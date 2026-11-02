@@ -46,7 +46,7 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
 
   const clusters = await listClusters(env.DB, {
     status: "published",
-    limit: 60,
+    limit: 100,
     sort: sort as "count" | "recent" | "rising" | "new",
     client: client !== "all" ? client : undefined,
   });

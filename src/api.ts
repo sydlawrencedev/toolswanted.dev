@@ -53,6 +53,8 @@ export async function handleApi(
       return getClusterApi(env, path.slice("/api/cluster/".length));
     case path === "/api/weekly" && request.method === "GET":
       return getWeeklyApi(env);
+    case path === "/api/servers" && request.method === "GET":
+      return getServersApi(env, url, request);
     default:
       return json({ error: "not_found" }, 404);
   }
@@ -238,6 +240,33 @@ async function getClusterApi(env: Env, slug: string): Promise<Response> {
       seeded: s.seeded === 1,
     })),
   });
+}
+
+/**
+ * Search the mirror of the MCP registry. Admin only: it is a tuning tool,
+ * not part of the public API.
+ */
+async function getServersApi(env: Env, url: URL, request: Request): Promise<Response> {
+  const token = request.headers.get("x-admin-token") ?? "";
+  if (!env.ADMIN_TOKEN || token !== env.ADMIN_TOKEN) {
+    return json({ error: "forbidden" }, 403);
+  }
+  const q = url.searchParams.get("q") ?? "";
+  if (!q.trim()) return json({ error: "invalid_query" }, 400);
+  const { embedQuery, queryServers, SERVER_MODEL } = await import("./embed");
+  const { isUsefulServer } = await import("./wish");
+  const vector = await embedQuery(env, q, SERVER_MODEL);
+  const matches = await queryServers(env, vector, 12);
+  const out = [];
+  for (const m of matches) {
+    const meta = (m.metadata ?? {}) as Record<string, string>;
+    const name = meta.name ?? m.id;
+    const title = meta.title ?? name;
+    const description = (meta.description ?? "").slice(0, 220);
+    if (!isUsefulServer(name, title, description)) continue;
+    out.push({ name, title, description, score: Number(m.score.toFixed(4)) });
+  }
+  return json({ ok: true, query: q, matches: out });
 }
 
 async function getWeeklyApi(env: Env): Promise<Response> {

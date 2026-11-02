@@ -3,9 +3,9 @@
  */
 
 const STOP_WORDS = new Set([
-  "a", "an", "the", "to", "for", "of", "in", "on", "and", "or", "with", "that",
-  "this", "it", "its", "my", "our", "we", "i", "you", "your", "as", "into",
-  "from", "by", "is", "are", "be", "can", "need", "want", "wants", "wished",
+  "a", "an", "the", "to", "for", "of", "and", "or", "with", "that", "this",
+  "it", "its", "into", "from", "by", "is", "are", "be", "can", "need",
+  "want", "wants", "wished", "my", "our", "we", "i", "you", "your",
 ]);
 
 export function slugify(text: string, maxLen = 64): string {
@@ -17,11 +17,9 @@ export function slugify(text: string, maxLen = 64): string {
     .split(/\s+/)
     .filter(Boolean);
 
-  const kept: string[] = [];
-  for (const w of words) {
-    if (STOP_WORDS.has(w) && kept.length === 0) continue;
-    kept.push(w);
-  }
+  // Drop connector words for readability, but never end up with nothing.
+  let kept = words.filter((w) => !STOP_WORDS.has(w));
+  if (kept.length === 0) kept = words;
 
   let slug = kept.join("-").replace(/-+/g, "-").replace(/^-|-$/g, "");
   if (slug.length > maxLen) {
@@ -40,8 +38,10 @@ export function slugify(text: string, maxLen = 64): string {
 export function titleFromNeed(need: string, maxLen = 110): string {
   const cleaned = need
     .replace(/\s+/g, " ")
-    .replace(/^(?:i|we)\s+(?:really\s+)?(?:need|want|wish)\s+(?:a|an|the|some)?\s*/i, "")
-    .replace(/^(?:a|an|the)\s+(?:tool|server|mcp|api|function)\s+(?:that\s+|to\s+|for\s+|which\s+)?/i, "")
+    .replace(
+      /^(?:i|we)\s+(?:really\s+)?(?:need|want|wish|would like)\s+(?:(?:a|an|the|some)\s+)?(?:(?:tool|server|mcp|api|function|skill)\s+(?:that\s+|to\s+|for\s+|which\s+|capable of\s+)?)?/i,
+      ""
+    )
     .replace(/\s+(?:please|thanks|thank you)[.!]?$/i, "")
     .trim();
   const capped = cleaned.length > maxLen ? `${cleaned.slice(0, maxLen - 1).trimEnd()}…` : cleaned;

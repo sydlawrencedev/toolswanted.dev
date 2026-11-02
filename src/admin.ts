@@ -98,6 +98,9 @@ export async function handleAdmin(
   if (path === "/admin/vector-debug" && request.method === "POST") {
     return handleVectorDebug(env, request);
   }
+  if (path === "/admin/weekly-snapshot" && request.method === "POST") {
+    return handleWeeklySnapshot(env);
+  }
 
   // Dashboard.
   const [pending, flagged, stats] = await Promise.all([
@@ -358,6 +361,40 @@ async function handleReset(env: Env, request: Request): Promise<Response> {
     console.error("vector reset failed", err);
   }
   return new Response(JSON.stringify({ ok: true }), { headers: { "content-type": "application/json" } });
+}
+
+/** Build the weekly snapshot now, rather than waiting for Monday. */
+async function handleWeeklySnapshot(env: Env): Promise<Response> {
+  const { isoWeekId, weekStart } = await import("./types");
+  const db = await import("./db");
+  const weekId = isoWeekId();
+  const clusters = await db.listClusters(env.DB, { status: "published", limit: 20, sort: "count" });
+  const stats = await db.getStats(env.DB);
+  const breakdown = await db.getClientBreakdown(
+    env.DB,
+    clusters.map((c) => c.id)
+  );
+  await db.putSnapshot(env.DB, weekId, weekStart().toISOString(), {
+    week: weekId,
+    generated_at: new Date().toISOString(),
+    stats,
+    wishes: clusters.map((c) => ({
+      title: c.title,
+      slug: c.slug,
+      agents: c.unique_agents,
+      wishes: c.count,
+      this_week: c.week_count,
+      first_seen: c.first_seen,
+      last_seen: c.last_seen,
+      shipped: c.shipped === 1,
+      builder: c.claim_login,
+      repo: c.claim_repo,
+      clients: breakdown.get(c.id) ?? [],
+    })),
+  });
+  return new Response(JSON.stringify({ ok: true, week: weekId, clusters: clusters.length }), {
+    headers: { "content-type": "application/json" },
+  });
 }
 
 /** Look at what is actually in the vector index. */

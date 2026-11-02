@@ -168,11 +168,15 @@ export async function fileWish(
   for (const m of serverMatches) {
     if (m.score < st) continue;
     const meta = (m.metadata ?? {}) as Record<string, string>;
+    const name = meta.name ?? m.id;
+    const title = meta.title ?? name;
+    const description = (meta.description ?? "").slice(0, 220);
+    if (!isUsefulServer(name, title, description)) continue;
     servers.push({
-      name: m.id,
-      title: meta.title ?? m.id,
-      description: (meta.description ?? "").slice(0, 220),
-      url: meta.url ?? `https://registry.modelcontextprotocol.io/v0.1/servers?search=${encodeURIComponent(m.id)}`,
+      name,
+      title,
+      description,
+      url: meta.url ?? `https://registry.modelcontextprotocol.io/v0.1/servers?search=${encodeURIComponent(name)}`,
       score: Number(m.score.toFixed(3)),
     });
     if (servers.length >= 3) break;
@@ -374,6 +378,33 @@ export async function genericiseWish(
 async function spendNeuronBudget(env: Env): Promise<boolean> {
   // ~60 input tokens + 60 output tokens of an 8B model.
   return budget.backgroundBudget(env, 6);
+}
+
+/**
+ * The registry is full of placeholders: "test", "demo", servers with no
+ * description at all. Pointing an agent at one of those is worse than saying
+ * nothing.
+ */
+const JUNK_TOKENS = new Set([
+  "test", "tests", "testing", "demo", "demos", "example", "examples", "sample",
+  "samples", "dummy", "foo", "bar", "baz", "asdf", "qwerty", "lorem", "ipsum",
+  "placeholder", "tmp", "temp", "untitled", "unknown", "changeme",
+]);
+
+export function isUsefulServer(name: string, title: string, description: string): boolean {
+  const tokens = `${name} ${title}`
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  if (tokens.some((t) => JUNK_TOKENS.has(t))) return false;
+
+  const text = description.toLowerCase();
+  if (/\b(todo|under construction|coming soon|not implemented|work in progress)\b/.test(text)) {
+    return false;
+  }
+  if (name === title && description.length < 40) return false;
+  if (description.trim().length < 12) return false;
+  return true;
 }
 
 /** The stored centroid for a cluster, if we have one. */

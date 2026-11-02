@@ -113,21 +113,35 @@ export async function crawlRegistry(env: Env, max = PAGE_SIZE): Promise<CrawlRes
   await upsertServers(env.DB, records);
   await upsertServerVectors(
     env,
-    records.map((r, i) => ({
-      id: r.name,
-      values: vectors[i]!,
-      metadata: {
-        title: r.title ?? r.name,
-        description: (r.description ?? "").slice(0, 220),
-        url: serverUrl(r),
-      },
-    }))
+    await Promise.all(
+      records.map(async (r, i) => ({
+        // Vectorize ids are capped at 64 bytes and some server names are
+        // longer, so the id is a hash and the real name rides in the metadata.
+        id: await vectorId(r.name),
+        values: vectors[i]!,
+        metadata: {
+          name: r.name,
+          title: r.title ?? r.name,
+          description: (r.description ?? "").slice(0, 220),
+          url: serverUrl(r),
+        },
+      }))
+    )
   );
 
   if (nextCursor) await setMeta(env.DB, "registry_cursor", nextCursor);
   else await setMeta(env.DB, "registry_cursor", "");
 
   return { fetched: records.length, stored: records.length, nextCursor, exhausted: !nextCursor };
+}
+
+/** Short, stable id for a server name. */
+export async function vectorId(name: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(name));
+  const hex = Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `s_${hex.slice(0, 40)}`;
 }
 
 /** Best link for a server. */

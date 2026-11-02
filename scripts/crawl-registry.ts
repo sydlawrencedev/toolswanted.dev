@@ -42,7 +42,16 @@ async function main() {
   console.log(`Crawling the MCP registry via ${WORKER}/admin/crawl ...`);
   let total = 0;
   for (let call = 0; call < MAX_CALLS; call++) {
-    const results = await Promise.all(Array.from({ length: PARALLEL }, () => crawl()));
+    const results = await Promise.all(
+      Array.from({ length: PARALLEL }, async () => {
+        try {
+          return await crawl();
+        } catch (err) {
+          console.error(`  crawl error: ${(err as Error).message}`);
+          return { fetched: 0, stored: 0, exhausted: false };
+        }
+      })
+    );
     const stored = results.reduce((n, r) => n + r.stored, 0);
     total += stored;
     if (call % 10 === 0 || results.some((r) => r.exhausted || r.skipped)) {
