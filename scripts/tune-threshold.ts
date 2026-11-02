@@ -7,7 +7,7 @@
  *   npm run tune
  */
 
-const WORKER = process.env.WORKER_URL ?? "https://toolswanted.sydlawrence.workers.dev";
+const WORKER = process.env.WORKER_URL ?? "https://toolswanted.dev";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "";
 
 /** Pairs that SHOULD match. */

@@ -7,7 +7,7 @@
  * tools, file a wish, search, and read the top of the board.
  */
 
-const ENDPOINT = process.env.MCP_URL ?? "https://toolswanted.sydlawrence.workers.dev/mcp";
+const ENDPOINT = process.env.MCP_URL ?? "https://toolswanted.dev/mcp";
 const CLIENT = process.env.MCP_CLIENT ?? "claude-code";
 const MODEL = process.env.MCP_MODEL ?? "claude-sonnet-4-5";
 

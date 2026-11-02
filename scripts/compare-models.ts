@@ -10,7 +10,7 @@
 
 import { readFile } from "node:fs/promises";
 
-const WORKER = process.env.WORKER_URL ?? "https://toolswanted.sydlawrence.workers.dev";
+const WORKER = process.env.WORKER_URL ?? "https://toolswanted.dev";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? (await readFile("/tmp/admin_token", "utf8")).trim();
 
 const MODELS = [

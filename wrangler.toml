@@ -3,6 +3,12 @@ main = "src/index.ts"
 compatibility_date = "2026-11-01"
 compatibility_flags = ["nodejs_compat"]
 
+# The real domain. Cloudflare creates the DNS record and the certificate.
+routes = [
+  { pattern = "toolswanted.dev", custom_domain = true },
+  { pattern = "www.toolswanted.dev", custom_domain = true },
+]
+
 # The board is server-rendered HTML. Static files (CSS, favicon) are served by
 # the Worker itself so there is exactly one deployment and one routing table.
 [observability]

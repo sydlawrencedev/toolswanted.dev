@@ -6,7 +6,7 @@
 
 import { chromium } from "playwright";
 
-const BASE = process.env.WORKER_URL ?? "https://toolswanted.sydlawrence.workers.dev";
+const BASE = process.env.WORKER_URL ?? "https://toolswanted.dev";
 const OUT = process.env.OUT_DIR ?? "/tmp/tw-shots";
 
 const PAGES = [

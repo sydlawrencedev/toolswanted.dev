@@ -99,6 +99,14 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, "") || "/";
 
+    // One canonical host. www redirects to the apex so links, caches and
+    // search engines only ever see one version of the board.
+    const canonical = new URL(env.SITE_URL);
+    if (url.hostname === `www.${canonical.hostname}`) {
+      const target = new URL(url.pathname + url.search, canonical.origin);
+      return new Response(null, { status: 308, headers: { location: target.toString() } });
+    }
+
     // CORS for the public API and the MCP endpoint.
     if (path.startsWith("/api/") || path === "/mcp") {
       const cors = {

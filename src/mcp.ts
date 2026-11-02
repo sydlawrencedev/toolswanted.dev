@@ -47,8 +47,7 @@ export interface McpIdentity extends Identity {
 export function createServer(
   env: Env,
   identity: McpIdentity,
-  ctx?: ExecutionContext,
-  origin?: string
+  ctx?: ExecutionContext
 ): McpServer {
   const server = new McpServer(
     { name: SERVER_NAME, version: SERVER_VERSION, title: "Tools Wanted" },
@@ -101,7 +100,7 @@ export function createServer(
             client: args.client ?? null,
             model: args.model ?? null,
           },
-          { origin: origin ?? env.SITE_URL }
+          {}
         );
         ctx?.waitUntil(
           genericiseWish(env, outcome.wishId, outcome.clusterId, outcome.need, args.context ?? null).catch(
@@ -163,12 +162,12 @@ export function createServer(
               : claim?.building
                 ? ` — being built by @${claim.login}`
                 : "") +
-            ` — ${(origin ?? env.SITE_URL)}/w/${cluster.slug}`
+            ` — ${env.SITE_URL}/w/${cluster.slug}`
         );
         structured.push({
           title: cluster.title,
           slug: cluster.slug,
-          url: `${origin ?? env.SITE_URL}/w/${cluster.slug}`,
+          url: `${env.SITE_URL}/w/${cluster.slug}`,
           agents: cluster.unique_agents,
           wishes: cluster.count,
           match: score,
@@ -212,13 +211,13 @@ export function createServer(
         lines.push(
           `${i + 1}. ${cluster.title} — ${cluster.unique_agents} agent${cluster.unique_agents === 1 ? "" : "s"}` +
             (clients.length ? ` (${describeClients(clients)})` : "") +
-            ` — ${(origin ?? env.SITE_URL)}/w/${cluster.slug}`
+            ` — ${env.SITE_URL}/w/${cluster.slug}`
         );
         structured.push({
           rank: i + 1,
           title: cluster.title,
           slug: cluster.slug,
-          url: `${origin ?? env.SITE_URL}/w/${cluster.slug}`,
+          url: `${env.SITE_URL}/w/${cluster.slug}`,
           agents: cluster.unique_agents,
           wishes: cluster.count,
           clients,
@@ -311,7 +310,7 @@ export async function handleMcpRequest(
   identity: McpIdentity,
   ctx?: ExecutionContext
 ): Promise<Response> {
-  const server = createServer(env, identity, ctx, new URL(request.url).origin);
+  const server = createServer(env, identity, ctx);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,

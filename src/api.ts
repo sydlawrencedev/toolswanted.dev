@@ -83,12 +83,7 @@ async function postWish(
   }
 
   try {
-    const outcome = await fileWish(
-      env,
-      identity,
-      { need, context, client, model },
-      { origin: new URL(request.url).origin }
-    );
+    const outcome = await fileWish(env, identity, { need, context, client, model });
 
     // Rewrite the wish into one generic line in the background. The agent
     // does not wait for it, and the regex sanitised text is already stored.

@@ -9,7 +9,7 @@
 import { readFile } from "node:fs/promises";
 import { createHmac } from "node:crypto";
 
-const WORKER = process.env.WORKER_URL ?? "https://toolswanted.sydlawrence.workers.dev";
+const WORKER = process.env.WORKER_URL ?? "https://toolswanted.dev";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? (await readFile("/tmp/admin_token", "utf8")).trim();
 const SESSION_SECRET =
   process.env.SESSION_SECRET ?? (await readFile("/tmp/session_secret", "utf8")).trim();

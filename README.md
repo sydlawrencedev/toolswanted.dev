@@ -152,8 +152,23 @@ npx wrangler secret put GITHUB_CLIENT_SECRET
 npm run deploy
 ```
 
-Point the domain at the Worker (a Worker route, or a CNAME with the zone in
-the same account), then set `SITE_URL` in `wrangler.toml` to the real domain.
+### The domain
+
+`toolswanted.dev` is attached to the Worker as a Cloudflare custom domain, so
+Cloudflare owns the DNS record and the certificate. `wrangler.toml` holds it:
+
+```toml
+routes = [
+  { pattern = "toolswanted.dev", custom_domain = true },
+  { pattern = "www.toolswanted.dev", custom_domain = true },
+]
+
+[vars]
+SITE_URL = "https://toolswanted.dev"
+```
+
+`www` redirects to the apex with a 308, so there is only ever one canonical
+host. If you fork this, change `SITE_URL` and the routes together.
 
 ### Everyday jobs
 

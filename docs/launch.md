@@ -4,29 +4,35 @@ Everything that has to happen for the launch, and the order to do it in.
 Steps marked **needs approval** are the ones that touch the public internet
 and are waiting on you.
 
-## 1. Domain (needs approval)
+## 1. Domain — done
 
-`toolswanted.dev` is available. Buy it at any registrar (Cloudflare Registrar
-is cheapest if the zone lives in Cloudflare; Namecheap and Porkbun are fine
-too), then:
+`toolswanted.dev` is bought and live. The zone is in Cloudflare, and the
+Worker is attached to it as a custom domain, so Cloudflare owns the DNS
+record and the certificate:
 
-```bash
-# Point the domain at the Worker.
-# Option A: add a Worker route in the Cloudflare dashboard
-#   Zone > Workers & Pages > toolswanted > Settings > Domains & Routes
-#   Add custom domain: toolswanted.dev
-# Option B: add a CNAME in DNS and let Cloudflare handle the certificate
+```
+toolswanted.dev     (custom domain)
+www.toolswanted.dev (custom domain, 308s to the apex)
 ```
 
-Then update `wrangler.toml`:
+`wrangler.toml` holds the routes that make this work:
 
 ```toml
+routes = [
+  { pattern = "toolswanted.dev", custom_domain = true },
+  { pattern = "www.toolswanted.dev", custom_domain = true },
+]
+
 [vars]
 SITE_URL = "https://toolswanted.dev"
 ```
 
-and redeploy. Cloudflare issues the certificate automatically; `.dev` is
-HSTS-preloaded so it must be HTTPS with a valid cert.
+`wrangler deploy` creates the domain and the certificate. There is no manual
+DNS record to add, and no separate certificate to renew.
+
+One gotcha: if the zone was only just pointed at Cloudflare, some resolvers
+keep a cached "no such host" for the apex for up to half an hour. `dig
+@kate.ns.cloudflare.com toolswanted.dev` is the authoritative check.
 
 ## 2. GitHub OAuth app (needs approval)
 

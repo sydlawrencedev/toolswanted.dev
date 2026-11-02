@@ -2,49 +2,136 @@
  * Capture the raw JSON-RPC exchange with the MCP server, for the record.
  *
  *   node scripts/transcript.mjs
+ *
+ * If your network cannot resolve the apex (a stale local resolver, say),
+ * set MCP_IP to one of its addresses and the TLS name is still checked
+ * properly:
+ *
+ *   MCP_IP=104.21.43.222 node scripts/transcript.mjs
  */
 
-const ENDPOINT = process.env.MCP_URL ?? "https://toolswanted.sydlawrence.workers.dev/mcp";
+import https from "node:https";
+import tls from "node:tls";
 
-let id = 0;
+const ENDPOINT = process.env.MCP_URL ?? "https://toolswanted.dev/mcp";
+const FORCE_IP = process.env.MCP_IP;
 
-async function call(method, params, label) {
-  id += 1;
-  const request = { jsonrpc: "2.0", id, method, params };
-  const res = await fetch(ENDPOINT, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      accept: "application/json, text/event-stream",
-      "user-agent": "claude-code/2.1.316",
-    },
-    body: JSON.stringify(request),
+const target = new URL(ENDPOINT);
+
+/** POST a JSON-RPC message and return the raw response body. */
+function rpc(message) {
+  const body = JSON.stringify(message);
+  return new Promise((resolve, reject) => {
+    const options = {
+      method: "POST",
+      hostname: target.hostname,
+      path: target.pathname + target.search,
+      port: 443,
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+        "user-agent": "claude-code/2.1.316",
+        "content-length": Buffer.byteLength(body),
+      },
+      ...(FORCE_IP
+        ? {
+            // Same TLS name, resolved to a known address.
+            servername: target.hostname,
+            lookup: (hostname, options, callback) => {
+              if (typeof options === "function") {
+                callback = options;
+                options = {};
+              }
+              // Node 20+ asks for every address at once.
+              if (options && options.all) {
+                callback(null, [{ address: FORCE_IP, family: 4 }]);
+              } else {
+                callback(null, FORCE_IP, 4);
+              }
+            },
+          }
+        : {}),
+    };
+    const req = https.request(options, (res) => {
+      let text = "";
+      res.on("data", (chunk) => (text += chunk));
+      res.on("end", () => resolve({ status: res.statusCode, headers: res.headers, text }));
+    });
+    req.on("error", reject);
+    req.write(body);
+    req.end();
   });
-  const text = await res.text();
-  console.log(`\n\x1b[2m→ ${label}\x1b[0m`);
-  console.log(`\x1b[2mPOST ${ENDPOINT}\x1b[0m`);
-  console.log(JSON.stringify(request, null, 2));
-  console.log(`\x1b[2m← HTTP ${res.status} ${res.headers.get("content-type") ?? ""}\x1b[0m`);
-  const parsed = text.trim().startsWith("{") ? JSON.stringify(JSON.parse(text), null, 2) : text;
-  console.log(parsed.length > 3000 ? `${parsed.slice(0, 3000)}\n… (truncated)` : parsed);
-  return text;
 }
 
 async function notify(method, params) {
-  await fetch(ENDPOINT, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      accept: "application/json, text/event-stream",
-      "user-agent": "claude-code/2.1.316",
-    },
-    body: JSON.stringify({ jsonrpc: "2.0", method, params }),
+  const body = JSON.stringify({ jsonrpc: "2.0", method, params });
+  await new Promise((resolve, reject) => {
+    const options = {
+      method: "POST",
+      hostname: target.hostname,
+      path: target.pathname + target.search,
+      port: 443,
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+        "user-agent": "claude-code/2.1.316",
+        "content-length": Buffer.byteLength(body),
+      },
+      ...(FORCE_IP
+        ? {
+            servername: target.hostname,
+            lookup: (hostname, options, callback) => {
+              if (typeof options === "function") {
+                callback = options;
+                options = {};
+              }
+              // Node 20+ asks for every address at once.
+              if (options && options.all) {
+                callback(null, [{ address: FORCE_IP, family: 4 }]);
+              } else {
+                callback(null, FORCE_IP, 4);
+              }
+            },
+          }
+        : {}),
+    };
+    const req = https.request(options, (res) => {
+      res.resume();
+      res.on("end", resolve);
+    });
+    req.on("error", reject);
+    req.write(body);
+    req.end();
   });
   console.log(`\n\x1b[2m→ notification ${method}\x1b[0m`);
 }
 
+let id = 0;
+async function call(method, params, label) {
+  id += 1;
+  const request = { jsonrpc: "2.0", id, method, params };
+  const res = await rpc(request);
+  console.log(`\n\x1b[2m→ ${label}\x1b[0m`);
+  console.log(`\x1b[2mPOST ${ENDPOINT}\x1b[0m`);
+  console.log(JSON.stringify(request, null, 2));
+  console.log(
+    `\x1b[2m← HTTP ${res.status} ${res.headers["content-type"] ?? ""}\x1b[0m`
+  );
+  const text = res.text.trim();
+  let shown = text;
+  try {
+    shown = JSON.stringify(JSON.parse(text), null, 2);
+  } catch {
+    const line = text.split("\n").find((l) => l.startsWith("data:"));
+    if (line) shown = JSON.stringify(JSON.parse(line.slice(5).trim()), null, 2);
+  }
+  console.log(shown.length > 3000 ? `${shown.slice(0, 3000)}\n… (truncated)` : shown);
+  return text;
+}
+
 async function main() {
   console.log("\x1b[1mTools Wanted — MCP transcript\x1b[0m");
+  if (FORCE_IP) console.log(`\x1b[2m(resolving ${target.hostname} to ${FORCE_IP})\x1b[0m`);
 
   await call(
     "initialize",
@@ -89,6 +176,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error(err);
+  console.error(`\n\x1b[31mFAILED\x1b[0m ${err.message}`);
   process.exit(1);
 });
