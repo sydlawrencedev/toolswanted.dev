@@ -1,0 +1,50 @@
+name = "toolswanted"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# The board is server-rendered HTML with a single static asset bundle.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[observability]
+enabled = true
+
+[vars]
+SITE_URL = "https://toolswanted.dev"
+SITE_NAME = "Tools Wanted"
+# Cosine similarity above which a new wish is folded into an existing cluster.
+# Tuned with scripts/tune-threshold.ts against a labelled pair set.
+MATCH_THRESHOLD = "0.815"
+# Cosine similarity above which an existing MCP server is offered as an alternative.
+SERVER_MATCH_THRESHOLD = "0.72"
+# A cluster stays in the review queue until it has this many wishes...
+AUTO_PUBLISH_WISHES = "3"
+# ...or an admin approves it.
+RATE_LIMIT_WISHES_PER_HOUR = "30"
+RATE_LIMIT_SEARCH_PER_MINUTE = "30"
+REGISTRY_CRON = "*/5 * * * *"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "toolswanted"
+database_id = "REPLACE_WITH_D1_ID"
+migrations_dir = "migrations"
+
+[[vectorize]]
+binding = "VECTORS"
+index_name = "toolswanted"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "REPLACE_WITH_KV_ID"
+
+[triggers]
+crons = ["*/5 * * * *", "0 8 * * 1"]
+
+# Secrets (set with `wrangler secret put <NAME>`):
+#   ADMIN_TOKEN  - passphrase for /admin
+#   GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET - OAuth app for builder claims
+#   IP_SALT      - random salt for hashing IPs and fingerprints
