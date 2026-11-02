@@ -52,7 +52,7 @@ import {
   type WishFormResult,
 } from "./board";
 import { isPreviewBot } from "./bots";
-import { rateLimit, readBucket } from "./ratelimit";
+import { rateLimit } from "./ratelimit";
 import { renderFeed, renderWishFeed } from "./rss";
 import { isoWeekId, num, weekStart, type Env } from "./types";
 
@@ -141,11 +141,23 @@ function notFound(env: Env): Response {
   );
 }
 
-/** Cache GET pages at the edge for a short while to keep D1 reads down. */
-async function cached(request: Request, _ttlSeconds: number, produce: () => Promise<Response>): Promise<Response> {
+/**
+ * Cache GET pages at the edge for a short while to keep D1 reads down.
+ *
+ * The key carries the deploy version, so a deploy serves the new version
+ * immediately rather than the old one for the length of the TTL.
+ */
+async function cached(
+  request: Request,
+  _ttlSeconds: number,
+  produce: () => Promise<Response>,
+  version?: string
+): Promise<Response> {
   if (request.method !== "GET") return produce();
   const cache = caches.default;
-  const cacheKey = new Request(request.url, { method: "GET" });
+  const url = new URL(request.url);
+  if (version) url.searchParams.set("__v", version);
+  const cacheKey = new Request(url.toString(), { method: "GET" });
   const hit = await cache.match(cacheKey);
   if (hit) {
     const res = new Response(hit.body, hit);
@@ -366,24 +378,38 @@ async function route(
   if (path === "/") {
     const filter = url.searchParams.get("filter") ?? "all";
     const client = url.searchParams.get("client") ?? "all";
-    return cached(request, 60, async () => {
-      const body = await renderBoard(env, { filter, client });
-      return html(body, 200, { "cache-control": "public, max-age=30, s-maxage=60" });
-    });
+    return cached(
+      request,
+      60,
+      async () => {
+        const body = await renderBoard(env, { filter, client });
+        return html(body, 200, { "cache-control": "public, max-age=30, s-maxage=60" });
+      },
+      env.VERSION_METADATA?.id
+    );
   }
 
   if (path.startsWith("/w/")) {
     const slug = decodeURIComponent(path.slice(3));
-    return cached(request, 300, async () => {
-      const body = await renderCluster(env, slug);
-      if (!body) return notFound(env);
-      return html(body, 200, { "cache-control": "public, max-age=120, s-maxage=300" });
-    });
+    return cached(
+      request,
+      300,
+      async () => {
+        const body = await renderCluster(env, slug);
+        if (!body) return notFound(env);
+        return html(body, 200, { "cache-control": "public, max-age=120, s-maxage=300" });
+      },
+      env.VERSION_METADATA?.id
+    );
   }
 
   if (path === "/weekly") {
-    return cached(request, 600, async () =>
-      html(await renderWeekly(env), 200, { "cache-control": "public, max-age=300, s-maxage=600" })
+    return cached(
+      request,
+      600,
+      async () =>
+        html(await renderWeekly(env), 200, { "cache-control": "public, max-age=300, s-maxage=600" }),
+      env.VERSION_METADATA?.id
     );
   }
   if (path.startsWith("/weekly/")) {
@@ -393,23 +419,35 @@ async function route(
     );
   }
   if (path === "/agents") {
-    return cached(request, 3600, async () =>
-      html(renderAgents(env), 200, { "cache-control": "public, max-age=3600" })
+    return cached(
+      request,
+      3600,
+      async () => html(renderAgents(env), 200, { "cache-control": "public, max-age=3600" }),
+      env.VERSION_METADATA?.id
     );
   }
   if (path === "/build") {
-    return cached(request, 600, async () =>
-      html(renderBuild(env), 200, { "cache-control": "public, max-age=600" })
+    return cached(
+      request,
+      600,
+      async () => html(renderBuild(env), 200, { "cache-control": "public, max-age=600" }),
+      env.VERSION_METADATA?.id
     );
   }
   if (path === "/about") {
-    return cached(request, 3600, async () =>
-      html(renderAbout(env), 200, { "cache-control": "public, max-age=3600" })
+    return cached(
+      request,
+      3600,
+      async () => html(renderAbout(env), 200, { "cache-control": "public, max-age=3600" }),
+      env.VERSION_METADATA?.id
     );
   }
   if (path === "/privacy") {
-    return cached(request, 3600, async () =>
-      html(renderPrivacy(env), 200, { "cache-control": "public, max-age=3600" })
+    return cached(
+      request,
+      3600,
+      async () => html(renderPrivacy(env), 200, { "cache-control": "public, max-age=3600" }),
+      env.VERSION_METADATA?.id
     );
   }
 

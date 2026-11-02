@@ -8,6 +8,7 @@ export interface Env {
   SERVER_VECTORS: Vectorize;
   AI: Ai;
   KV: KVNamespace;
+  VERSION_METADATA?: { id: string; tag?: string };
   SITE_URL: string;
   SITE_NAME: string;
   /** Cosine similarity above which a wish folds into an existing cluster. */

@@ -14,6 +14,11 @@ routes = [
 [observability]
 enabled = true
 
+# Used to version cache keys, so a deploy busts the edge cache instead of
+# serving the previous version of the board for an hour.
+[version_metadata]
+binding = "VERSION_METADATA"
+
 [vars]
 SITE_URL = "https://toolswanted.dev"
 SITE_NAME = "Tools Wanted"

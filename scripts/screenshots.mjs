@@ -13,6 +13,7 @@ const PAGES = [
   { path: "/", name: "board" },
   { path: "/w/read-uk-council-planning-pdfs-as-structured-data", name: "cluster" },
   { path: "/agents", name: "agents" },
+  { path: "/wish", name: "wish" },
   { path: "/weekly", name: "weekly" },
 ];
 
