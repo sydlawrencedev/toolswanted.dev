@@ -66,13 +66,13 @@ async function main() {
 
   if (command) {
     // One-shot: tools/call <tool> <json-args>
-    const [tool, argsJson] = rest;
+    const [argsJson] = rest;
     await notify("notifications/initialized");
     const result = await rpc("tools/call", {
-      name: tool,
+      name: command,
       arguments: argsJson ? JSON.parse(argsJson) : {},
     });
-    show(`${tool}`, result);
+    show(`${command}`, result);
     return;
   }
 

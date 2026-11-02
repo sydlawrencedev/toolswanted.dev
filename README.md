@@ -179,9 +179,22 @@ host. If you fork this, change `SITE_URL` and the routes together.
 ```bash
 npm run seed        # seed the board with wishes filed by the operator's own agents
 npm run crawl       # push the MCP registry mirror forward
-npm run og:sync     # re-render the OG images and upload them to KV
+npm run og:sync     # re-render the OG images and upload them
 npm run tune        # re-measure the clustering threshold against labelled pairs
+./scripts/after-reset.sh   # wait for midnight UTC, then apply migrations and restart the crawl
 ```
+
+### Daily budgets on the free plan
+
+Two of them bite, and both are tracked in code rather than discovered:
+
+- **D1 writes 100,000 rows a day.** A wish costs about four. The registry
+  crawl is capped at 35,000 rows a day and only writes rows that actually
+  changed, so it cannot take the board down with it. When the budget is
+  spent, the board says so plainly and says when it resets.
+- **Workers AI gives 10,000 neurons a day.** The sanitiser's rewrite gets the
+  product's share; the registry crawl gets what is left and stops when there
+  is none.
 
 `npm run seed` marks every wish it files as seeded, and seeded clusters are
 labelled on the board. Nothing else is synthetic.

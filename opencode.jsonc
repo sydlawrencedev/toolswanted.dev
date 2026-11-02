@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "tools-wanted": {
+      "type": "remote",
+      "url": "https://toolswanted.dev/mcp",
+      "enabled": true
+    }
+  }
+}
