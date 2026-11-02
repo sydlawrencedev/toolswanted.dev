@@ -10,6 +10,53 @@
 import { embedBatch, upsertServerVectors, SERVER_MODEL } from "./embed";
 import { upsertServers, getExistingServerNames } from "./db";
 import { backgroundBudget } from "./budget";
+
+/**
+ * D1's free plan allows 100,000 rows written a day. The product needs most
+ * of that, so the background crawl gets a fixed share and stops when it is
+ * spent rather than taking the board down with it.
+ */
+const CRAWL_ROW_BUDGET = 35_000;
+
+async function ensureUsageBudget(env: Env): Promise<void> {
+  try {
+    await env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS usage_budget (
+         day TEXT NOT NULL, kind TEXT NOT NULL, used REAL NOT NULL DEFAULT 0,
+         PRIMARY KEY (day, kind))`
+    ).run();
+  } catch {
+    /* created by the migration, or the write limit is spent */
+  }
+}
+
+async function crawlRowsUsed(env: Env): Promise<number> {
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    const row = await env.DB.prepare(
+      `SELECT used FROM usage_budget WHERE day = ? AND kind = 'crawl'`
+    )
+      .bind(today)
+      .first<{ used: number }>();
+    return row?.used ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function addCrawlRows(env: Env, rows: number): Promise<void> {
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    await env.DB.prepare(
+      `INSERT INTO usage_budget (day, kind, used) VALUES (?, 'crawl', ?)
+       ON CONFLICT(day, kind) DO UPDATE SET used = used + excluded.used`
+    )
+      .bind(today, rows)
+      .run();
+  } catch {
+    /* the counter is a nicety, not a requirement */
+  }
+}
 import { getMeta, setMeta } from "./db";
 import type { Env } from "./types";
 import type { ServerRecord } from "./types";
@@ -93,6 +140,18 @@ function toRecord(entry: RegistryServer, latest: boolean): ServerRecord | null {
  * Returns how far it got.
  */
 export async function crawlRegistry(env: Env, max = PAGE_SIZE): Promise<CrawlResult> {
+  await ensureUsageBudget(env);
+  const used = await crawlRowsUsed(env);
+  if (used >= CRAWL_ROW_BUDGET) {
+    return {
+      fetched: 0,
+      stored: 0,
+      nextCursor: await getMeta(env.DB, "registry_cursor"),
+      exhausted: false,
+      skipped: "daily row write budget",
+    };
+  }
+
   let cursor = await getMeta(env.DB, "registry_cursor");
   let nextCursor: string | null = null;
 
@@ -156,7 +215,8 @@ export async function crawlRegistry(env: Env, max = PAGE_SIZE): Promise<CrawlRes
 
   const vectors = await embedBatch(env, texts, SERVER_MODEL);
 
-  await upsertServers(env.DB, records);
+  const rowsWritten = await upsertServers(env.DB, records);
+  await addCrawlRows(env, rowsWritten);
   await upsertServerVectors(
     env,
     await Promise.all(

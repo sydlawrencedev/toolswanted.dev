@@ -22,6 +22,7 @@ import { handleApi } from "./api";
 import { handleMcpRequest } from "./mcp";
 import { identify } from "./identity";
 import { handleAdmin, purgeClusterCache, readForm } from "./admin";
+import { isWriteLimitError } from "./db";
 import { crawlRegistry } from "./registry";
 import { fileWish } from "./wish";
 import * as db from "./db";
@@ -57,6 +58,58 @@ function html(body: string, status = 200, headers: Record<string, string> = {}):
     status,
     headers: { "content-type": "text/html; charset=utf-8", ...headers },
   });
+}
+
+/**
+ * D1's free plan gives 100,000 rows written a day. When that is spent, say
+ * so plainly and say when it resets, rather than showing a Cloudflare error
+ * page and making it look like the board is broken.
+ */
+function writeLimitResponse(err: unknown, request: Request, env: Env): Response {
+  if (!isWriteLimitError(err)) {
+    console.error("unhandled error", err);
+    return new Response("Something went wrong.", {
+      status: 500,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  console.error("d1 write limit reached", err);
+  const reset = new Date();
+  reset.setUTCHours(24, 0, 0, 0);
+  const hours = Math.max(1, Math.ceil((reset.getTime() - Date.now()) / 3_600_000));
+  const message = `The board has used its daily write budget (100,000 rows on the free plan). It resets at midnight UTC, in about ${hours} hour${hours === 1 ? "" : "s"}.`;
+
+  const accepts = request.headers.get("accept") ?? "";
+  if (path_isApi(request) || accepts.includes("application/json")) {
+    return new Response(JSON.stringify({ error: "daily_write_limit", message }), {
+      status: 503,
+      headers: { "content-type": "application/json; charset=utf-8" },
+    });
+  }
+  if (request.headers.get("accept")?.includes("text/event-stream")) {
+    return new Response(
+      JSON.stringify({ jsonrpc: "2.0", error: { code: -32000, message }, id: null }),
+      { status: 503, headers: { "content-type": "application/json" } }
+    );
+  }
+  return html(
+    layout(
+      {
+        title: "Briefly out of writes",
+        description: message,
+        canonical: `${env.SITE_URL}/`,
+        noindex: true,
+      },
+      `<section class="page"><div class="wrap"><h1>Out of writes</h1><p>${esc(message)}</p><p>Reading the board still works; filing new wishes and moderating do not, for now.</p></div></section>`
+    ),
+    503
+  );
+}
+
+function path_isApi(request: Request): boolean {
+  const path = new URL(request.url).pathname;
+  return path === "/mcp" || path.startsWith("/api/");
 }
 
 function notFound(env: Env): Response {
@@ -120,13 +173,22 @@ export default {
         "access-control-max-age": "86400",
       };
       if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-      const response = await route(request, env, ctx, url, path);
+      let response: Response;
+      try {
+        response = await route(request, env, ctx, url, path);
+      } catch (err) {
+        response = writeLimitResponse(err, request, env);
+      }
       const headers = new Headers(response.headers);
       for (const [k, v] of Object.entries(cors)) headers.set(k, v);
       return new Response(response.body, { status: response.status, headers });
     }
 
-    return route(request, env, ctx, url, path);
+    try {
+      return await route(request, env, ctx, url, path);
+    } catch (err) {
+      return writeLimitResponse(err, request, env);
+    }
   },
 
   async scheduled(event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
@@ -200,6 +262,7 @@ async function route(
       return await handleMcpRequest(env, request, identity, ctx);
     } catch (err) {
       console.error("mcp error", err);
+      if (isWriteLimitError(err)) return writeLimitResponse(err, request, env);
       return new Response(
         JSON.stringify({ jsonrpc: "2.0", error: { code: -32603, message: "Internal error" }, id: null }),
         { status: 500, headers: { "content-type": "application/json" } }

@@ -12,7 +12,7 @@ import { z } from "zod";
 import type { Env } from "./types";
 import { fileWish, genericiseWish, searchWishes, topWishes, WishError, type Identity } from "./wish";
 import { describeClients } from "./wish";
-import { getClientBreakdown } from "./db";
+import { getClientBreakdown, isWriteLimitError } from "./db";
 import { clientLabel } from "./types";
 
 export const SERVER_NAME = "tools-wanted";
@@ -116,6 +116,17 @@ export function createServer(
           return {
             isError: true,
             content: [{ type: "text" as const, text: `Could not file that wish: ${err.message}` }],
+          };
+        }
+        if (isWriteLimitError(err)) {
+          return {
+            isError: true,
+            content: [
+              {
+                type: "text" as const,
+                text: "The board has used its daily write budget and cannot take new wishes until midnight UTC. Nothing was filed.",
+              },
+            ],
           };
         }
         throw err;

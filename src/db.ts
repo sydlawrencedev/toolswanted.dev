@@ -11,6 +11,12 @@
 import type { Cluster, ServerRecord, Wish } from "./types";
 import { newId } from "./types";
 
+/** True when D1 refused a write because the daily row limit is spent. */
+export function isWriteLimitError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return /row write limit|exceeded D1/i.test(message);
+}
+
 export const CLUSTER_COLUMNS = `id, slug, title, title_source, count, unique_agents, week_count,
   first_seen, last_seen, status, merged_into, vector, shipped, claim_login, claim_repo,
   claim_note, claimed_at, shipped_at, seeded, notes, created_at, updated_at`;
@@ -544,11 +550,18 @@ export async function getClaim(db: D1Database, clusterId: string): Promise<Claim
  * Registry mirror
  * ------------------------------------------------------------------ */
 
+/**
+ * Store servers, writing only the rows that actually changed.
+ *
+ * The daily row write limit on the free plan is 100,000. A crawl that
+ * re-writes rows it already has would spend the whole day's budget on
+ * nothing, so unchanged rows are skipped.
+ */
 export async function upsertServers(
   db: D1Database,
   servers: Array<ServerRecord & { isLatest?: boolean }>
-): Promise<void> {
-  if (servers.length === 0) return;
+): Promise<number> {
+  if (servers.length === 0) return 0;
   const statements = servers.map((s) =>
     db
       .prepare(
@@ -558,7 +571,12 @@ export async function upsertServers(
            description = excluded.description, remotes = excluded.remotes,
            packages = excluded.packages, updated_at = excluded.updated_at,
            is_latest = excluded.is_latest
-         WHERE excluded.is_latest = 1 OR servers.is_latest = 0`
+         WHERE (excluded.is_latest = 1 OR servers.is_latest = 0)
+           AND (servers.title IS NOT excluded.title
+             OR servers.description IS NOT excluded.description
+             OR servers.remotes IS NOT excluded.remotes
+             OR servers.packages IS NOT excluded.packages
+             OR servers.is_latest IS NOT excluded.is_latest)`
       )
       .bind(
         s.name,
@@ -571,9 +589,12 @@ export async function upsertServers(
       )
   );
   // Chunk to stay inside D1 batch limits.
+  let written = 0;
   for (let i = 0; i < statements.length; i += 50) {
-    await db.batch(statements.slice(i, i + 50));
+    const results = await db.batch(statements.slice(i, i + 50));
+    for (const result of results) written += result?.meta?.changes ?? 0;
   }
+  return written;
 }
 
 /** Which of these names are already in the mirror. One query, not one per name. */
