@@ -150,8 +150,8 @@ async function renderPoster(cluster: Cluster | null, fontData: Awaited<ReturnTyp
             justifyContent: "center",
             border: `5px solid ${INK}`,
             background: PAPER_2,
-            padding: "22px 30px",
-            minWidth: 230,
+            padding: "26px 34px 22px",
+            minWidth: 240,
           },
         },
         h(
@@ -159,9 +159,9 @@ async function renderPoster(cluster: Cluster | null, fontData: Awaited<ReturnTyp
           {
             style: {
               fontFamily: "Archivo Black",
-              fontSize: 96,
+              fontSize: 88,
               color: RED,
-              lineHeight: 1,
+              lineHeight: 1.15,
               display: "flex",
               letterSpacing: -3,
             },

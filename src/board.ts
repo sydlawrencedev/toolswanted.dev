@@ -4,9 +4,16 @@
  */
 
 import { esc, escAttr, layout, type PageMeta } from "./html";
-import { getClientBreakdown, getClusterBySlug, getSamples, getStats, listClusters } from "./db";
+import {
+  getClientBreakdown,
+  getClusterBySlug,
+  getSamples,
+  getSamplesForClusters,
+  getStats,
+  listClusters,
+} from "./db";
 import { titleFromNeed } from "./slug";
-import { CLIENTS, clientLabel, num, relativeTime, shortDate, type Cluster, type Env } from "./types";
+import { CLIENTS, clientLabel, num, relativeTime, shortDate, type Cluster, type Env, type Wish } from "./types";
 import { isoWeekId, weekStart } from "./types";
 
 export interface BoardOptions {
@@ -50,9 +57,18 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
   );
   const stats = await getStats(env.DB);
 
+  // One query for every sample, not one per cluster.
+  const samples = await getSamplesForClusters(
+    env.DB,
+    clusters.map((c) => c.id),
+    3
+  );
+
   const cards: string[] = [];
   for (const [i, cluster] of clusters.entries()) {
-    cards.push(await clusterCard(env, cluster, i + 1, breakdown.get(cluster.id) ?? []));
+    cards.push(
+      clusterCard(cluster, i + 1, breakdown.get(cluster.id) ?? [], samples.get(cluster.id) ?? [])
+    );
   }
 
   const content = `
@@ -106,13 +122,12 @@ ${liveTickerScript(env)}`;
   );
 }
 
-async function clusterCard(
-  env: Env,
+function clusterCard(
   cluster: Cluster,
   rank: number,
-  clients: Array<{ client: string; count: number }>
-): Promise<string> {
-  const samples = await getSamples(env.DB, cluster.id, 3);
+  clients: Array<{ client: string; count: number }>,
+  samples: Wish[]
+): string {
   const tags = clients
     .slice(0, 5)
     .map((c) => `<span class="tag">${esc(clientLabel(c.client))} ${c.count}</span>`)

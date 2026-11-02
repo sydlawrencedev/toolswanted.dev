@@ -11,7 +11,8 @@
     "seed": "node scripts/seed.ts",
     "og:sync": "node scripts/render-og.ts",
     "build": "npm run typecheck && npm run test",
-    "tune": "node scripts/tune-threshold.ts"
+    "tune": "node scripts/tune-threshold.ts",
+    "crawl": "node scripts/crawl-registry.ts"
   },
   "keywords": [],
   "author": "",

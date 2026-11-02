@@ -15,7 +15,7 @@ import type { Env } from "./types";
 import type { ServerRecord } from "./types";
 
 const REGISTRY_BASE = "https://registry.modelcontextprotocol.io/v0.1";
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 50;
 
 interface RegistryServer {
   server?: {

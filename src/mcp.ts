@@ -44,7 +44,12 @@ export interface McpIdentity extends Identity {
   client: string | null;
 }
 
-export function createServer(env: Env, identity: McpIdentity, ctx?: ExecutionContext): McpServer {
+export function createServer(
+  env: Env,
+  identity: McpIdentity,
+  ctx?: ExecutionContext,
+  origin?: string
+): McpServer {
   const server = new McpServer(
     { name: SERVER_NAME, version: SERVER_VERSION, title: "Tools Wanted" },
     { capabilities: { tools: {} }, instructions: INSTRUCTIONS }
@@ -87,12 +92,17 @@ export function createServer(env: Env, identity: McpIdentity, ctx?: ExecutionCon
     },
     async (args) => {
       try {
-        const outcome = await fileWish(env, identity, {
-          need: args.need,
-          context: args.context ?? null,
-          client: args.client ?? null,
-          model: args.model ?? null,
-        });
+        const outcome = await fileWish(
+          env,
+          identity,
+          {
+            need: args.need,
+            context: args.context ?? null,
+            client: args.client ?? null,
+            model: args.model ?? null,
+          },
+          { origin: origin ?? env.SITE_URL }
+        );
         ctx?.waitUntil(
           genericiseWish(env, outcome.wishId, outcome.clusterId, outcome.need, args.context ?? null).catch(
             () => undefined
@@ -153,12 +163,12 @@ export function createServer(env: Env, identity: McpIdentity, ctx?: ExecutionCon
               : claim?.building
                 ? ` — being built by @${claim.login}`
                 : "") +
-            ` — ${env.SITE_URL}/w/${cluster.slug}`
+            ` — ${(origin ?? env.SITE_URL)}/w/${cluster.slug}`
         );
         structured.push({
           title: cluster.title,
           slug: cluster.slug,
-          url: `${env.SITE_URL}/w/${cluster.slug}`,
+          url: `${origin ?? env.SITE_URL}/w/${cluster.slug}`,
           agents: cluster.unique_agents,
           wishes: cluster.count,
           match: score,
@@ -202,13 +212,13 @@ export function createServer(env: Env, identity: McpIdentity, ctx?: ExecutionCon
         lines.push(
           `${i + 1}. ${cluster.title} — ${cluster.unique_agents} agent${cluster.unique_agents === 1 ? "" : "s"}` +
             (clients.length ? ` (${describeClients(clients)})` : "") +
-            ` — ${env.SITE_URL}/w/${cluster.slug}`
+            ` — ${(origin ?? env.SITE_URL)}/w/${cluster.slug}`
         );
         structured.push({
           rank: i + 1,
           title: cluster.title,
           slug: cluster.slug,
-          url: `${env.SITE_URL}/w/${cluster.slug}`,
+          url: `${origin ?? env.SITE_URL}/w/${cluster.slug}`,
           agents: cluster.unique_agents,
           wishes: cluster.count,
           clients,
@@ -301,7 +311,7 @@ export async function handleMcpRequest(
   identity: McpIdentity,
   ctx?: ExecutionContext
 ): Promise<Response> {
-  const server = createServer(env, identity, ctx);
+  const server = createServer(env, identity, ctx, new URL(request.url).origin);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,

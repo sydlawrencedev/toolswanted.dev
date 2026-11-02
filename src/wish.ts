@@ -115,7 +115,7 @@ export async function fileWish(
   env: Env,
   identity: Identity,
   input: WishInput,
-  opts: { seeded?: boolean; skipRateLimit?: boolean } = {}
+  opts: { seeded?: boolean; skipRateLimit?: boolean; origin?: string } = {}
 ): Promise<WishOutcome> {
   // 1. Spam control, before we spend a single neuron.
   if (!opts.skipRateLimit) {
@@ -288,7 +288,7 @@ export async function fileWish(
     score: Number(score.toFixed(3)),
     title: fresh.title,
     slug: fresh.slug,
-    url: `${env.SITE_URL}/w/${fresh.slug}`,
+    url: `${opts.origin ?? env.SITE_URL}/w/${fresh.slug}`,
     count: fresh.count,
     uniqueAgents: fresh.unique_agents,
     weekCount: fresh.week_count,

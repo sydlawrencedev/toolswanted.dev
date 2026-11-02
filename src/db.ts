@@ -151,6 +151,41 @@ export async function getSamples(db: D1Database, clusterId: string, limit = 4): 
   return results ?? [];
 }
 
+/**
+ * Sample wishes for many clusters in one query. The board needs three
+ * samples for each of up to sixty clusters; one query per cluster would be
+ * sixty round trips and blow the CPU budget.
+ */
+export async function getSamplesForClusters(
+  db: D1Database,
+  clusterIds: string[],
+  perCluster = 3
+): Promise<Map<string, Wish[]>> {
+  const out = new Map<string, Wish[]>();
+  if (clusterIds.length === 0) return out;
+  for (let i = 0; i < clusterIds.length; i += 40) {
+    const chunk = clusterIds.slice(i, i + 40);
+    const placeholders = chunk.map(() => "?").join(",");
+    const { results } = await db
+      .prepare(
+        `SELECT id, cluster_id, need, need_generic, context, client, model, source_key, ip_key,
+                seeded, flagged, flag_reason, created_at
+         FROM wishes WHERE cluster_id IN (${placeholders})
+         ORDER BY created_at DESC`
+      )
+      .bind(...chunk)
+      .all<Wish>();
+    for (const wish of results ?? []) {
+      const list = out.get(wish.cluster_id) ?? [];
+      if (list.length < perCluster) {
+        list.push(wish);
+        out.set(wish.cluster_id, list);
+      }
+    }
+  }
+  return out;
+}
+
 /** Client breakdown for a set of clusters. */
 export async function getClientBreakdown(
   db: D1Database,

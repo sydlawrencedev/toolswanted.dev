@@ -298,7 +298,7 @@ async function handleSeed(env: Env, request: Request, ctx?: ExecutionContext): P
 async function handleCrawl(env: Env, request: Request): Promise<Response> {
   const { crawlRegistry } = await import("./registry");
   try {
-    const result = await crawlRegistry(env, 25);
+    const result = await crawlRegistry(env, 50);
     return new Response(JSON.stringify({ ok: true, ...result }), {
       headers: { "content-type": "application/json" },
     });
