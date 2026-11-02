@@ -179,7 +179,7 @@ export async function fileWish(
       url: meta.url ?? `https://registry.modelcontextprotocol.io/v0.1/servers?search=${encodeURIComponent(name)}`,
       score: Number(m.score.toFixed(3)),
     });
-    if (servers.length >= 3) break;
+    if (servers.length >= 4) break;
   }
 
   // 5. Cluster matching. Two sources, because Vectorize is eventually

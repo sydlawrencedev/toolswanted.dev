@@ -15,7 +15,7 @@ SITE_NAME = "Tools Wanted"
 # Tuned with scripts/tune-threshold.ts against a labelled pair set.
 MATCH_THRESHOLD = "0.723"
 # Cosine similarity above which an existing MCP server is offered as an alternative.
-SERVER_MATCH_THRESHOLD = "0.62"
+SERVER_MATCH_THRESHOLD = "0.57"
 # A cluster stays in the review queue until it has this many wishes...
 AUTO_PUBLISH_WISHES = "3"
 # ...or an admin approves it.
