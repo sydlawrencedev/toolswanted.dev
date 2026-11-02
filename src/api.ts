@@ -217,6 +217,7 @@ async function getClusterApi(env: Env, slug: string): Promise<Response> {
   const breakdown = await getClientBreakdown(env.DB, [cluster.id]);
   return json({
     ok: true,
+    id: cluster.id,
     title: cluster.title,
     slug: cluster.slug,
     url: `${env.SITE_URL}/w/${cluster.slug}`,

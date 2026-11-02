@@ -21,7 +21,7 @@ import { CSS, esc, escAttr, layout } from "./html";
 import { handleApi } from "./api";
 import { handleMcpRequest } from "./mcp";
 import { identify } from "./identity";
-import { handleAdmin } from "./admin";
+import { handleAdmin, purgeClusterCache, readForm } from "./admin";
 import { crawlRegistry } from "./registry";
 import { fileWish } from "./wish";
 import * as db from "./db";
@@ -461,10 +461,10 @@ async function finishGitHub(env: Env, request: Request, url: URL): Promise<Respo
 }
 
 async function handleClaim(env: Env, request: Request): Promise<Response> {
-  const form = await request.formData();
-  const slug = String(form.get("slug") ?? "").trim();
-  const repo = String(form.get("repo") ?? "").trim();
-  const note = String(form.get("note") ?? "").trim().slice(0, 200);
+  const form = await readForm(request);
+  const slug = String(form?.get("slug") ?? "").trim();
+  const repo = String(form?.get("repo") ?? "").trim();
+  const note = String(form?.get("note") ?? "").trim().slice(0, 200);
 
   if (!slug || !repo) return new Response("slug and repo are required", { status: 400 });
   if (!/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+/.test(repo)) {
@@ -496,6 +496,7 @@ async function handleClaim(env: Env, request: Request): Promise<Response> {
     note: note || null,
     shipped: false,
   });
+  await purgeClusterCache(env, cluster.id, new URL(request.url).origin);
   return new Response(null, { status: 302, headers: { location: `/w/${cluster.slug}` } });
 }
 

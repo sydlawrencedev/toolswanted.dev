@@ -174,11 +174,42 @@ export async function handleAdmin(
   );
 }
 
+/**
+ * Read a submitted form, whatever the content type says. A claim that
+ * silently does nothing because of a missing header is worse than an error.
+ */
+export async function readForm(
+  request: Request
+): Promise<{ get(name: string): string | null } | null> {
+  try {
+    const form = await request.formData();
+    return {
+      get: (name: string) => {
+        const value = form.get(name);
+        return typeof value === "string" ? value : null;
+      },
+    };
+  } catch {
+    try {
+      const text = await request.text();
+      if (!text.trim()) return null;
+      if (text.trim().startsWith("{")) {
+        const json = JSON.parse(text) as Record<string, string>;
+        return { get: (name: string) => json[name] ?? null };
+      }
+      const params = new URLSearchParams(text);
+      return { get: (name: string) => params.get(name) };
+    } catch {
+      return null;
+    }
+  }
+}
+
 async function handleClusterAction(env: Env, request: Request, path: string): Promise<Response> {
   const parts = path.split("/");
   const id = parts[3]!;
   const action = parts[4]!;
-  const form = await request.formData().catch(() => null);
+  const form = await readForm(request);
 
   switch (action) {
     case "publish":
@@ -207,7 +238,31 @@ async function handleClusterAction(env: Env, request: Request, path: string): Pr
       return new Response("Unknown action", { status: 400 });
   }
 
+  // The cluster page is cached at the edge: drop it so the change is visible.
+  await purgeClusterCache(env, id, new URL(request.url).origin);
+
   return new Response(null, { status: 302, headers: { location: "/admin" } });
+}
+
+/** Drop the cached page for a cluster, so a claim shows up immediately. */
+export async function purgeClusterCache(
+  env: Env,
+  clusterId: string,
+  origin?: string
+): Promise<void> {
+  try {
+    const { getClusterById } = await import("./db");
+    const cluster = await getClusterById(env.DB, clusterId);
+    if (!cluster) return;
+    const origins = new Set<string>();
+    if (origin) origins.add(new URL(origin).origin);
+    origins.add(new URL(env.SITE_URL).origin);
+    for (const o of origins) {
+      await caches.default.delete(new Request(`${o}/w/${cluster.slug}`));
+    }
+  } catch {
+    /* a stale cache is not worth failing over */
+  }
 }
 
 /** Mark a cluster as shipped from the admin panel without a GitHub claim. */
