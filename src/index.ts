@@ -325,13 +325,14 @@ async function route(
  * ------------------------------------------------------------------ */
 
 async function renderOg(env: Env, name: string): Promise<Response> {
-  const key = name.endsWith(".png") ? `og:${name.slice(0, -4)}` : `og:${name}`;
-  let object = await env.KV.get(key, "arrayBuffer");
+  const slug = name.endsWith(".png") ? name.slice(0, -4) : name;
+  let object = await db.getOgImage(env.DB, slug);
   let isDefault = false;
   if (!object) {
-    object = await env.KV.get("og:default", "arrayBuffer");
+    object = await db.getOgImage(env.DB, "default");
     isDefault = true;
   }
+
   if (!object) {
     return new Response("OG image not rendered yet. Run: npm run og:sync", {
       status: 404,

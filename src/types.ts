@@ -76,6 +76,8 @@ export interface ServerRecord {
   remotes: string | null;
   packages: string | null;
   updated_at: string;
+  /** True when this is the server's latest published version. */
+  isLatest?: boolean;
 }
 
 /** Known agent clients, used for the client breakdown and the "by client" filter. */

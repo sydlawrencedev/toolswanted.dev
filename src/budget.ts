@@ -14,16 +14,33 @@ const RESERVE_FOR_PRODUCT = 8_500;
 
 export async function spendNeurons(env: Env, estimate: number): Promise<boolean> {
   const today = new Date().toISOString().slice(0, 10);
-  const key = `neurons:${today}`;
-  const current = Number((await env.KV.get(key)) ?? "0");
-  if (current + estimate > DAILY_LIMIT) return false;
-  await env.KV.put(key, String(current + estimate));
-  return true;
+  try {
+    const row = await env.DB.prepare(
+      `INSERT INTO neuron_budget (day, used) VALUES (?, ?)
+       ON CONFLICT(day) DO UPDATE SET used = used + excluded.used
+       RETURNING used`
+    )
+      .bind(today, estimate)
+      .first<{ used: number }>();
+    const used = row?.used ?? estimate;
+    return used <= DAILY_LIMIT;
+  } catch {
+    // If the counter is broken, let the call through: the platform enforces
+    // the real limit anyway, and a broken counter should not stop the board.
+    return true;
+  }
 }
 
 export async function neuronsUsed(env: Env): Promise<number> {
   const today = new Date().toISOString().slice(0, 10);
-  return Number((await env.KV.get(`neurons:${today}`)) ?? "0");
+  try {
+    const row = await env.DB.prepare(`SELECT used FROM neuron_budget WHERE day = ?`)
+      .bind(today)
+      .first<{ used: number }>();
+    return row?.used ?? 0;
+  } catch {
+    return 0;
+  }
 }
 
 /**

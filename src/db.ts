@@ -544,18 +544,31 @@ export async function getClaim(db: D1Database, clusterId: string): Promise<Claim
  * Registry mirror
  * ------------------------------------------------------------------ */
 
-export async function upsertServers(db: D1Database, servers: ServerRecord[]): Promise<void> {
+export async function upsertServers(
+  db: D1Database,
+  servers: Array<ServerRecord & { isLatest?: boolean }>
+): Promise<void> {
   if (servers.length === 0) return;
   const statements = servers.map((s) =>
     db
       .prepare(
-        `INSERT INTO servers (name, title, description, remotes, packages, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?)
+        `INSERT INTO servers (name, title, description, remotes, packages, updated_at, is_latest)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(name) DO UPDATE SET title = excluded.title,
            description = excluded.description, remotes = excluded.remotes,
-           packages = excluded.packages, updated_at = excluded.updated_at`
+           packages = excluded.packages, updated_at = excluded.updated_at,
+           is_latest = excluded.is_latest
+         WHERE excluded.is_latest = 1 OR servers.is_latest = 0`
       )
-      .bind(s.name, s.title, s.description, s.remotes, s.packages, s.updated_at)
+      .bind(
+        s.name,
+        s.title,
+        s.description,
+        s.remotes,
+        s.packages,
+        s.updated_at,
+        s.isLatest ? 1 : 0
+      )
   );
   // Chunk to stay inside D1 batch limits.
   for (let i = 0; i < statements.length; i += 50) {
@@ -563,11 +576,61 @@ export async function upsertServers(db: D1Database, servers: ServerRecord[]): Pr
   }
 }
 
+/** Which of these names are already in the mirror. One query, not one per name. */
+export async function getExistingServerNames(
+  db: D1Database,
+  names: string[]
+): Promise<Set<string>> {
+  const found = new Set<string>();
+  for (let i = 0; i < names.length; i += 40) {
+    const chunk = names.slice(i, i + 40);
+    const placeholders = chunk.map(() => "?").join(",");
+    const { results } = await db
+      .prepare(`SELECT name FROM servers WHERE name IN (${placeholders})`)
+      .bind(...chunk)
+      .all<{ name: string }>();
+    for (const row of results ?? []) found.add(row.name);
+  }
+  return found;
+}
+
 export async function getServer(db: D1Database, name: string): Promise<ServerRecord | null> {
   return db
     .prepare(`SELECT name, title, description, remotes, packages, updated_at FROM servers WHERE name = ?`)
     .bind(name)
     .first<ServerRecord>();
+}
+
+/* ------------------------------------------------------------------ *
+ * OG images
+ * ------------------------------------------------------------------ */
+
+export async function putOgImage(
+  db: D1Database,
+  slug: string,
+  bytes: ArrayBuffer
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO og_images (slug, bytes, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT(slug) DO UPDATE SET bytes = excluded.bytes, updated_at = excluded.updated_at`
+    )
+    .bind(slug, bytes, new Date().toISOString())
+    .run();
+}
+
+export async function getOgImage(
+  db: D1Database,
+  slug: string
+): Promise<Uint8Array | null> {
+  const row = await db
+    .prepare(`SELECT bytes FROM og_images WHERE slug = ?`)
+    .bind(slug)
+    .first<{ bytes: Uint8Array }>();
+  if (!row?.bytes) return null;
+  // D1 hands the blob back as an array-like that Response() will not accept
+  // as a body, so make it a real byte array.
+  return row.bytes instanceof Uint8Array ? row.bytes : new Uint8Array(row.bytes as any);
 }
 
 /* ------------------------------------------------------------------ *

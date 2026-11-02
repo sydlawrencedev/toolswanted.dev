@@ -101,7 +101,6 @@ export async function handleAdmin(
   if (path === "/admin/weekly-snapshot" && request.method === "POST") {
     return handleWeeklySnapshot(env);
   }
-
   // Dashboard.
   const [pending, flagged, stats] = await Promise.all([
     listPendingClusters(env.DB, 50),
@@ -282,12 +281,11 @@ async function handleOgUpload(env: Env, request: Request): Promise<Response> {
     return new Response(JSON.stringify({ error: "no images" }), { status: 400 });
   }
   let stored = 0;
+  const { putOgImage } = await import("./db");
   for (const image of body.images) {
     if (!image.slug || !image.png) continue;
     const bytes = Uint8Array.from(atob(image.png), (c) => c.charCodeAt(0));
-    await env.KV.put(`og:${image.slug}`, bytes, {
-      expirationTtl: 60 * 60 * 24 * 365,
-    });
+    await putOgImage(env.DB, image.slug, bytes.buffer as ArrayBuffer);
     stored++;
   }
   return new Response(JSON.stringify({ ok: true, stored }), {
@@ -392,10 +390,12 @@ async function handleEmbed(env: Env, request: Request): Promise<Response> {
 
 /** Clear wishes and clusters. For development only. */
 async function handleReset(env: Env, request: Request): Promise<Response> {
+  // Order matters: claims reference clusters.
   await env.DB.batch([
     env.DB.prepare(`DELETE FROM votes`),
     env.DB.prepare(`DELETE FROM wishes`),
     env.DB.prepare(`DELETE FROM cluster_clients`),
+    env.DB.prepare(`DELETE FROM claims`),
     env.DB.prepare(`DELETE FROM clusters`),
     env.DB.prepare(`DELETE FROM rate_limits`),
   ]);
@@ -405,7 +405,8 @@ async function handleReset(env: Env, request: Request): Promise<Response> {
       deleteById?: (ids: Array<{ id: string; namespace: string }>) => Promise<unknown>;
     };
     if (typeof vectorize.deleteById === "function") {
-      const listed = await env.VECTORS.query(new Array(768).fill(0), {
+      const { CLUSTER_DIMS } = await import("./embed");
+      const listed = await env.VECTORS.query(new Array(CLUSTER_DIMS).fill(0), {
         topK: 100,
         namespace: "clusters",
       });
@@ -464,7 +465,8 @@ async function handleVectorDebug(env: Env, request: Request): Promise<Response> 
 
   // Also probe the default namespace to see if vectors ended up in the wrong
   // place.
-  const probe = new Array(1024).fill(0);
+  const { CLUSTER_DIMS } = await import("./embed");
+  const probe = new Array(CLUSTER_DIMS).fill(0);
   const raw = await env.VECTORS.query(probe, { topK: 100 });
 
   const dbClusters = await env.DB.prepare(

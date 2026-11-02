@@ -8,7 +8,7 @@
  */
 
 import { embedBatch, upsertServerVectors, SERVER_MODEL } from "./embed";
-import { upsertServers } from "./db";
+import { upsertServers, getExistingServerNames } from "./db";
 import { backgroundBudget } from "./budget";
 import { getMeta, setMeta } from "./db";
 import type { Env } from "./types";
@@ -25,6 +25,12 @@ interface RegistryServer {
     version?: string;
     remotes?: Array<{ type?: string; url?: string }>;
     packages?: Array<{ registry_type?: string; identifier?: string; version?: string }>;
+  };
+  _meta?: {
+    "io.modelcontextprotocol.registry/official"?: {
+      isLatest?: boolean;
+      version?: string;
+    };
   };
 }
 
@@ -55,7 +61,11 @@ export async function fetchRegistryPage(
   };
 }
 
-function toRecord(entry: RegistryServer): ServerRecord | null {
+function isLatest(entry: RegistryServer): boolean {
+  return entry._meta?.["io.modelcontextprotocol.registry/official"]?.isLatest === true;
+}
+
+function toRecord(entry: RegistryServer, latest: boolean): ServerRecord | null {
   const server = entry.server;
   if (!server?.name) return null;
   const remote =
@@ -74,6 +84,7 @@ function toRecord(entry: RegistryServer): ServerRecord | null {
     remotes: JSON.stringify({ remote, pkg: pkgUrl, version: server.version ?? null }),
     packages: server.packages ? JSON.stringify(server.packages) : null,
     updated_at: new Date().toISOString(),
+    isLatest: latest,
   };
 }
 
@@ -82,15 +93,50 @@ function toRecord(entry: RegistryServer): ServerRecord | null {
  * Returns how far it got.
  */
 export async function crawlRegistry(env: Env, max = PAGE_SIZE): Promise<CrawlResult> {
-  const cursor = await getMeta(env.DB, "registry_cursor");
-  const { servers, nextCursor } = await fetchRegistryPage(cursor, PAGE_SIZE);
+  let cursor = await getMeta(env.DB, "registry_cursor");
+  let nextCursor: string | null = null;
+
+  // One server can have hundreds of published versions, and the registry
+  // pages over them one by one. Walk pages until we have something worth
+  // storing, or until we have looked at enough.
+  let servers: RegistryServer[] = [];
+  for (let page = 0; page < 6; page++) {
+    const result = await fetchRegistryPage(cursor, PAGE_SIZE);
+    servers = result.servers;
+    nextCursor = result.nextCursor;
+    if (servers.length === 0) break;
+    const distinct = new Set(servers.map((e) => e.server?.name).filter(Boolean));
+    if (distinct.size > 1) break;
+    // Every entry on this page is another version of the same server.
+    cursor = nextCursor;
+    if (!nextCursor) break;
+  }
+
+  // The registry lists every published version of a server. Keep the latest
+  // one, and only fall back to an older version for servers that have not
+  // published a new one.
+  const latest = new Map<string, ServerRecord>();
+  const older = new Map<string, ServerRecord>();
+  for (const entry of servers) {
+    const isTheLatest = isLatest(entry);
+    const record = toRecord(entry, isTheLatest);
+    if (!record) continue;
+    if (isTheLatest) latest.set(record.name, record);
+    else if (!older.has(record.name)) older.set(record.name, record);
+  }
+
+  const existing = await getExistingServerNames(
+    env.DB,
+    [...latest.keys(), ...older.keys()]
+  );
 
   const records: ServerRecord[] = [];
-  for (const entry of servers) {
-    const record = toRecord(entry);
-    if (record) records.push(record);
+  for (const [name, record] of latest) records.push(record);
+  for (const [name, record] of older) {
+    if (!existing.has(name)) records.push(record);
   }
   if (records.length === 0) {
+    if (nextCursor) await setMeta(env.DB, "registry_cursor", nextCursor);
     return { fetched: 0, stored: 0, nextCursor, exhausted: !nextCursor };
   }
 
