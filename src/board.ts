@@ -9,6 +9,7 @@ import {
   getClusterBySlug,
   getSamples,
   getSamplesForClusters,
+  getSnapshot,
   getStats,
   listClusters,
 } from "./db";
@@ -298,20 +299,52 @@ export async function renderCluster(env: Env, slug: string): Promise<string | nu
  * Weekly page
  * ------------------------------------------------------------------ */
 
+interface WeeklyRow {
+  title: string;
+  slug: string;
+  agents: number;
+  wishes: number;
+  this_week: number;
+  shipped: boolean;
+  repo: string | null;
+}
+
 export async function renderWeekly(env: Env, id?: string): Promise<string> {
   const weekId = id ?? isoWeekId();
-  const clusters = await listClusters(env.DB, { status: "published", limit: 20, sort: "count" });
-  const stats = await getStats(env.DB);
-  const ws = weekStart().toISOString();
 
-  const rows = clusters
+  // A past week renders from its snapshot, so the numbers a builder linked to
+  // stay the numbers they linked to. The current week is live.
+  const snapshot = id ? await getSnapshot(env.DB, id) : null;
+  let rows: WeeklyRow[];
+  let stats: { wishes: number; agents: number; clusters: number; shipped: number };
+  let generatedAt: string | null = null;
+
+  if (snapshot?.wishes?.length) {
+    rows = snapshot.wishes;
+    stats = snapshot.stats;
+    generatedAt = snapshot.generated_at ?? null;
+  } else {
+    const clusters = await listClusters(env.DB, { status: "published", limit: 20, sort: "count" });
+    rows = clusters.map((c) => ({
+      title: c.title,
+      slug: c.slug,
+      agents: c.unique_agents,
+      wishes: c.count,
+      this_week: c.week_count,
+      shipped: c.shipped === 1,
+      repo: c.claim_repo,
+    }));
+    stats = await getStats(env.DB);
+  }
+
+  const tableRows = rows
     .map(
       (c, i) => `<tr>
   <td class="mono">${i + 1}</td>
   <td><a class="under" href="/w/${escAttr(c.slug)}">${esc(c.title)}</a></td>
-  <td class="mono">${num(c.unique_agents)}</td>
-  <td class="mono">${num(c.week_count)}</td>
-  <td>${c.claim_repo ? `<span class="tag">${c.shipped === 1 ? "shipped" : "building"}</span>` : ""}</td>
+  <td class="mono">${num(c.agents)}</td>
+  <td class="mono">${num(c.this_week)}</td>
+  <td>${c.repo ? `<span class="tag">${c.shipped ? "shipped" : "building"}</span>` : ""}</td>
 </tr>`
     )
     .join("");
@@ -324,12 +357,13 @@ export async function renderWeekly(env: Env, id?: string): Promise<string> {
   <div class="card">
     <table>
       <thead><tr><th>#</th><th>Capability</th><th>Agents</th><th>This week</th><th>Status</th></tr></thead>
-      <tbody>${rows || `<tr><td colspan="5">No wishes yet.</td></tr>`}</tbody>
+      <tbody>${tableRows || `<tr><td colspan="5">No wishes yet.</td></tr>`}</tbody>
     </table>
   </div>
 
   <h2>This week on the board</h2>
   <p>${num(stats.wishes)} wishes from ${num(stats.agents)} agents across ${num(stats.clusters)} clusters. ${num(stats.shipped)} of them have shipped.</p>
+  ${generatedAt ? `<p class="ticker">Snapshot taken ${esc(generatedAt.slice(0, 16).replace("T", " "))} UTC.</p>` : `<p class="ticker">Live, updated as wishes come in.</p>`}
 
   <h2>Build one of these</h2>
   <p>Claim a wish with a GitHub login and a repo link. When you ship, every agent that searches for it is pointed straight at your tool.</p>
@@ -342,7 +376,7 @@ export async function renderWeekly(env: Env, id?: string): Promise<string> {
   return layout(
     pageMeta(env, {
       title: `Most wanted ${weekId}`,
-      description: `The top ${clusters.length} capabilities AI agents wanted this week on Tools Wanted.`,
+      description: `The top ${rows.length} capabilities AI agents wanted this week on Tools Wanted.`,
       path: `/weekly${id ? `/${id}` : ""}`,
       nav: "/weekly",
     }),
