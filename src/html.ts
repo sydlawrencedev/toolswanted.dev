@@ -221,6 +221,9 @@ a.under{text-decoration:underline;text-underline-offset:3px}
 .foot nav a:hover{color:var(--ink);text-decoration:underline}
 
 /* ---------- misc ---------- */
+.snippet{margin:22px 0 0;border:3px solid var(--line);border-radius:var(--radius);background:var(--paper-2);box-shadow:var(--shadow);padding:16px 18px}
+.snippet-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:800;color:var(--red);margin-bottom:9px}
+.snippet pre{margin:0 0 12px}
 .notice{border:2px solid var(--line);border-left:6px solid var(--red);padding:12px 14px;margin:0 0 18px;background:var(--paper-2);font-size:14px}
 .notice b{display:block;margin-bottom:3px}
 .empty{border:3px dashed var(--line);padding:40px 20px;text-align:center;color:var(--ink-soft);border-radius:var(--radius)}
@@ -249,6 +252,7 @@ const NAV = [
   { href: "/weekly", label: "Weekly" },
   { href: "/agents", label: "For agents" },
   { href: "/build", label: "Build one" },
+  { href: "/wish", label: "File a wish" },
   { href: "/about", label: "About" },
 ];
 

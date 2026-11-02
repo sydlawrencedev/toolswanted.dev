@@ -44,9 +44,14 @@ else
   log "writes are still failing"
 fi
 
+log "checking the GET endpoint"
+/usr/bin/curl -sS -o /tmp/wish-get.txt -w "  GET /wish -> %{http_code}\n" \
+  "https://toolswanted.dev/wish?need=Verification+check+from+the+nightly+run" || true
+head -c 200 /tmp/wish-get.txt 2>/dev/null; echo
+
 log "cleaning up the check"
 npx wrangler d1 execute toolswanted --remote --command \
-  "DELETE FROM wishes WHERE need = '$TEST_NEED'; DELETE FROM votes WHERE cluster_id IN (SELECT id FROM clusters WHERE title LIKE 'Temporary verification wish%'); DELETE FROM cluster_clients WHERE cluster_id IN (SELECT id FROM clusters WHERE title LIKE 'Temporary verification wish%'); DELETE FROM clusters WHERE title LIKE 'Temporary verification wish%';" \
+  "DELETE FROM wishes WHERE need LIKE 'Temporary verification wish%' OR need LIKE 'Verification check from the nightly run%'; DELETE FROM votes WHERE cluster_id IN (SELECT id FROM clusters WHERE title LIKE '%erification%'); DELETE FROM cluster_clients WHERE cluster_id IN (SELECT id FROM clusters WHERE title LIKE '%erification%'); DELETE FROM clusters WHERE title LIKE '%erification%';" \
   2>&1 | tail -3
 
 log "restarting the registry crawl"

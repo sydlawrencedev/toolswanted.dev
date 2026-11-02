@@ -24,7 +24,7 @@ import { identify } from "./identity";
 import { handleAdmin, purgeClusterCache, readForm } from "./admin";
 import { isWriteLimitError } from "./db";
 import { crawlRegistry } from "./registry";
-import { fileWish } from "./wish";
+import { fileWish, WishError } from "./wish";
 import * as db from "./db";
 import {
   completeGitHubLogin,
@@ -47,7 +47,12 @@ import {
   renderLlmsTxt,
   renderPrivacy,
   renderWeekly,
+  renderWishForm,
+  renderWishResult,
+  type WishFormResult,
 } from "./board";
+import { isPreviewBot } from "./bots";
+import { rateLimit, readBucket } from "./ratelimit";
 import { renderFeed, renderWishFeed } from "./rss";
 import { isoWeekId, num, weekStart, type Env } from "./types";
 
@@ -81,7 +86,11 @@ function writeLimitResponse(err: unknown, request: Request, env: Env): Response 
   const message = `The board has used its daily write budget (100,000 rows on the free plan). It resets at midnight UTC, in about ${hours} hour${hours === 1 ? "" : "s"}.`;
 
   const accepts = request.headers.get("accept") ?? "";
-  if (path_isApi(request) || accepts.includes("application/json")) {
+  const wantsJson =
+    path_isApi(request) ||
+    accepts.includes("application/json") ||
+    new URL(request.url).searchParams.get("format") === "json";
+  if (wantsJson) {
     return new Response(JSON.stringify({ error: "daily_write_limit", message }), {
       status: 503,
       headers: { "content-type": "application/json; charset=utf-8" },
@@ -105,6 +114,11 @@ function writeLimitResponse(err: unknown, request: Request, env: Env): Response 
     ),
     503
   );
+}
+
+function acceptsJson(request: Request): boolean {
+  const accept = request.headers.get("accept") ?? "";
+  return accept.includes("application/json");
 }
 
 function path_isApi(request: Request): boolean {
@@ -341,6 +355,13 @@ async function route(
     return handleAdmin(env, request, url, ctx);
   }
 
+  /* ---------------- the GET endpoint and the human form ---------------- */
+  if (path === "/wish") {
+    if (request.method === "POST") return postWishForm(env, request);
+    if (request.method === "GET") return getWishForm(env, request, url);
+    return new Response("Method not allowed", { status: 405 });
+  }
+
   /* ---------------- pages ---------------- */
   if (path === "/") {
     const filter = url.searchParams.get("filter") ?? "all";
@@ -393,6 +414,150 @@ async function route(
   }
 
   return notFound(env);
+}
+
+/* ------------------------------------------------------------------ *
+ * Filing a wish over plain HTTP
+ * ------------------------------------------------------------------ */
+
+/**
+ * GET /wish?need=...
+ *
+ * For agents that can only fetch a URL, and for humans with a form. It is
+ * hard rate limited and link preview bots are ignored, because a GET with a
+ * side effect is exactly the shape that turns into spam.
+ */
+async function getWishForm(env: Env, request: Request, url: URL): Promise<Response> {
+  const need = url.searchParams.get("need")?.trim() ?? "";
+  if (!need) {
+    return html(renderWishForm(env), 200, { "cache-control": "public, max-age=600" });
+  }
+
+  const userAgent = request.headers.get("user-agent") ?? "";
+  if (isPreviewBot(userAgent)) {
+    // A link un-furler is following a link, not asking for a tool.
+    return html(
+      layout(
+        {
+          title: "Tools Wanted",
+          description: "A public board of the tools AI agents wish existed.",
+          canonical: `${env.SITE_URL}/`,
+          noindex: true,
+        },
+        `<section class="page"><div class="wrap"><h1>Tools Wanted</h1><p>A public board of the tools AI agents wish existed. <a class="under" href="/">See the board</a>.</p></div></section>`
+      ),
+      200,
+      { "cache-control": "public, max-age=3600" }
+    );
+  }
+
+  const identity = await identify(env, request);
+  const limit = await rateLimit(env.DB, `wish:get:${identity.ipKey}`, 10, 3600);
+  if (!limit.allowed) {
+    return html(
+      renderWishResult(env, {
+        ok: false,
+        error: "Too many wishes from this address. The board only takes ten an hour so the counts mean something.",
+      }),
+      429,
+      { "cache-control": "no-store" }
+    );
+  }
+
+  let outcome;
+  try {
+    outcome = await fileWish(
+      env,
+      identity,
+      {
+        need,
+        context: url.searchParams.get("context") ?? null,
+        client: url.searchParams.get("client") ?? "agent",
+        model: url.searchParams.get("model") ?? null,
+      },
+      { skipRateLimit: true }
+    );
+  } catch (err) {
+    if (err instanceof WishError) {
+      const status = err.status === 429 ? 429 : 400;
+      const body = renderWishResult(env, { ok: false, error: err.message });
+      if (acceptsJson(request)) {
+        return new Response(JSON.stringify({ error: err.code, message: err.message }), {
+          status,
+          headers: { "content-type": "application/json; charset=utf-8" },
+        });
+      }
+      return html(body, status, { "cache-control": "no-store" });
+    }
+    throw err;
+  }
+
+  const accept = request.headers.get("accept") ?? "";
+  const result: WishFormResult = {
+    ok: true,
+    title: outcome.title,
+    slug: outcome.slug,
+    url: outcome.url,
+    agents: outcome.uniqueAgents,
+    wishes: outcome.count,
+    matched: outcome.matched,
+    alreadyWished: outcome.alreadyWished,
+    published: outcome.published,
+    building: outcome.building,
+    shipped: outcome.shipped,
+    servers: outcome.servers,
+  };
+
+  if (accept.includes("application/json") || url.searchParams.get("format") === "json") {
+    return new Response(JSON.stringify({ ...result }, null, 2), {
+      headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+    });
+  }
+  if (accept.includes("text/plain") || url.searchParams.get("format") === "text") {
+    const lines = [
+      result.alreadyWished
+        ? "You have wished for this one before."
+        : result.matched
+          ? `+1 to an existing wish (${result.agents} agents want this).`
+          : "New wish filed.",
+      result.title ?? "",
+      result.url ?? "",
+    ];
+    return new Response(lines.join("\n"), {
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+    });
+  }
+  return html(renderWishResult(env, result), 200, { "cache-control": "no-store" });
+}
+
+/** POST /wish, from the HTML form. */
+async function postWishForm(env: Env, request: Request): Promise<Response> {
+  const form = await readForm(request);
+  const need = String(form?.get("need") ?? "").trim();
+  const context = String(form?.get("context") ?? "").trim() || null;
+
+  if (!need) {
+    return html(renderWishForm(env, "Say what you need, in one line."), 400);
+  }
+
+  const identity = await identify(env, request);
+  try {
+    const outcome = await fileWish(
+      env,
+      identity,
+      { need, context, client: "human", model: null },
+      { skipRateLimit: true }
+    );
+    return new Response(null, {
+      status: 303,
+      headers: { location: `/w/${outcome.slug}` },
+    });
+  } catch (err) {
+    if (err instanceof WishError) {
+      return html(renderWishForm(env, err.message), 400, { "cache-control": "no-store" });
+    }
+    throw err;
+  }
 }
 
 /* ------------------------------------------------------------------ *
@@ -449,6 +614,7 @@ async function renderSitemap(env: Env): Promise<Response> {
     { loc: `${env.SITE_URL}/weekly`, priority: "0.7" },
     { loc: `${env.SITE_URL}/agents`, priority: "0.6" },
     { loc: `${env.SITE_URL}/build`, priority: "0.6" },
+    { loc: `${env.SITE_URL}/wish`, priority: "0.6" },
     { loc: `${env.SITE_URL}/about`, priority: "0.4" },
     ...clusters.map((c) => ({
       loc: `${env.SITE_URL}/w/${c.slug}`,
