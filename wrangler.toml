@@ -3,12 +3,8 @@ main = "src/index.ts"
 compatibility_date = "2026-11-01"
 compatibility_flags = ["nodejs_compat"]
 
-# The board is server-rendered HTML with a single static asset bundle.
-[assets]
-directory = "./public"
-binding = "ASSETS"
-run_worker_first = true
-
+# The board is server-rendered HTML. Static files (CSS, favicon) are served by
+# the Worker itself so there is exactly one deployment and one routing table.
 [observability]
 enabled = true
 
@@ -17,9 +13,9 @@ SITE_URL = "https://toolswanted.dev"
 SITE_NAME = "Tools Wanted"
 # Cosine similarity above which a new wish is folded into an existing cluster.
 # Tuned with scripts/tune-threshold.ts against a labelled pair set.
-MATCH_THRESHOLD = "0.815"
+MATCH_THRESHOLD = "0.723"
 # Cosine similarity above which an existing MCP server is offered as an alternative.
-SERVER_MATCH_THRESHOLD = "0.72"
+SERVER_MATCH_THRESHOLD = "0.62"
 # A cluster stays in the review queue until it has this many wishes...
 AUTO_PUBLISH_WISHES = "3"
 # ...or an admin approves it.
@@ -27,19 +23,31 @@ RATE_LIMIT_WISHES_PER_HOUR = "30"
 RATE_LIMIT_SEARCH_PER_MINUTE = "30"
 REGISTRY_CRON = "*/5 * * * *"
 
+# Workers AI: embeddings for clustering, and the model that rewrites a wish
+# into one generic line.
+[ai]
+binding = "AI"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "toolswanted"
-database_id = "REPLACE_WITH_D1_ID"
+database_id = "5c87faf7-018f-4df8-82b9-495594aa600b"
 migrations_dir = "migrations"
 
+# Clusters: bge-large, the core mechanic, best separation we measured.
 [[vectorize]]
 binding = "VECTORS"
-index_name = "toolswanted"
+index_name = "toolswanted-clusters"
+
+# The mirror of the official MCP registry: bge-small, cheap enough to index
+# tens of thousands of servers.
+[[vectorize]]
+binding = "SERVER_VECTORS"
+index_name = "toolswanted-servers"
 
 [[kv_namespaces]]
 binding = "KV"
-id = "REPLACE_WITH_KV_ID"
+id = "9b15a7743f604369b6a59d4a874804d7"
 
 [triggers]
 crons = ["*/5 * * * *", "0 8 * * 1"]
