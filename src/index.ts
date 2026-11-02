@@ -99,10 +99,14 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, "") || "/";
 
-    // One canonical host. www redirects to the apex so links, caches and
-    // search engines only ever see one version of the board.
+    // One canonical host. Pages on www redirect to the apex so links, caches
+    // and search engines only ever see one version of the board. The API and
+    // the MCP endpoint answer on both hosts, because a client that does not
+    // follow redirects should still work.
     const canonical = new URL(env.SITE_URL);
-    if (url.hostname === `www.${canonical.hostname}`) {
+    const isApi =
+      path === "/mcp" || path.startsWith("/api/") || path.startsWith("/admin") || path.startsWith("/auth");
+    if (!isApi && url.hostname === `www.${canonical.hostname}`) {
       const target = new URL(url.pathname + url.search, canonical.origin);
       return new Response(null, { status: 308, headers: { location: target.toString() } });
     }
