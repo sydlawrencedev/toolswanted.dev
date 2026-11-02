@@ -129,7 +129,11 @@ To talk to the server by hand:
 node scripts/mcp-client.mjs      # initialize, list tools, wish, search, top
 node scripts/transcript.mjs       # the raw JSON-RPC exchange
 node scripts/test-claim.mjs       # claim → build → ship, end to end
+./scripts/claude-transcript.sh   # a real Claude Code session, end to end
 ```
+
+`scripts/claude-transcript.sh` needs the Claude Code CLI to be logged in
+(`claude`, then `/login`).
 
 ## Deploying
 
