@@ -1,7 +1,7 @@
 {
   "version": 1,
   "kit_version": "1.0.0",
-  "generated_at": "2026-11-03T09:18:05.759Z",
+  "generated_at": "2026-11-03T11:24:05.245Z",
   "agents": [
     "ceo",
     "content-brand",
@@ -198,7 +198,7 @@
       ]
     },
     "agents/design-delight/AGENTS.md": {
-      "sha256": "24af559fada2a31a42860d20ab6281f33417324b986a243b1b439beac4dc23e0",
+      "sha256": "d6499cb8d03a37da9a07a7eea16b89870d6b11bf7e1a0b0b181ecfb7c2f97ef4",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/AGENTS.md"
@@ -212,7 +212,7 @@
       ]
     },
     "agents/design-delight/HEARTBEAT.md": {
-      "sha256": "9b40caef746c7cf659200a6590a69ff0d07e4acb3e658f1752d94d368931f770",
+      "sha256": "c3e07e30f34a8145a1579d99e27e0273ec07d058fcda79868aa7a2ac733632e6",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/HEARTBEAT.md"
@@ -269,7 +269,7 @@
       "sources": []
     },
     ".opencode/agents/design-delight.md": {
-      "sha256": "d60cd1668588b11941508263f90f9242885ee46659b209a2d9d5ca04f5f355e9",
+      "sha256": "a1cfaaa4b5e11ad9f3b3da918fa22479d42ee0236cddf4d1edea1a972d5c68db",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/AGENTS.md",
@@ -280,7 +280,7 @@
       ]
     },
     ".claude/agents/design-delight.md": {
-      "sha256": "5c543f42d5e4abef03af66abb243dcc0b33b23e5182acd98fbf7ecbde7e0d8f7",
+      "sha256": "12d5743532a6ef50f68ddfa0976886855ad60f540b65515ed363af635efe0d68",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/AGENTS.md",
@@ -591,7 +591,7 @@
       ]
     },
     "agents/_shared/SKILLS.md": {
-      "sha256": "d44b7115f550684c1bb15eb5ef8c0e10e143729716564d94eaaf8ad731a8281e",
+      "sha256": "2ad52768088ede810b20c395d1cb2c8cb0ee9687587a29f63ecd7bc991ed4f0f",
       "ownership": "managed",
       "sources": [
         "agents/_shared/SKILLS.md"

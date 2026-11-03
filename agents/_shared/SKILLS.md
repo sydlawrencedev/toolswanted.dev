@@ -46,6 +46,16 @@ and do not follow a recipe you have not read.
 | `adapt` | Responsive design across devices | Multi-screen adaptation |
 | `animate` | Motion and micro-interactions | Adding purposeful motion |
 | `critique` | UX evaluation | Design reviews |
+| `onboard` | Empty states and first-time experience | When somebody arrives for the first time |
+| `harden` | Error handling, edge cases, overflow | When a flow breaks at the edges |
+| `distill` | Stripping to the essence | Removing unnecessary complexity |
+
+The UX review has its own step, separate from the screen review. It walks the
+task somebody came to do, not the pixels of the screen they are looking at. It
+always includes the exit: can the person take the thing they came for out of
+the page and use it somewhere else. A page that shows a snippet, a URL, a
+command or a badge and gives no way to take it with one action has a UX
+defect, not a missing feature.
 
 ## Content and brand
 

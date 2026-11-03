@@ -35,18 +35,23 @@ export function jsonScript(value: unknown): string {
     .replace(/\u2029/g, "\\u2029");
 }
 
+import { COPY_SCRIPT } from "./copy";
+
 export const CSS = `
 :root{
   --paper:#f3eee1; --paper-2:#fffdf7; --ink:#151210; --ink-soft:#514a42;
   --red:#d32a1c; --red-ink:#b32016; --line:#151210; --chip:#e8e1d1;
-  --shadow:4px 4px 0 #151210;
-  --radius:4px;
+  --shadow:3px 3px 0 #151210;
+  --radius:2px;
   /* The height of the sticky top bar. The filter bar sticks below it, so
      the two have to agree. It used to be a hard-coded 58px in the filter
      rule while the bar was actually taller on a narrow screen, and the
      filter bar slid underneath it. */
   --topbar-h:60px;
-  --font-display:ui-sans-serif,system-ui,"Helvetica Neue",Arial,"Segoe UI",Roboto,sans-serif;
+  /* Archivo Black is a single weight, so there is no faux bold. The
+     fallback is Arial Black, which is a real display face on every
+     Windows and macOS machine, so the first frame is not a downgrade. */
+  --font-display:"Archivo Black","Arial Black",ui-sans-serif,system-ui,sans-serif;
   --font-body:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --font-mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
 }
@@ -54,16 +59,16 @@ export const CSS = `
   :root{
     --paper:#100e0d; --paper-2:#1a1715; --ink:#f3eee1; --ink-soft:#a89f93;
     --red:#ff5c4a; --red-ink:#ff7a6a; --line:#726859; --chip:#241f1c;
-    --shadow:4px 4px 0 #000;
+    --shadow:3px 3px 0 #000;
   }
 }
 html[data-theme="light"]{
   --paper:#f3eee1; --paper-2:#fffdf7; --ink:#151210; --ink-soft:#514a42;
-  --red:#d32a1c; --red-ink:#b32016; --line:#151210; --chip:#e8e1d1; --shadow:4px 4px 0 #151210;
+  --red:#d32a1c; --red-ink:#b32016; --line:#151210; --chip:#e8e1d1; --shadow:3px 3px 0 #151210;
 }
 html[data-theme="dark"]{
   --paper:#100e0d; --paper-2:#1a1715; --ink:#f3eee1; --ink-soft:#a89f93;
-  --red:#ff5c4a; --red-ink:#ff7a6a; --line:#726859; --chip:#241f1c; --shadow:4px 4px 0 #000;
+  --red:#ff5c4a; --red-ink:#ff7a6a; --line:#726859; --chip:#241f1c; --shadow:3px 3px 0 #000;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -83,13 +88,13 @@ a{color:inherit}
 }
 .top .wrap{display:flex;align-items:center;gap:16px;min-height:var(--topbar-h);flex-wrap:wrap}
 .logo{
-  font-family:var(--font-display); font-weight:900; letter-spacing:-.03em;
+  font-family:var(--font-display); font-weight:400; letter-spacing:-.03em;
   font-size:19px; text-transform:uppercase; text-decoration:none; white-space:nowrap;
 }
 .logo b{color:var(--red)}
 .top nav{margin-left:auto;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
 .top nav a{
-  text-decoration:none;font-weight:700;font-size:13px;text-transform:uppercase;
+  text-decoration:none;font-weight:700;font-size:12px;text-transform:uppercase;
   letter-spacing:.06em;padding:8px;border-radius:var(--radius);
 }
 .top nav a:hover{background:var(--chip)}
@@ -97,6 +102,7 @@ a{color:inherit}
 .tally{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);white-space:nowrap}
 @media (max-width:760px){
   :root{--topbar-h:84px}
+  .clientpick{margin-left:0}
   .tally{display:none}
   .top .wrap{min-height:0;padding-top:8px;padding-bottom:8px;row-gap:4px}
   .logo{order:1;font-size:17px}
@@ -111,21 +117,21 @@ a{color:inherit}
 /* ---------- hero ---------- */
 .hero{padding:40px 0 8px;border-bottom:3px solid var(--line)}
 .hero h1{
-  font-family:var(--font-display); font-weight:900; letter-spacing:-.035em;
-  font-size:clamp(38px,9vw,86px); line-height:.92; margin:0 0 16px; text-transform:uppercase;
+  font-family:var(--font-display); font-weight:400; letter-spacing:-.04em;
+  font-size:clamp(36px,7.2vw,72px); line-height:.94; margin:0 0 16px; text-transform:uppercase;
 }
 .hero h1 em{font-style:normal;color:var(--red)}
 .hero p{max-width:60ch;color:var(--ink-soft);margin:0 0 16px;font-size:17px}
-.hero .lede{font-size:19px;color:var(--ink)}
+.hero .lede{font-size:20px;color:var(--ink);letter-spacing:-.01em}
 .btn{
   display:inline-block;background:var(--ink);color:var(--paper);text-decoration:none;
-  font-weight:800;font-size:14px;padding:12px 16px;border-radius:var(--radius);
-  text-transform:uppercase;letter-spacing:.04em;border:2px solid var(--line);
+  font-weight:700;font-size:14px;padding:12px 16px;border-radius:var(--radius);
+  text-transform:none;letter-spacing:0;border:1px solid var(--line);
 }
 .btn:hover{background:var(--red);color:#fff;border-color:var(--red)}
 .btn.ghost{background:transparent;color:var(--ink)}
 .btn.ghost:hover{background:var(--ink);color:var(--paper)}
-.btn.sm{padding:8px 12px;font-size:12px}
+.btn.sm{padding:8px 12px;font-size:13px}
 
 /* ---------- filters ---------- */
 .filters{
@@ -134,51 +140,61 @@ a{color:inherit}
 }
 .filters .label{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);font-weight:800}
 .chip{
-  display:inline-block;padding:8px 12px;border:2px solid var(--line);border-radius:var(--radius);
-  text-decoration:none;font-weight:700;font-size:13px;background:var(--paper-2);
+  display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:99px;
+  text-decoration:none;font-weight:400;font-size:13px;background:var(--paper-2);
 }
 .chip:hover{background:var(--chip)}
 .chip[aria-current="true"],.chip.on{background:var(--ink);color:var(--paper)}
 .count-pill{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
+.chip .x{margin-left:6px;opacity:.7}
+/* One control instead of eight boxes. Eight client chips wrapped to two
+   rows and read as a table of contents for a filter. */
+.clientpick{margin-left:auto}
+.clientpick select{
+  font-family:inherit;font-size:13px;color:var(--ink);
+  padding:6px 8px;border:1px solid var(--line);border-radius:99px;
+  background:var(--paper-2);cursor:pointer;
+}
+.clientpick select:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 
 /* ---------- board ---------- */
 .board{padding:24px 0 60px}
 .cluster{
-  border:3px solid var(--line);background:var(--paper-2);border-radius:var(--radius);
+  border:2px solid var(--line);background:var(--paper-2);border-radius:var(--radius);
   margin:0 0 16px;box-shadow:var(--shadow);position:relative;overflow:hidden;
 }
 .cluster .topline{display:flex;align-items:flex-start;gap:16px;padding:16px 16px 4px}
 .rank{
-  font-family:var(--font-display);font-weight:900;font-size:13px;color:var(--paper);
-  background:var(--ink);width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;
-  border-radius:var(--radius);letter-spacing:-.02em;
+  font-family:var(--font-display);font-weight:400;font-size:13px;color:var(--paper);
+  background:var(--ink);width:28px;height:28px;flex:0 0 28px;display:grid;place-items:center;
+  border-radius:99px;letter-spacing:-.02em;
 }
 .cluster h2{
   font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;line-height:1.1;
-  margin:0;font-size:clamp(20px,3.4vw,28px);flex:1;min-width:0;
+  margin:0;font-size:clamp(18px,2.2vw,22px);font-weight:600;letter-spacing:-.012em;flex:1;min-width:0;color:var(--ink);
 }
 .cluster h2 a{text-decoration:none}
 .cluster h2 a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
 .tallybig{
-  font-family:var(--font-display);font-weight:900;font-size:clamp(32px,8vw,48px);
-  line-height:.85;letter-spacing:-.05em;font-variant-numeric:tabular-nums;text-align:right;
+  font-family:var(--font-display);font-weight:400;font-size:clamp(32px,8vw,48px);
+  line-height:.85;letter-spacing:-.04em;font-variant-numeric:tabular-nums;text-align:right;
   flex:0 0 auto;
 }
 .tallybig small{display:block;font-size:12px;letter-spacing:.12em;font-weight:800;color:var(--ink-soft);text-transform:uppercase;margin-top:8px}
 .meta{display:flex;flex-wrap:wrap;gap:4px 12px;padding:4px 16px 16px;font-size:13px;color:var(--ink-soft)}
 .meta b{color:var(--ink);font-variant-numeric:tabular-nums}
-.samples{border-top:2px solid var(--line);padding:12px 16px;background:var(--chip)}
-.samples p{margin:0 0 8px;font-size:14px;color:var(--ink-soft)}
-.samples p:last-child{margin-bottom:0}
+.meta .clients{color:var(--ink-soft)}
+.samples{border-top:1px solid var(--line);padding:12px 16px;background:var(--chip)}
+.samples p{margin:0;font-size:14px;color:var(--ink-soft)}
 .samples .q{color:var(--ink)}
 .tag{
-  display:inline-block;font-family:var(--font-mono);font-size:12px;padding:2px 8px;
-  border:1px solid var(--line);border-radius:99px;background:var(--paper-2);margin:0 4px 4px 0;
+  display:inline-block;font-size:12px;padding:2px 8px;
+  border:1px solid var(--line);border-radius:var(--radius);background:var(--paper-2);margin:0 4px 4px 0;
 }
 .stamp{
-  display:inline-block;border:2px solid var(--red);color:var(--red);font-weight:900;
-  font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:4px 8px;
-  transform:rotate(-3deg);border-radius:var(--radius);
+  display:inline-block;border:1px solid var(--red);color:var(--red);font-weight:700;
+  font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;
+  border-radius:var(--radius);
 }
 .stamp.shipped{background:var(--red);color:#fff}
 .builders{padding:0 16px 16px;font-size:13px}
@@ -191,13 +207,13 @@ a{color:inherit}
 }
 
 /* ---------- generic page ---------- */
-.page{padding:32px 0 72px;max-width:760px}
+.page{padding:32px 0 72px;max-width:760px;margin-left:auto;margin-right:auto}
 .page h1{
-  font-family:var(--font-display);font-weight:900;letter-spacing:-.03em;text-transform:uppercase;
-  font-size:clamp(32px,7vw,56px);line-height:.95;margin:0 0 8px;
+  font-family:var(--font-display);font-weight:400;letter-spacing:-.035em;text-transform:uppercase;
+  font-size:clamp(30px,5.2vw,44px);line-height:.98;margin:0 0 12px;
 }
-.page h2{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em;margin:32px 0 8px;text-transform:uppercase}
-.page h3{font-weight:800;font-size:20px;margin:24px 0 8px}
+.page h2{font-weight:700;font-size:20px;letter-spacing:-.01em;margin:32px 0 8px}
+.page h3{font-weight:700;font-size:17px;margin:24px 0 8px}
 .page p,.page li{color:var(--ink-soft)}
 .page p strong,.page li strong{color:var(--ink)}
 .page code{
@@ -216,7 +232,12 @@ pre{
   pre{background:#241f1c;color:#f3eee1;border-color:#726859}
 }
 html[data-theme="dark"] pre{background:#241f1c;color:#f3eee1;border-color:#726859}
-pre code{background:none;padding:0;color:inherit}
+/* A code block inside a pre inherits the block's own colours.
+   This needs to beat the inline-code rule, which sets the chip background
+   and the ink colour. Without the extra specificity, inline code inside a
+   code block rendered as dark text on a dark panel. */
+pre code,
+.page pre code{background:none;padding:0;color:inherit;font-family:inherit}
 /* A wide table gets its own scroll container, so the page itself does not
    overflow. Without it the weekly table lost its whole Status column at a
    320px viewport, with nothing to say that it had. */
@@ -263,6 +284,29 @@ a.under{text-decoration:underline;text-underline-offset:4px}
 /* ---------- misc ---------- */
 .snippet{margin:24px 0 0;border:2px solid var(--line);border-radius:var(--radius);background:var(--paper-2);padding:16px}
 .snippet-label{font-size:12px;text-transform:uppercase;letter-spacing:.12em;font-weight:800;color:var(--red-ink);margin-bottom:8px}
+.snippet-note{font-size:14px;color:var(--ink-soft);margin:8px 0 12px}
+
+/* ---------- copy button ----------
+   The snippet exists to be pasted somewhere, so getting it out of the page
+   is part of the snippet rather than a nicety next to it. The code stays
+   selectable by hand, so the button is a shortcut and not a requirement. */
+.copyrow{position:relative}
+.copyrow pre{padding-right:80px}
+.copybtn{
+  position:absolute;top:8px;right:8px;
+  font-family:var(--font-mono);font-size:12px;line-height:1;
+  padding:8px 12px;border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--paper-2);color:var(--ink);cursor:pointer;
+  font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+}
+.copybtn:hover{background:var(--chip)}
+.copybtn:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.copybtn.done{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+/* On a narrow screen the button would sit on top of the code, so the code
+   gets its own row above it. */
+@media (max-width:520px){
+  .copyrow pre{padding-right:16px;padding-top:52px}
+}
 .snippet pre{margin:0 0 12px}
 .notice{border:2px solid var(--line);border-left:6px solid var(--red);padding:12px 16px;margin:0 0 16px;background:var(--paper-2);font-size:14px}
 .notice b{display:block;margin-bottom:4px}
@@ -331,6 +375,8 @@ ${meta.noindex ? '<meta name="robots" content="noindex,nofollow">' : '<meta name
 <link rel="alternate" type="application/rss+xml" title="Tools Wanted — most wanted" href="/feed.xml">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/font.css">
+<link rel="preload" href="/font.css" as="style">
 <script>try{var t=localStorage.getItem('tw-theme');if(t)document.documentElement.setAttribute('data-theme',t);var b=document.getElementById('themebtn');if(b)b.onclick=function(){var c=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',c);localStorage.setItem('tw-theme',c);};}catch(e){}</script>
 ${meta.extraHead ?? ""}
 </head>
@@ -349,6 +395,7 @@ ${content}
     <a href="/feed.xml">RSS</a><a href="/privacy">Privacy</a><a href="/about">About</a>
   </nav>
 </div></footer>
+${COPY_SCRIPT}
 </body>
 </html>`;
 }

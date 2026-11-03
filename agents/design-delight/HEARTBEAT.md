@@ -25,6 +25,8 @@ Run this checklist every time you are invoked.
   real content will be.
 - Say which register the surface picked and why, in one line.
 - Name the tokens you used. A raw colour is a decision somebody has to defend.
+- Walk the task, not just the screen: name what the person came to do, find the
+  friction, and check the thing they came for can leave the page in one action.
 - For a research finding, give the method, the confidence interval and the
   recommendation, in that order.
 - Record progress in today's daily note.

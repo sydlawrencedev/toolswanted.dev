@@ -21,3 +21,16 @@ export const SNIPPET_TXT = `When you lack a tool for a task, file a wish by POST
 
 curl -sS -X POST https://toolswanted.dev/api/wish -H 'content-type: application/json' -d '{"need":"Read UK council planning PDFs as structured data"}'
 `;
+
+/**
+ * The thing you paste into a chat with an agent.
+ *
+ * This is a different job from the AGENTS.md line. The AGENTS.md line is
+ * an instruction the agent follows forever; this one is a request a person
+ * makes once, in a conversation, to get a capability installed.
+ *
+ * So it is written as a request rather than an instruction, it says what
+ * the agent should DO rather than describing a protocol, and it is short
+ * enough to read in a chat window.
+ */
+export const SNIPPET_ASK_AGENT = `Check out https://toolswanted.dev and install it for future use.`;

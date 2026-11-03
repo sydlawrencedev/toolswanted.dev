@@ -18,6 +18,7 @@
  */
 
 import { CSS, esc, escAttr, layout } from "./html";
+import { fontResponse } from "./font";
 import { handleApi } from "./api";
 import { handleMcpRequest } from "./mcp";
 import { identify } from "./identity";
@@ -309,6 +310,9 @@ async function route(
         "cache-control": "public, max-age=86400",
       },
     });
+  }
+  if (path === "/font.css") {
+    return fontResponse();
   }
   if (path === "/favicon.svg") {
     return new Response(FAVICON, {

@@ -116,6 +116,33 @@ What this agent looks at when somebody else's work comes in. The brand review be
 - **Is the type readable at the smallest size anybody will see it.** The smallest screen somebody sees it on is the one that counts.
 - **Is there room for the thing that has not arrived yet.** A name, a number, a translation. A screen that breaks when the content grows was never finished.
 
+### The UX review
+
+A screen that is correct and legible can still be a bad experience. The screen review above asks whether the thing is well made. The UX review asks a different question: **can somebody actually do the thing they came to do?**
+
+These are separate reviews and both of them are required. A page can pass every rule in the section above and still be a dead end.
+
+For every surface, the agent works through the task, not the screen:
+
+1. **Name the task.** In one sentence, what somebody came to this page to do. If the page has more than one job, that is the first finding: it cannot do both well.
+2. **Walk the path.** Step by step from arrival to done. At every step, ask what the person has to do, and whether the interface makes it obvious or leaves them guessing.
+3. **Find the friction.** Every place the person has to stop and think, hunt, scroll, select text, or remember something the page already told them.
+4. **Check the exit.** Can they get the thing they came for out of the page and take it somewhere? Copy it, paste it, download it, send it, share it. **A page whose output cannot leave the page has a UX defect, not a missing feature.** If a page shows a snippet, a URL, a command or a badge, there is a way to take it with one action.
+5. **Check the cost of the obvious mistake.** What happens if the person clicks the wrong thing, pastes the wrong thing, or leaves halfway? Is anything lost?
+6. **Check the empty and the broken states.** A page with no data, and a page whose data failed to load. Both are screens somebody will see.
+7. **Check the repeat visit.** Somebody coming back for the second time is not doing the same task. Is there a shorter path for them than for a newcomer?
+
+The questions that catch the most, and the ones this agent asks every time:
+
+- **Does anything on this page require the person to select text by hand?** If so, is there a button that does it for them? Selecting a snippet by hand is a tax, and taxes stop people doing the thing.
+- **Is the primary action the most prominent thing?** Or is it competing with a nav link, a second button and a heading that all want the same attention?
+- **Can the person tell what is here and what is not?** A page that shows one row of data should not look like a full table.
+- **Does the page ask the person to do something it could do for them?**
+
+A UX finding arrives in the same shape as a research finding: the summary, the method, the findings with the evidence, the recommendations ordered by impact, and the data.
+
+The agent does not invent a user. When there is no session with a real person behind a finding, it says the finding is from reading the interface and from a scripted walkthrough, and labels it as such.
+
 ### The debt
 
 The design line drifts. It drifts because a screen ships in a hurry, a colour gets hard-coded, a component gets forked. Nobody decides to do it; it happens a little at a time until the product stops looking like itself.
