@@ -15,11 +15,24 @@
  */
 
 import type { Env } from "./types";
+import * as budget from "./budget";
 
 export const CLUSTER_MODEL = "@cf/baai/bge-large-en-v1.5";
 export const CLUSTER_DIMS = 1024;
 export const SERVER_MODEL = "@cf/baai/bge-small-en-v1.5";
 export const SERVER_DIMS = 384;
+
+/**
+ * The neuron cost of one embedding, by model.
+ *
+ * Workers AI bills by the tokens the model processes. `bge-large` on a
+ * short string is roughly a thousand neurons; `bge-small` a few hundred.
+ * These are the figures the daily budget was built around, so an estimate
+ * that is wrong in the right direction matters: too low and the board
+ * overruns the platform limit, too high and it stops early.
+ */
+const CLUSTER_NEURONS = 1_000;
+const SERVER_NEURONS = 300;
 
 /**
  * BGE models are trained asymmetrically: the retrieval side gets an
@@ -34,12 +47,21 @@ export const NS_SERVERS = "servers";
 
 type Metadata = Record<string, string | number | boolean>;
 
-/** Embed one string as a DOCUMENT (no instruction prefix). */
+/**
+ * Embed one string as a DOCUMENT (no instruction prefix).
+ *
+ * The embedding is charged to the daily budget before it is made. When
+ * the budget is spent the call still goes through — the platform enforces
+ * the real limit, and a board that stops accepting wishes because it ran
+ * out of embedding budget is worse than one that tries. The charge is
+ * what keeps the counter honest.
+ */
 export async function embed(
   env: Env,
   text: string,
   model: string = CLUSTER_MODEL
 ): Promise<number[]> {
+  await budget.spendNeurons(env, model === SERVER_MODEL ? SERVER_NEURONS : CLUSTER_NEURONS);
   const res = await env.AI.run(model, { text: [text.slice(0, 500)] });
   const data = (res as { data?: number[][] }).data;
   if (!data || data.length === 0 || !data[0]) throw new Error("embedding failed");
@@ -52,19 +74,26 @@ export async function embedQuery(
   text: string,
   model: string = CLUSTER_MODEL
 ): Promise<number[]> {
+  await budget.spendNeurons(env, model === SERVER_MODEL ? SERVER_NEURONS : CLUSTER_NEURONS);
   const res = await env.AI.run(model, { text: [QUERY_PREFIX + text.slice(0, 500)] });
   const data = (res as { data?: number[][] }).data;
   if (!data || data.length === 0 || !data[0]) throw new Error("embedding failed");
   return data[0];
 }
 
-/** Embed many strings in one call. */
+/**
+ * Embed many strings in one call.
+ *
+ * Charged per string, because Workers AI bills per input.
+ */
 export async function embedBatch(
   env: Env,
   texts: string[],
   model: string = CLUSTER_MODEL
 ): Promise<number[][]> {
   if (texts.length === 0) return [];
+  const perText = model === SERVER_MODEL ? SERVER_NEURONS : CLUSTER_NEURONS;
+  await budget.spendNeurons(env, perText * texts.length);
   const res = await env.AI.run(model, { text: texts.map((t) => t.slice(0, 500)) });
   const data = (res as { data?: number[][] }).data;
   return data ?? [];

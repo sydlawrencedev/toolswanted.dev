@@ -12,6 +12,8 @@ export interface RateResult {
   remaining: number;
   resetAt: number;
   used: number;
+  /** True when the counter could not be read or written. */
+  degraded: boolean;
 }
 
 export async function rateLimit(
@@ -25,6 +27,7 @@ export async function rateLimit(
   const resetAt = (windowStart + windowSeconds) * 1000;
 
   let hits = 1;
+  let degraded = false;
   try {
     const row = await db
       .prepare(
@@ -36,17 +39,27 @@ export async function rateLimit(
       .first<{ hits: number }>();
     hits = row?.hits ?? 1;
   } catch {
-    // If the counter write fails we still allow the request but do not count
-    // it: the board should not go dark because the limiter broke.
-    hits = 0;
+    // The counter write failed.
+    //
+    // It used to set `hits = 0`, which made `allowed` true for EVERY
+    // request — the limit was not degraded, it was absent, and nothing
+    // said so. The board went into an unlimited state exactly when D1 was
+    // under pressure, which is when the write limit is most likely to
+    // have been hit.
+    //
+    // Now the failure is explicit. `allowed` is false, so a broken
+    // limiter cannot be used to spam, and `degraded` says why.
+    degraded = true;
+    hits = limit + 1;
   }
 
   return {
-    allowed: hits <= limit,
+    allowed: !degraded && hits <= limit,
     limit,
     used: hits,
-    remaining: Math.max(0, limit - hits),
+    remaining: degraded ? 0 : Math.max(0, limit - hits),
     resetAt,
+    degraded,
   };
 }
 

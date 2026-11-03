@@ -99,6 +99,14 @@ const SECRET_RULES: Rule[] = [
     replace: "[redacted-token]",
   },
   {
+    // Vendor prefixes that carry a live secret: Stripe, GitLab, Shopify.
+    // Each is `prefix` + a body that is not hex and not plain base64, so
+    // the blob rules do not catch them.
+    name: "vendor-token",
+    re: /\b(?:sk_live_|glpat-|shpat_|shpss_|xox[baprs]-|sq0atp-|sq0csp-|AC[0-9a-fA-F]{20}-|EAAA)[A-Za-z0-9_-]{10,}/g,
+    replace: "[redacted-token]",
+  },
+  {
     name: "bearer-header",
     re: /\bBearer\s+[A-Za-z0-9._~+/-]{12,}={0,2}/g,
     replace: "Bearer [redacted-token]",
@@ -106,19 +114,27 @@ const SECRET_RULES: Rule[] = [
   {
     // Any identifier that *contains* a sensitive word, followed by a value:
     // api_key=, secret=, aws_secret_access_key=, GITHUB_TOKEN:, ...
+    //
+    // The separator can be `:`/`=` or a plain English copula, because that
+    // is how people actually write it: "my password is hunter2". The copula
+    // form only counts when the sensitive word stands alone, so "tokenise"
+    // and "passwordless" are left alone.
     name: "assigned-secret",
-    re: /\b[\w.-]{0,40}(?:secret|password|passwd|api[_-]?key|apikey|access[_-]?key|auth[_-]?token|access[_-]?token|refresh[_-]?token|private[_-]?key|client[_-]?secret|credential|pwd|passphrase|token)[\w.-]{0,40}\b(\s*[:=]\s*)["']?([^\s"',;)]{6,})["']?/gi,
-    replace: (_m, sep: string, value: string) => {
+    re: /\b[\w.-]{0,40}(?:secret|password|passwd|api[_-]?key|apikey|access[_-]?key|auth[_-]?token|access[_-]?token|refresh[_-]?token|private[_-]?key|client[_-]?secret|credential|pwd|passphrase|token)[\w.-]{0,40}\b(?:\s*[:=]\s*|\s+(?:is|was|equals?)\s+)["']?([^\s"',;)]{6,})["']?/gi,
+    replace: (_m: string, value: string) => {
       // Keep obvious placeholders: they carry no secret and read better.
       if (/^(none|null|undefined|nil|example|changeme|placeholder|redacted|xxx+|\*+)$/i.test(value)) {
-        return `${sep}${value}`;
+        return value;
       }
-      // Only redact things that actually look like a credential.
-      const looksSecret =
-        /[0-9]/.test(value) ||
-        /[_\-./+=]/.test(value) ||
-        (value.length >= 12 && /[a-z]/.test(value) && /[A-Z]/.test(value));
-      return looksSecret ? `${sep}[redacted-secret]` : `${sep}${value}`;
+      // A value assigned to a credential-shaped key IS a credential. The
+      // surrounding text said so; we do not second-guess it because the
+      // value happens to lack a digit. `password: correcthorse` is a
+      // password, and an all-lowercase passphrase is a real passphrase.
+      //
+      // The guard is the length: a short value after `token:` is more likely
+      // to be prose ("token: the") than a secret.
+      if (value.length < 6) return value;
+      return "[redacted-secret]";
     },
   },
   {
@@ -144,6 +160,15 @@ const URL_RE = /\b(?:https?|ftp):\/\/[^\s<>"'`]+/gi;
 const OPAQUE_SEGMENT_RE = /[A-Za-z0-9_-]{20,}/;
 const HEX_SEGMENT_RE = /\b[A-Fa-f0-9]{16,}\b/;
 
+// A query string that carries a signature or a credential. The URL is a
+// capability, so the whole URL goes rather than just the query.
+//
+// Matched on the parameter NAME, not on a prefix: the name is
+// `X-Amz-Signature`, so a prefix of `x-amz-` followed by `=` never
+// matches. These are the parameter names the signing schemes use.
+const PRESIGNED_QUERY_RE =
+  /[?&](?:x-amz-[a-z-]+|x-goog-[a-z-]+|x-ms-[a-z-]+|x-oss-[a-z-]+|signature|credential|token|auth|key|expires|se|sp|sig|sv|st|policy|sas|password)=/i;
+
 const WINDOWS_PATH_RE = /\b[A-Za-z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*/g;
 const UNC_PATH_RE = /\\\\[A-Za-z0-9._-]+\\[^\s"']+/g;
 const HOME_PATH_RE = /~(?:\/[^\s"']+)+/g;
@@ -164,10 +189,27 @@ const FILE_EXTENSIONS = [
   "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "png", "jpg", "jpeg", "gif", "webp",
   "svg", "zip", "tar", "gz", "bz2", "7z", "mp4", "mov", "mp3", "wav", "tf", "tfvars",
 ];
+// A filename with a known extension: config.env, notes.md, .env
+//
+// The extension may be preceded by a dotfile marker, so `.env` and
+// `.env.local` match. A leading `\b` would not do it: a dot is a
+// non-word character, so there is no boundary between it and the
+// space before it, and every dotfile would slip through.
+//
+// A dot is required. Without one the pattern matches a bare word, which
+// is how `[path]` came to be rewritten as `[pat[path]]` on a second pass.
 const FILE_NAME_RE = new RegExp(
-  `\\b[A-Za-z0-9_.@-]+\\.(?:${FILE_EXTENSIONS.join("|")})\\b`,
+  `(?:[A-Za-z0-9_.@-]*\\.)(?:${FILE_EXTENSIONS.join("|")})\\b`,
   "g"
 );
+
+// A dotfile with no extension, or one whose extension is not in the list:
+// .env, .env.local, .gitignore, .npmrc
+const DOTFILE_RE = /(?<![\w/\\-])\.[A-Za-z0-9_-]{1,24}(?:\.[A-Za-z0-9_-]{1,24})*/g;
+
+// A private key file, named but not always with an extension: id_rsa,
+// id_dsa, id_ecdsa, id_ed25519
+const KEY_FILE_RE = /\bid_(?:rsa|dsa|ecdsa|ed25519)\b/gi;
 
 /* ------------------------------------------------------------------ *
  * Phase 2: prompt-injection detection (flag, do not rewrite silently)
@@ -203,6 +245,11 @@ function collapseWhitespace(input: string): string {
  * Rewrite a URL so it can be stored safely: drop credentials, query strings
  * and fragments entirely, and drop the whole URL if the path contains
  * something that looks like a pre-signed secret.
+ *
+ * A pre-signed URL keeps its signature in the *query*, so dropping the
+ * query does not make it safe — the path and host of a pre-signed object
+ * are exactly the parts that identify the object. So we look for the
+ * signature in the query before we discard it, and drop the whole URL.
  */
 function sanitiseUrl(raw: string): string {
   let url = raw;
@@ -217,6 +264,10 @@ function sanitiseUrl(raw: string): string {
   }
 
   if (parsed.username || parsed.password) return "[url]";
+
+  // A signed or credentialed query means the URL is a capability, not a
+  // reference. Drop the whole thing.
+  if (PRESIGNED_QUERY_RE.test(parsed.search)) return "[url]";
 
   const path = parsed.pathname || "";
   if (HEX_SEGMENT_RE.test(path)) return "[url]";
@@ -259,16 +310,13 @@ export function sanitizeText(raw: string, maxLength = 300): SanitiseResult {
   text = text.replace(TAG_RE, " ");
   if (text !== before) removed.push("tags");
 
-  for (const rule of SECRET_RULES) {
-    const re = new RegExp(rule.re.source, rule.re.flags);
-    const next = text.replace(re, rule.replace as any);
-    if (next !== text) {
-      removed.push(rule.name);
-      text = next;
-    }
-  }
-
-  // URLs: strip credentials, query and fragment.
+  // URLs first, before the secret rules.
+  //
+  // Order matters: a pre-signed URL carries its signature in the query, and
+  // a secret rule can match that signature and replace it in place. Once
+  // the query has been rewritten, the URL no longer looks pre-signed, and
+  // the check that would drop the whole URL never fires. Sanitising the URL
+  // first means it is judged as a whole.
   {
     const re = new RegExp(URL_RE.source, URL_RE.flags);
     let hit = false;
@@ -277,6 +325,15 @@ export function sanitizeText(raw: string, maxLength = 300): SanitiseResult {
       return sanitiseUrl(m);
     });
     if (hit) removed.push("url");
+  }
+
+  for (const rule of SECRET_RULES) {
+    const re = new RegExp(rule.re.source, rule.re.flags);
+    const next = text.replace(re, rule.replace as any);
+    if (next !== text) {
+      removed.push(rule.name);
+      text = next;
+    }
   }
 
   {
@@ -294,6 +351,8 @@ export function sanitizeText(raw: string, maxLength = 300): SanitiseResult {
     ["deep-path", DEEP_ABS_PATH_RE],
     ["relative-file", RELATIVE_FILE_RE],
     ["file-name", FILE_NAME_RE],
+    ["dotfile", DOTFILE_RE],
+    ["key-file", KEY_FILE_RE],
   ] as const) {
     const r = new RegExp(re.source, re.flags);
     const next = text.replace(r, "[path]");
@@ -308,9 +367,14 @@ export function sanitizeText(raw: string, maxLength = 300): SanitiseResult {
 
   // Final gate: if anything that looks like a secret survived the rules above,
   // drop the whole string rather than risk storing it.
+  //
+  // Each rule is tested against a fresh, non-global copy of its own pattern.
+  // A global regex carries `lastIndex` between calls, so `re.test()` on the
+  // shared rule object alternates between matching and not — which is why
+  // this gate could be skipped entirely by a previous call.
   for (const rule of SECRET_RULES) {
     if (rule.name === "assigned-secret") continue;
-    const re = new RegExp(rule.re.source, rule.re.flags);
+    const re = new RegExp(rule.re.source, rule.re.flags.replace("g", ""));
     if (re.test(text)) {
       return {
         text: "",
@@ -351,8 +415,11 @@ export function sanitiseGeneric(raw: string, maxLength = 160): string | null {
   if (cleaned.length > maxLength * 2) return null;
 
   // Reject outright if the model produced something secret-shaped.
+  // Fresh, non-global copies: a global regex carries `lastIndex` between
+  // calls, so testing the shared rule object would alternate between
+  // matching and not.
   for (const rule of SECRET_RULES) {
-    const re = new RegExp(rule.re.source, rule.re.flags);
+    const re = new RegExp(rule.re.source, rule.re.flags.replace("g", ""));
     if (re.test(cleaned)) return null;
   }
 

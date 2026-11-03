@@ -73,14 +73,36 @@ export interface WishOutcome {
   clusterId: string;
 }
 
-/** Thresholds are env-configurable so they can be tuned without a deploy. */
+/**
+ * Thresholds are env-configurable so they can be tuned without a deploy.
+ *
+ * The fallback values are the ones in `wrangler.toml`. They used to
+ * disagree: the code said 0.815 and 0.72, wrangler.toml said 0.723 and
+ * 0.57, and the README quoted a third set from the tuner. A threshold
+ * that differs depending on which file you read is a threshold nobody can
+ * reason about, and one live false-positive match was a direct result.
+ *
+ * The fallback exists for local `wrangler dev` runs where the var is not
+ * set. In every deployed environment the var is set and the fallback is
+ * never used, so it must match the deployed value.
+ */
 export function matchThreshold(env: Env): number {
-  return Number(env.MATCH_THRESHOLD || "0.815");
+  return Number(env.MATCH_THRESHOLD || "0.723");
 }
 
 export function serverThreshold(env: Env): number {
-  return Number(env.SERVER_MATCH_THRESHOLD || "0.72");
+  return Number(env.SERVER_MATCH_THRESHOLD || "0.57");
 }
+
+/**
+ * The floor for a search result.
+ *
+ * A search is looser than a cluster match: a builder looking for "read
+ * PDFs" wants to see near-misses, and a match that is too tight returns
+ * an empty list, which is the same as returning nothing. This is
+ * deliberately lower than the cluster-match threshold.
+ */
+export const SEARCH_SCORE_FLOOR = 0.6;
 
 export function autoPublishThreshold(env: Env): number {
   return Number(env.AUTO_PUBLISH_WISHES || "3");
@@ -125,10 +147,18 @@ export async function fileWish(
       rateLimit(env.DB, sourceBucket(identity.sourceKey), perHour, 3600),
     ]);
     if (!ipLimit.allowed || !srcLimit.allowed) {
+      // A degraded limiter is a different failure from a real limit. The
+      // counter could not be written, so we cannot know whether this
+      // source has been over the limit. Refusing is the safe answer for a
+      // write: the agent retries, and the board is never spammed. Saying
+      // so lets the caller tell the two apart.
+      const degraded = ipLimit.degraded || srcLimit.degraded;
       throw new WishError(
-        "Too many wishes from this source. The board only takes a handful per hour so the numbers mean something.",
-        429,
-        "rate_limited"
+        degraded
+          ? "The board could not check its rate limit, so the wish was not filed. Try again in a moment."
+          : "Too many wishes from this source. The board only takes a handful per hour so the numbers mean something.",
+        degraded ? 503 : 429,
+        degraded ? "limiter_unavailable" : "rate_limited"
       );
     }
   }
@@ -313,6 +343,25 @@ export async function fileWish(
 }
 
 /**
+ * Build the text that goes to the model.
+ *
+ * This is the model boundary, so it is where the sanitising happens. The
+ * need and the context are both cleaned here, which means every caller is
+ * protected and a new caller cannot reintroduce a leak by forgetting to
+ * sanitise.
+ *
+ * Exported so it can be tested without a Worker: the whole point is that
+ * no raw caller text reaches the model, and that is a property of this
+ * function, not of the network call around it.
+ */
+export function buildGenericPrompt(need: string, context: string | null): string | null {
+  const safeNeed = sanitizeText(need, 300).text;
+  const safeContext = context ? sanitizeText(context, 400).text : "";
+  const source = safeContext ? `${safeNeed}\nContext: ${safeContext}` : safeNeed;
+  return source || null;
+}
+
+/**
  * The optional LLM pass: rewrite a wish into one generic line so the board
  * reads like a list of capabilities rather than a list of chatty messages.
  *
@@ -330,7 +379,19 @@ export async function genericiseWish(
   const budget = await spendNeuronBudget(env);
   if (!budget) return;
 
-  const source = context ? `${need}\nContext: ${context}` : need;
+  // The context is sanitised HERE, at the model boundary, rather than at
+  // each call site.
+  //
+  // The stored context is already sanitised in `fileWish`, but the value
+  // handed to this function by the API and MCP handlers was the raw,
+  // caller-supplied string. Passing that to the model sent whatever the
+  // caller put in `context` — including a credential — to a third-party
+  // inference endpoint.
+  //
+  // Sanitising at the boundary means every caller is protected, and a new
+  // caller cannot reintroduce the leak by forgetting to sanitise.
+  const source = buildGenericPrompt(need, context);
+  if (!source) return;
   try {
     const res = await env.AI.run("@cf/meta/llama-3.2-3b-instruct", {
       messages: [
@@ -439,7 +500,7 @@ export async function searchWishes(
     const centroid = decodeVector(row.vector);
     if (!centroid) continue;
     const similarity = cosine(vector, centroid);
-    if (similarity < 0.6) continue;
+    if (similarity < SEARCH_SCORE_FLOOR) continue;
     const cluster = await db.getClusterById(env.DB, row.id);
     if (!cluster || cluster.status === "merged" || cluster.status === "rejected") continue;
     found.set(cluster.id, { cluster, score: similarity });
@@ -447,7 +508,7 @@ export async function searchWishes(
 
   // Everything else, from the vector index.
   for (const m of matches) {
-    if (m.score < 0.6) break;
+    if (m.score < SEARCH_SCORE_FLOOR) break;
     if (found.has(m.id)) continue;
     const cluster = await db.getClusterById(env.DB, m.id);
     if (!cluster || cluster.status === "merged" || cluster.status === "rejected") continue;

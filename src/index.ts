@@ -51,7 +51,7 @@ import {
   renderWishResult,
   type WishFormResult,
 } from "./board";
-import { isPreviewBot } from "./bots";
+import { isPreviewBot, isCrawler } from "./bots";
 import { rateLimit } from "./ratelimit";
 import { renderFeed, renderWishFeed } from "./rss";
 import { isoWeekId, num, weekStart, type Env } from "./types";
@@ -472,8 +472,9 @@ async function getWishForm(env: Env, request: Request, url: URL): Promise<Respon
   }
 
   const userAgent = request.headers.get("user-agent") ?? "";
-  if (isPreviewBot(userAgent)) {
-    // A link un-furler is following a link, not asking for a tool.
+  if (isPreviewBot(userAgent) || isCrawler(userAgent)) {
+    // A link un-furler is following a link, not asking for a tool. A crawler
+    // is indexing, not asking for a tool. Neither should file a wish.
     return html(
       layout(
         {
