@@ -71,7 +71,7 @@ export async function neuronsUsed(env: Env): Promise<number> {
  *
  * The check and the charge are one statement. It used to read the counter,
  * compare it, and then charge it in a second call, which left a window
- * where two crawls could both pass the check and both spend — and where
+ * where two crawls could both pass the check and both spend, and where
  * background work could spend the reserve it was supposed to protect.
  */
 export async function backgroundBudget(env: Env, estimate: number): Promise<boolean> {

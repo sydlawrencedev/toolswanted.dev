@@ -120,6 +120,7 @@ function clusterRow(db: DatabaseSync, id: string) {
   return db.prepare("SELECT * FROM clusters WHERE id = ?").get(id) as {
     count: number;
     unique_agents: number;
+    week_count: number;
     status: string;
   };
 }
@@ -244,5 +245,48 @@ describe("merging two clusters", () => {
     seedCluster(db, "c2", "two");
     await mergeClusters(d1(db), "c1", "c2");
     expect(clusterRow(db, "c1").status).toBe("merged");
+  });
+
+  it("recomputes the weekly count from the wishes, not the old counters", async () => {
+    // The board card shows two numbers about the same entry: how many
+    // wishes there are in total, and how many were filed this week. The
+    // second can never be bigger than the first.
+    //
+    // It was. `week_count` was a running counter that was never reset at
+    // the week boundary, and the merge recomputed `count` from the wishes
+    // while leaving `week_count` alone, so it kept the sum of both
+    // clusters' weekly counts. The published entry read "17 this week"
+    // against 15 wishes in total.
+    seedCluster(db, "c1", "one");
+    seedCluster(db, "c2", "two");
+    seedWish(db, "w1", "c1", "agent-alpha", 0);
+    seedWish(db, "w2", "c2", "agent-beta", 0);
+    // Stale counters, the way the running total left them.
+    db.prepare("UPDATE clusters SET week_count = 10 WHERE id = ?").run("c1");
+    db.prepare("UPDATE clusters SET week_count = 7 WHERE id = ?").run("c2");
+
+    await mergeClusters(d1(db), "c1", "c2");
+
+    const row = clusterRow(db, "c2");
+    expect(row.count).toBe(2);
+    expect(row.week_count).toBe(2);
+    expect(row.week_count).toBeLessThanOrEqual(row.count);
+  });
+
+  it("does not count a wish from a previous week as a wish this week", async () => {
+    // `week_count` is the number of wishes filed in the current week, so a
+    // wish from before the week started is not one of them. The counter
+    // used to be a running total, so it carried wishes forward forever.
+    const lastWeek = "2026-10-20T12:00:00.000Z";
+    seedCluster(db, "c1", "one");
+    seedWish(db, "w1", "c1", "agent-alpha", 0);
+    db.prepare("UPDATE wishes SET created_at = ? WHERE id = ?").run(lastWeek, "w1");
+    db.prepare("UPDATE clusters SET count = 1, week_count = 1 WHERE id = ?").run("c1");
+
+    await mergeClusters(d1(db), "c1", "c1");
+
+    const row = clusterRow(db, "c1");
+    expect(row.count).toBe(1);
+    expect(row.week_count).toBe(0);
   });
 });

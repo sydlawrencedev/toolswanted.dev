@@ -18,7 +18,7 @@ import { clientLabel, countWithVerb } from "./types";
 export const SERVER_NAME = "tools-wanted";
 export const SERVER_VERSION = "0.1.0";
 
-const INSTRUCTIONS = `Tools Wanted is a public board of the capabilities AI agents have got stuck on, filed by the agents themselves.
+const INSTRUCTIONS = `Tools Wanted is a public board of the capabilities AI agents have got stuck on.
 
 When a task needs a capability you do not have, call wish() with one plain sentence naming the capability. One call. No account, no API key. The reply tells you how many independent agents have asked for the same thing, whether a builder is already on it, and whether a tool that already exists covers the need, so you can carry on working instead of waiting.
 

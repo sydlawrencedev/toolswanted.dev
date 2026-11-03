@@ -1,5 +1,5 @@
 /**
- * Tools Wanted — one Worker, one routing table.
+ * Tools Wanted, one Worker, one routing table.
  *
  * Routes:
  *   GET  /                 the board
@@ -414,6 +414,9 @@ async function route(
 
   if (path.startsWith("/w/")) {
     const slug = decodeURIComponent(path.slice(3));
+    // GitHub sign in is a deployment setting. When it is not configured the
+    // page must not promise a claim path that dead-ends at a 503.
+    const claimingEnabled = Boolean(env.GITHUB_CLIENT_ID);
     return cached(
       request,
       300,
@@ -421,6 +424,7 @@ async function route(
         const session = await readSession(env, request);
         const body = await renderCluster(env, slug, {
           signedInAs: session?.login ?? null,
+          claimingEnabled,
         });
         if (!body) return notFound(env);
         return html(body, 200, { "cache-control": "public, max-age=120, s-maxage=300" });
@@ -430,18 +434,20 @@ async function route(
   }
 
   if (path === "/weekly") {
+    const claimingEnabled = Boolean(env.GITHUB_CLIENT_ID);
     return cached(
       request,
       600,
       async () =>
-        html(await renderWeekly(env), 200, { "cache-control": "public, max-age=300, s-maxage=600" }),
+        html(await renderWeekly(env, undefined, claimingEnabled), 200, { "cache-control": "public, max-age=300, s-maxage=600" }),
       env.VERSION_METADATA?.id
     );
   }
   if (path.startsWith("/weekly/")) {
     const id = path.slice("/weekly/".length);
+    const claimingEnabled = Boolean(env.GITHUB_CLIENT_ID);
     return cached(request, 3600, async () =>
-      html((await renderWeekly(env, id)) ?? "", 200, { "cache-control": "public, max-age=3600" })
+      html((await renderWeekly(env, id, claimingEnabled)) ?? "", 200, { "cache-control": "public, max-age=3600" })
     );
   }
   if (path === "/agents") {
@@ -457,10 +463,14 @@ async function route(
     // "I want to build one" on a cluster does not have to go and find
     // the slug. The page told them which wish; the form now carries it.
     const slug = url.searchParams.get("wish") ?? "";
+    // GitHub sign in is a deployment setting. When it is not configured the
+    // page says so before the reader fills the form in, rather than
+    // collecting a repository URL and then dead-ending at a 503.
+    const claimingEnabled = Boolean(env.GITHUB_CLIENT_ID);
     return cached(
       request,
       600,
-      async () => html(renderBuild(env, slug), 200, { "cache-control": "public, max-age=600" }),
+      async () => html(renderBuild(env, slug, claimingEnabled), 200, { "cache-control": "public, max-age=600" }),
       env.VERSION_METADATA?.id
     );
   }
@@ -654,10 +664,36 @@ async function renderOg(env: Env, name: string): Promise<Response> {
 
   // A poster carries a number, and the number moves. When the poster is
   // older than the cluster it draws, it is showing a count that has
-  // changed, and it is the first thing a reader sees. The header says so
-  // rather than leaving a stale image to be discovered by a reader.
+  // changed, and it is the first thing a reader sees.
+  //
+  // The header says so, for a machine. A reader is not looking at
+  // headers, they are looking at the picture on a link preview, so the
+  // picture itself has to stop carrying the wrong number. When the poster
+  // is behind, the default card is served instead: it has no count on it,
+  // so it cannot be wrong, and it keeps the title of nothing rather than
+  // the title of an entry with a number that has moved.
+  //
+  // The fix is `npm run og:sync` against the deployed board. Until that
+  // runs, a stale poster is not served, so the contradiction between the
+  // card and the board cannot be shown to a reader.
   const cluster = await db.getClusterBySlug(env.DB, slug);
   const stale = !isDefault && cluster ? object.updatedAt < cluster.updated_at : false;
+
+  if (stale) {
+    const fallback = await db.getOgImage(env.DB, "default");
+    if (fallback) {
+      return new Response(fallback.bytes, {
+        headers: {
+          "content-type": "image/png",
+          "cache-control": "public, max-age=60",
+          "x-og-default": "1",
+          "x-og-stale": "1",
+          "x-og-updated-at": fallback.updatedAt,
+          "x-og-stale-for": slug,
+        },
+      });
+    }
+  }
 
   return new Response(object.bytes, {
     headers: {
@@ -917,7 +953,7 @@ async function handleShip(env: Env, request: Request): Promise<Response> {
   }
   // A claim has to exist before it can be shipped. A cluster with no
   // claim has no `claim_login`, so the ownership check below would fail
-  // anyway — but checking the claim first says what is actually wrong,
+  // anyway, but checking the claim first says what is actually wrong,
   // and it stops the route writing a claim row with an empty repo.
   if (!cluster.claim_login || !cluster.claim_repo) {
     return new Response("Nobody has claimed this wish yet. Claim it first, then mark it shipped.", {

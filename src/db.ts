@@ -9,7 +9,7 @@
  */
 
 import type { Cluster, ServerRecord, Wish } from "./types";
-import { newId } from "./types";
+import { newId, weekStart } from "./types";
 
 /** True when D1 refused a write because the daily row limit is spent. */
 export function isWriteLimitError(err: unknown): boolean {
@@ -252,7 +252,11 @@ export async function getSamplesForClusters(
  *
  * Seeded wishes are excluded. The breakdown is an attribution to agents,
  * and the seeded wishes were filed by the operator, so counting them here
- * would put our own wishes in a table headed "which agents want this".
+ * would put our own wishes in a table headed "which agents filed these".
+ *
+ * It counts wishes, not agents. One agent filing the same wish twice is
+ * two rows of count here and one agent in the cluster's agent count, so
+ * the two numbers do not add up to each other and the copy has to say so.
  *
  * It is counted from the wishes table rather than read from
  * `cluster_clients` for that reason: `cluster_clients` has no seeded
@@ -261,7 +265,8 @@ export async function getSamplesForClusters(
  */
 export async function getClientBreakdown(
   db: D1Database,
-  clusterIds: string[]
+  clusterIds: string[],
+  pairsPerCluster = 6
 ): Promise<Map<string, Array<{ client: string; count: number; total: number }>>> {
   const out = new Map<string, Array<{ client: string; count: number; total: number }>>();
   if (clusterIds.length === 0) return out;
@@ -271,7 +276,12 @@ export async function getClientBreakdown(
   // database scanned the whole board to produce four numbers per card. The
   // window function counts per cluster and client and keeps the top few
   // pairs, which is what the card renders.
-  const PAIRS_PER_CLUSTER = 6;
+  //
+  // The window is a parameter, because not every caller renders a card.
+  // The entry page has a table headed "Which agents filed these", and a
+  // table is the whole story: it showed six agents of ten and said
+  // nothing about the four it dropped. That caller asks for all of them.
+  const limit = Math.max(1, Math.min(pairsPerCluster, 1000));
   const placeholders = clusterIds.map(() => "?").join(",");
   // The window keeps the top pairs per cluster. The total is counted
   // separately, because the card says how many more clients there are and
@@ -289,7 +299,7 @@ export async function getClientBreakdown(
        WHERE rn <= ?
        ORDER BY count DESC`
     )
-    .bind(...clusterIds, PAIRS_PER_CLUSTER)
+    .bind(...clusterIds, limit)
     .all<{ cluster_id: string; client: string; count: number; total: number }>();
   for (const row of results ?? []) {
     const list = out.get(row.cluster_id) ?? [];
@@ -441,60 +451,26 @@ export async function recordWish(
   }
 ): Promise<{ wishId: string; newVote: boolean }> {
   const wishId = newId("w");
-  const isNewWeek = input.now >= input.weekStart;
 
-  // One batch, one round trip. The order matters: the counter update reads
-  // the votes table to decide whether this source is new to the cluster, so
-  // it has to run before the vote is inserted.
+  // One batch, one round trip. The order matters.
+  //
+  // The wish row goes in first. The cluster's `week_count` is the number of
+  // wishes on it that were filed in the current week, and it is counted from
+  // the wishes table rather than kept as a running counter. A running
+  // counter has to be reset at the week boundary and it has to survive a
+  // cluster merge, and neither happened: the published entry read "17 this
+  // week" against 15 wishes in total. Counting from the wishes cannot
+  // drift, and the wish row has to exist before the count reads it.
+  //
+  // The counter update reads the votes table to decide whether this source
+  // is new to the cluster, so it has to run before the vote is inserted.
   //
   // A seeded wish is the operator's own, not an agent's. It is counted as a
   // wish, and it is labelled, but it is NOT counted as an independent
   // agent and it cannot auto-publish a cluster on its own. Otherwise the
-  // board's headline number — "wanted by N agents" — would be counting the
+  // board's headline number, "wanted by N agents", would be counting the
   // operator's own wishes as agent demand.
   const results = await db.batch([
-    db
-      .prepare(
-        `UPDATE clusters SET
-           count = count + 1,
-           unique_agents = unique_agents + CASE
-             WHEN ? = 1 THEN 0
-             WHEN EXISTS (SELECT 1 FROM votes WHERE source_key = ? AND cluster_id = ? AND seeded = 0) THEN 0
-             ELSE 1 END,
-           week_count = week_count + ?,
-           last_seen = ?,
-           updated_at = ?,
-           seeded = CASE WHEN ? = 1 THEN 1 ELSE seeded END,
-           status = CASE
-             WHEN status = 'pending'
-              AND unique_agents + CASE
-                    WHEN ? = 1 THEN 0
-                    WHEN EXISTS (SELECT 1 FROM votes WHERE source_key = ? AND cluster_id = ? AND seeded = 0) THEN 0
-                    ELSE 1 END >= ?
-             THEN 'published'
-             ELSE status END
-         WHERE id = ?`
-      )
-      .bind(
-        input.seeded ? 1 : 0,
-        input.sourceKey,
-        input.clusterId,
-        isNewWeek ? 1 : 0,
-        input.now,
-        input.now,
-        input.seeded ? 1 : 0,
-        input.seeded ? 1 : 0,
-        input.sourceKey,
-        input.clusterId,
-        input.autoPublishThreshold,
-        input.clusterId
-      ),
-    db
-      .prepare(
-        `INSERT INTO votes (source_key, cluster_id, created_at, seeded) VALUES (?, ?, ?, ?)
-         ON CONFLICT(source_key, cluster_id) DO NOTHING`
-      )
-      .bind(input.sourceKey, input.clusterId, input.now, input.seeded ? 1 : 0),
     db
       .prepare(
         `INSERT INTO wishes (id, cluster_id, need, need_generic, context, client, model,
@@ -517,12 +493,57 @@ export async function recordWish(
       ),
     db
       .prepare(
+        `UPDATE clusters SET
+           count = count + 1,
+           unique_agents = unique_agents + CASE
+             WHEN ? = 1 THEN 0
+             WHEN EXISTS (SELECT 1 FROM votes WHERE source_key = ? AND cluster_id = ? AND seeded = 0) THEN 0
+             ELSE 1 END,
+           week_count = (SELECT COUNT(*) FROM wishes WHERE cluster_id = clusters.id
+                          AND created_at >= ?),
+           last_seen = ?,
+           updated_at = ?,
+           seeded = CASE WHEN ? = 1 THEN 1 ELSE seeded END,
+           status = CASE
+             WHEN status = 'pending'
+              AND unique_agents + CASE
+                    WHEN ? = 1 THEN 0
+                    WHEN EXISTS (SELECT 1 FROM votes WHERE source_key = ? AND cluster_id = ? AND seeded = 0) THEN 0
+                    ELSE 1 END >= ?
+             THEN 'published'
+             ELSE status END
+         WHERE id = ?`
+      )
+      .bind(
+        input.seeded ? 1 : 0,
+        input.sourceKey,
+        input.clusterId,
+        input.weekStart,
+        input.now,
+        input.now,
+        input.seeded ? 1 : 0,
+        input.seeded ? 1 : 0,
+        input.sourceKey,
+        input.clusterId,
+        input.autoPublishThreshold,
+        input.clusterId
+      ),
+    db
+      .prepare(
+        `INSERT INTO votes (source_key, cluster_id, created_at, seeded) VALUES (?, ?, ?, ?)
+         ON CONFLICT(source_key, cluster_id) DO NOTHING`
+      )
+      .bind(input.sourceKey, input.clusterId, input.now, input.seeded ? 1 : 0),
+    db
+      .prepare(
         `INSERT INTO cluster_clients (cluster_id, client, count) VALUES (?, ?, 1)
          ON CONFLICT(cluster_id, client) DO UPDATE SET count = count + 1`
       )
       .bind(input.clusterId, input.client),
   ]);
 
+  // The vote insert is the second statement in the batch, so its result is
+  // at index 1. It reports whether this source was new to the cluster.
   const newVote = (results[1]?.meta?.changes ?? 0) > 0;
   return { wishId, newVote };
 }
@@ -670,7 +691,7 @@ export async function mergeClusters(
     // one-vote-per-agent rule is checked against the votes table for the
     // target cluster. Without moving them, an agent that had already
     // wished in the cluster being merged away counted as a NEW
-    // independent agent in the target — so three wishes from one agent
+    // independent agent in the target, so three wishes from one agent
     // could auto-publish a cluster, which is exactly what the rule
     // exists to prevent.
     //
@@ -724,15 +745,25 @@ export async function mergeClusters(
   // `recordWish` applies and the same rule the migration backfill used.
   // Counting them made the merged cluster look like more agents wanted
   // it than actually did.
+  //
+  // `week_count` is recomputed too, and it has to be. It is a count of
+  // the wishes filed in the current week, and it was maintained as a
+  // running counter that was never reset. So a cluster merged in the
+  // same week as its target carried the sum of both clusters' weekly
+  // counts against a `count` that had just been recomputed from the
+  // wishes. The published entry read "17 this week" against 15 wishes
+  // in total, which is a count on this board that is not the whole truth.
   await db
     .prepare(
       `UPDATE clusters SET count = (SELECT COUNT(*) FROM wishes WHERE cluster_id = ?),
          unique_agents = (SELECT COUNT(DISTINCT source_key) FROM wishes
                            WHERE cluster_id = ? AND seeded = 0),
+         week_count = (SELECT COUNT(*) FROM wishes WHERE cluster_id = ?
+                        AND created_at >= ?),
          updated_at = ?
        WHERE id = ?`
     )
-    .bind(intoId, intoId, now, intoId)
+    .bind(intoId, intoId, intoId, weekStart().toISOString(), now, intoId)
     .run();
 }
 

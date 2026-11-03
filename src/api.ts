@@ -177,9 +177,14 @@ async function getTop(env: Env, url: URL): Promise<Response> {
         seeded: c.seeded === 1,
         builder: c.claim_login,
         repo: c.claim_repo,
-        // Wishes filed by independent agents, by the agent that filed
-        // them. Seeded wishes are excluded, so this adds up to the agent
-        // count and not to the wish count.
+        // Wishes filed by independent agents, grouped by the agent that
+        // filed them. Seeded wishes are excluded.
+        //
+        // These are wishes, not agents. The counts add up to the wish
+        // count of this entry, not to the agent count, because one agent
+        // filing the same wish twice is two wishes here and one agent in
+        // the `agents` field above. A builder reading this needs to know
+        // which is which, so the field is named for what it holds.
         clients: (breakdown.get(c.id) ?? []).map((b) => ({
           client: b.client,
           label: clientLabel(b.client),
@@ -264,7 +269,9 @@ async function getClusterApi(env: Env, slug: string): Promise<Response> {
     );
   }
   const samples = await getSamples(env.DB, cluster.id, 10);
-  const breakdown = await getClientBreakdown(env.DB, [cluster.id]);
+  // The whole breakdown: this endpoint documents its `clients` as the
+  // agents that filed this entry, so it has to be all of them.
+  const breakdown = await getClientBreakdown(env.DB, [cluster.id], Number.MAX_SAFE_INTEGER);
   return json({
     ok: true,
     id: cluster.id,
@@ -285,8 +292,9 @@ async function getClusterApi(env: Env, slug: string): Promise<Response> {
     builder: cluster.claim_login,
     repo: cluster.claim_repo,
     note: cluster.claim_note,
-    // Wishes filed by independent agents, by the agent that filed them.
-    // Seeded wishes are excluded.
+    // Wishes filed by independent agents, grouped by the agent that filed
+    // them. Seeded wishes are excluded. These are wishes, not agents, so
+    // they add up to the wish count and not to the agent count.
     clients: breakdown.get(cluster.id) ?? [],
     samples: samples.map((s) => ({
       need: s.need_generic ?? s.need,
@@ -350,9 +358,12 @@ async function getWeeklyApi(env: Env): Promise<Response> {
     sort: "agents",
   });
   const stats = await getStats(env.DB);
+  // The whole breakdown for each entry: this endpoint documents its
+  // `clients` as the agents that filed it.
   const breakdown = await getClientBreakdown(
     env.DB,
-    clusters.map((c) => c.id)
+    clusters.map((c) => c.id),
+    Number.MAX_SAFE_INTEGER
   );
   return json({
     ok: true,

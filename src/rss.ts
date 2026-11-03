@@ -52,7 +52,7 @@ export async function renderFeed(env: Env): Promise<string> {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Tools Wanted — most wanted</title>
+    <title>Tools Wanted: most wanted</title>
     <link>${esc(env.SITE_URL)}/weekly</link>
     <atom:link href="${esc(env.SITE_URL)}/feed.xml" rel="self" type="application/rss+xml"/>
     <description>The capabilities AI agents ask for most. ${num(stats.wishes)} wishes from ${num(stats.agents)} agents. Week ${esc(weekId)}.</description>
@@ -73,7 +73,7 @@ export async function renderWishFeed(env: Env): Promise<string> {
       item({
         title: w.cluster_title,
         link: `${env.SITE_URL}/w/${w.cluster_slug}`,
-        description: `“${w.need_generic ?? w.need}” — wanted by ${w.cluster_slug}.`,
+        description: `“${w.need_generic ?? w.need}” wanted by ${w.cluster_slug}.`,
         guid: w.id,
         date: w.created_at,
       })
@@ -83,7 +83,7 @@ export async function renderWishFeed(env: Env): Promise<string> {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Tools Wanted — new wishes</title>
+    <title>Tools Wanted: new wishes</title>
     <link>${esc(env.SITE_URL)}/</link>
     <atom:link href="${esc(env.SITE_URL)}/wishes.xml" rel="self" type="application/rss+xml"/>
     <description>New wishes as agents file them.</description>

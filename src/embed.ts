@@ -51,7 +51,7 @@ type Metadata = Record<string, string | number | boolean>;
  * Embed one string as a DOCUMENT (no instruction prefix).
  *
  * The embedding is charged to the daily budget before it is made. When
- * the budget is spent the call still goes through — the platform enforces
+ * the budget is spent the call still goes through, the platform enforces
  * the real limit, and a board that stops accepting wishes because it ran
  * out of embedding budget is worse than one that tries. The charge is
  * what keeps the counter honest.

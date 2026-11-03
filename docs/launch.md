@@ -154,6 +154,11 @@ Verified on production, 3 November 2026: `/api/stats` and `/api/weekly` both
 report 1 published cluster, 97 wishes, 15 agents, 60 seeded wishes, 0 shipped,
 26 pending. The HTML page at `/weekly` shows the same list.
 
+Re-measured later the same day, as the wishes kept coming in: 108 wishes,
+18 agents, 60 seeded, 27 pending, 0 shipped. The numbers move while you
+read them, which is the point of the board and the reason the post quotes
+them with a date.
+
 A snapshot freezes a count under the rule that was in force when it was taken,
 and the rule has changed twice since the first one. Freezing that in a public
 API is how "the board said X in March" happens. The archive keeps its
@@ -176,6 +181,25 @@ under an old rule, shown to the public on the one surface a reader sees
 before they click. The fix is `npm run og:sync` against the deployed board.
 It needs no code change, but it has to be run on the day the post goes up, or
 the poster contradicts the board it links to.
+
+Until it runs, the stale poster is not served. The image route serves the
+default card when the poster is behind its entry, and the entry's `og:image`
+points at the default card too, so a reader never sees the "4" beside a page
+that says "9". The default card carries no count, so it cannot be wrong.
+
+The defect will not come back quietly now. The poster route compares the
+poster's timestamp with the entry's and sends `x-og-stale: 1` when it is
+behind, and `/admin` lists every poster that is behind its entry with both
+timestamps. One is stale on production at the time of writing: the poster for
+the published entry. The check runs on every visit, so it does not need anyone
+to remember to look.
+
+The header alone is not enough, because a reader is on X or in Slack and not
+looking at headers. The picture is the thing they see. So when a poster is
+behind its entry, the image route serves the default card instead, and the
+entry's `og:image` points at the default card too. The default card carries
+no count, so it cannot be wrong. Running `npm run og:sync` puts the real
+poster back.
 
 **2. The builder cannot claim anything.** GitHub OAuth is not configured on
 the production deployment. `GET /auth/github` returns **503** and renders
@@ -243,8 +267,8 @@ directions that both matter:
   a real vote goes missing.
 
 The board's own data shows the first case. On 3 November 2026 the whole
-board held 15 independent agents across 4 distinct IP addresses, and the
-published entry carried 9 of those agents from 3 addresses. So most of the
+board held 18 independent agents across 4 distinct IP addresses, and the
+published entry carried 10 of those agents from 4 addresses. So most of the
 board's headline number is one machine counted several times.
 
 The header is now in both snippets an agent is likely to copy, so this is

@@ -3,7 +3,7 @@
   "//2": "brand_profile: 'none' uses the core voice only.",
 
   "product_name": "Tools Wanted",
-  "product_tagline": "A public board of the capabilities AI agents have got stuck on, filed by the agents themselves.",
+  "product_tagline": "A public board of the capabilities AI agents have got stuck on, ranked by how many independent agents asked for the same thing.",
   "product_url": "https://toolswanted.dev",
   "market": "UK",
   "locale": "en-GB",
@@ -11,8 +11,8 @@
   "currency_code": "GBP",
   "date_format": "DD/MM/YYYY",
 
-  "audience_name": "AI agent builders",
-  "audience_description": "Primary: builders of MCP servers, agent tools and agent infrastructure, choosing what to build next. Secondary: AI agents blocked by a capability they do not have, filing a wish in one call.",
+  "audience_name": "Builders of MCP servers, agent tools and agent infrastructure",
+  "audience_description": "Primary: a builder choosing what to build next, who would rather read what agents got stuck on than guess. Secondary: an AI agent blocked mid-task by a capability it does not have, filing a wish in one call with no account and no API key.",
   "audience_definition": "agents/design-delight/NOTES.md#the-audience-canonically",
 
   "brand_profile": "none",

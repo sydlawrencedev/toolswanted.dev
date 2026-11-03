@@ -247,7 +247,7 @@ function collapseWhitespace(input: string): string {
  * something that looks like a pre-signed secret.
  *
  * A pre-signed URL keeps its signature in the *query*, so dropping the
- * query does not make it safe — the path and host of a pre-signed object
+ * query does not make it safe, the path and host of a pre-signed object
  * are exactly the parts that identify the object. So we look for the
  * signature in the query before we discard it, and drop the whole URL.
  */
@@ -370,7 +370,7 @@ export function sanitizeText(raw: string, maxLength = 300): SanitiseResult {
   //
   // Each rule is tested against a fresh, non-global copy of its own pattern.
   // A global regex carries `lastIndex` between calls, so `re.test()` on the
-  // shared rule object alternates between matching and not — which is why
+  // shared rule object alternates between matching and not, which is why
   // this gate could be skipped entirely by a previous call.
   for (const rule of SECRET_RULES) {
     if (rule.name === "assigned-secret") continue;

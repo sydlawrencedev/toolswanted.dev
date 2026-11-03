@@ -84,7 +84,7 @@ export function clearCookie(): string {
  * The pending-claim cookie the server hands to every anonymous visitor
  * who starts a claim is signed in exactly this format, with exactly this
  * secret, and carries `login: ""` because there is no builder yet. It is
- * a different cookie name, so it is not read here — but a token is a
+ * a different cookie name, so it is not read here, but a token is a
  * token, and if a caller can put one in `tw_session` it must not become
  * a signed-in builder. The routes that trust the login (claim, ship)
  * would otherwise accept it.

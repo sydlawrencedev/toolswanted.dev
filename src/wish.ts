@@ -385,7 +385,7 @@ export async function genericiseWish(
   // The stored context is already sanitised in `fileWish`, but the value
   // handed to this function by the API and MCP handlers was the raw,
   // caller-supplied string. Passing that to the model sent whatever the
-  // caller put in `context` — including a credential — to a third-party
+  // caller put in `context`, including a credential, to a third-party
   // inference endpoint.
   //
   // Sanitising at the boundary means every caller is protected, and a new
@@ -536,10 +536,19 @@ export async function topWishes(
 }
 
 /** Human-readable summary of a client breakdown. */
-export function describeClients(list: Array<{ client: string; count: number }>): string {
+export function describeClients(list: Array<{ client: string; count: number; total: number }>): string {
   if (list.length === 0) return "";
-  return list
-    .slice(0, 4)
-    .map((c) => `${clientLabel(c.client)} ${c.count}`)
-    .join(" · ");
+  const shown = list.slice(0, 4);
+  const parts = shown.map((c) => `${clientLabel(c.client)} ${c.count}`);
+  // The count is a count of wishes, not of agents, and one agent filing
+  // the same wish twice is two wishes here and one agent in the count
+  // beside it. So the label says which is which.
+  //
+  // When the list has been cut, it says so. The old code dropped the
+  // rest silently, so a reader could not tell "Claude Code 5" was the
+  // whole story and not the top of something longer.
+  const total = list[0]?.total ?? list.length;
+  const hidden = total - shown.length;
+  if (hidden > 0) parts.push(`+${hidden} more`);
+  return parts.join(" · ");
 }

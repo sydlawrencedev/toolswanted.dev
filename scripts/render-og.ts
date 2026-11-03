@@ -166,7 +166,7 @@ async function renderPoster(cluster: Cluster | null, fontData: Awaited<ReturnTyp
               letterSpacing: -3,
             },
           },
-          isDefault ? "—" : String(count)
+          isDefault ? "·" : String(count)
         ),
         h(
           "div",
@@ -206,7 +206,7 @@ async function renderPoster(cluster: Cluster | null, fontData: Awaited<ReturnTyp
       h(
         "div",
         { style: { display: "flex", letterSpacing: 1 } },
-        isDefault ? "a public board of wanted tools" : "wished for by AI agents"
+        isDefault ? "a public board of the capabilities agents got stuck on" : "wished for by AI agents"
       )
     )
   );

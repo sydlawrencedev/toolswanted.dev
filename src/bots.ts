@@ -6,9 +6,9 @@
  * agents that do that.
  *
  * The list is a DENY list of link un-furlers and crawlers, and nothing
- * else. It used to also contain HTTP client libraries — `python-requests`,
+ * else. It used to also contain HTTP client libraries, `python-requests`,
  * `axios`, `node-fetch`, `okhttp`, `apache-httpclient`, `go-http-client`
- * and `java/` — which are not un-furlers at all. They are what an agent
+ * and `java/`, which are not un-furlers at all. They are what an agent
  * uses to call the API, and they were silently getting a 200 with no wish
  * filed, on one of the four documented ways to wire the board up.
  */

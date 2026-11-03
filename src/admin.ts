@@ -169,7 +169,7 @@ export async function handleAdmin(
     ${stalePosters
       .map(
         (p: { slug: string; title: string; og_updated_at: string; cluster_updated_at: string }) =>
-          `<li><a class="under" href="/w/${escAttr(p.slug)}">${esc(p.title)}</a> — poster from ${esc(p.og_updated_at.slice(0, 16).replace("T", " "))}, entry changed ${esc(p.cluster_updated_at.slice(0, 16).replace("T", " "))}</li>`
+          `<li><a class="under" href="/w/${escAttr(p.slug)}">${esc(p.title)}</a>: poster from ${esc(p.og_updated_at.slice(0, 16).replace("T", " "))}, entry changed ${esc(p.cluster_updated_at.slice(0, 16).replace("T", " "))}</li>`
       )
       .join("")}
   </ul>

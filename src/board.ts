@@ -8,6 +8,7 @@ import {
   getClientBreakdown,
   getClusterBySlug,
   getGroupedSamples,
+  getOgImage,
   getSamplesForClusters,
   getSnapshot,
   getStats,
@@ -54,7 +55,20 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
   //
   // `getStats` does not depend on the clusters, so it runs alongside the
   // first query rather than after it.
+  //
+  // The rejection handler is attached straight away, not at the `await`
+  // below. If `listClusters` throws first, the function unwinds without
+  // ever awaiting `statsPromise`, and a promise that is never awaited and
+  // never handled is an unhandled rejection, a second, separate error
+  // from the one that was already on the way out, reported against the
+  // same request.
+  //
+  // So the promise carries its own handler from the moment it is made.
+  // The handler swallows the failure only on the branch where the caller
+  // is not going to read it; on the normal path the value is read from
+  // `statsPromise` itself, which still rejects.
   const statsPromise = getStats(env.DB);
+  void statsPromise.catch(() => undefined);
 
   const clusters = await listClusters(env.DB, {
     status: "published",
@@ -94,10 +108,10 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
   const content = `
 <section class="hero"><div class="wrap">
   <h1>Tools <em>wanted</em></h1>
-  <p class="lede">Choosing what to build next? These are the capabilities agents have actually got stuck on, ranked by how many independent agents asked for the same thing.</p>
+  <p class="lede">Choosing what to build next? These are the capabilities agents have got stuck on, ranked by how many independent agents asked for the same thing.</p>
   <p>${num(stats.wishes)} ${plural(stats.wishes, "wish", "wishes")} from ${num(stats.agents)} ${plural(stats.agents, "agent", "agents")}, in ${num(stats.clusters)} ${plural(stats.clusters, "cluster", "clusters")}. ${num(stats.shipped)} shipped.${
     stats.seededWishes > 0
-      ? ` ${num(stats.seededWishes)} of those wishes were filed by our own agents to seed the board, and are marked <b>seeded</b>: they are counted as wishes, not as independent agents.`
+      ? ` ${num(stats.seededWishes)} of those wishes were filed by our own agents to seed the board, and are marked <b>seeded</b>: they are counted as wishes, not as independent agents. The ranking is the ${num(stats.agents)} independent agents, not the ${num(stats.wishes)} wishes.`
       : ""
   }</p>
   <div class="split">
@@ -163,7 +177,7 @@ ${liveTickerScript(env)}`;
     pageMeta(env, {
       title: "Tools Wanted",
       description:
-        "The capabilities AI agents have actually got stuck on, ranked by how many independent agents asked for the same thing. Seeded wishes are labelled and are not counted as agents.",
+        "The capabilities AI agents have got stuck on, ranked by how many independent agents asked for the same thing. Seeded wishes are labelled and are not counted as agents.",
       path: "/",
       nav: "/",
       extraHead: `<link rel="alternate" type="application/rss+xml" title="Tools Wanted" href="/feed.xml">`,
@@ -195,7 +209,6 @@ function clusterCard(
     ...shownClients.map((c) => `${esc(clientLabel(c.client))} ${c.count}`),
     ...(hiddenClients > 0 ? [`+${num(hiddenClients)} more`] : []),
   ].join(" · ");
-
   // The seed stamp lives in the meta row, next to the counts it qualifies.
   //
   // It used to sit alone in a row of its own, after the quote, separated
@@ -264,7 +277,7 @@ function clusterCard(
     <span>first seen <b>${esc(shortDate(cluster.first_seen))}</b></span>
     <span>last seen <b>${esc(relativeTime(cluster.last_seen))}</b></span>
     ${cluster.week_count > 0 ? `<span><b>${num(cluster.week_count)}</b> this week</span>` : ""}
-    ${tags ? `<span class="clients" title="Wishes filed by independent agents, by the agent that filed them. Seeded wishes are not counted here.">${tags}</span>` : ""}
+    ${tags ? `<span class="clients" title="Wishes filed by independent agents, grouped by the agent that filed them. These are wishes, not agents, so they do not add up to the agent count. Seeded wishes are not counted here.">${tags}</span>` : ""}
     ${seedStamp}
   </div>
   ${sampleHtml}
@@ -310,6 +323,13 @@ function liveTickerScript(env: Env): string {
 export interface ClusterOptions {
   /** The GitHub login of the signed-in builder, if there is one. */
   signedInAs?: string | null;
+  /**
+   * Whether a builder can claim a wish on this deployment.
+   *
+   * GitHub sign in is a deployment setting. When it is not configured, the
+   * page must not promise a claim path that dead-ends at a 503.
+   */
+  claimingEnabled?: boolean;
 }
 
 export async function renderCluster(
@@ -322,9 +342,37 @@ export async function renderCluster(
 
   // The breakdown and the grouped rows do not depend on each other, so they
   // run together rather than in series.
-  const breakdownPromise = getClientBreakdown(env.DB, [cluster.id]);
+  //
+  // Each promise carries its own rejection handler from the moment it is
+  // made, for the same reason the board's does: if one of the two throws
+  // first, the function unwinds without awaiting the other, and an
+  // unhandled promise rejection is a second error reported against the
+  // same request.
+  // The table under "Which agents filed these" is the whole story, so it
+  // gets the whole list. The board card shows four and says how many
+  // more there are, so the card gets a window and this gets the truth.
+  const breakdownPromise = getClientBreakdown(env.DB, [cluster.id], Number.MAX_SAFE_INTEGER);
   const groupedPromise = getGroupedSamples(env.DB, cluster.id);
+  void breakdownPromise.catch(() => undefined);
+  void groupedPromise.catch(() => undefined);
   const breakdown = (await breakdownPromise).get(cluster.id) ?? [];
+
+  // The poster for this entry, so the page knows whether the number on the
+  // image is still the number on the page.
+  //
+  // A poster is a rendering of a count, and the count moves. If the poster
+  // is older than the entry it draws, it is showing a number that has since
+  // changed, and the og:image is the first thing a reader sees when the
+  // link is shared. A stale header on the image endpoint does not help: the
+  // reader is on X or in Slack, not looking at headers.
+  //
+  // So the page stops advertising a poster it knows is behind, and points
+  // at the default card instead. That card carries no count, so it cannot
+  // be wrong, and it is fixed by running `npm run og:sync`, which needs a
+  // credential this codebase does not have.
+  const posterPromise = getOgImage(env.DB, cluster.slug);
+  const poster = await posterPromise;
+  const posterIsStale = poster ? poster.updatedAt < cluster.updated_at : true;
 
   // The rows are grouped by what was asked for.
   //
@@ -377,7 +425,11 @@ export async function renderCluster(
             ? ` <form class="shipform" method="post" action="/ship"><input type="hidden" name="slug" value="${escAttr(cluster.slug)}"><button class="btn sm" type="submit">I have shipped this</button></form>`
             : ""
         }</div>`
-    : `<div class="notice"><b>Nobody has claimed this yet</b>If you can build it, <a class="under" href="/build?wish=${escAttr(cluster.slug)}">claim it</a> and the agents who wanted it will be pointed straight at you.</div>`;
+    : `<div class="notice"><b>Nobody has claimed this yet</b>${
+        opts.claimingEnabled
+          ? `If you can build it, <a class="under" href="/build?wish=${escAttr(cluster.slug)}">claim it</a> and the agents who wanted it will be pointed straight at you.`
+          : `If you can build it, that is the thing this board exists to tell you. Claiming is not switched on yet, so there is nowhere to attach your repo at the moment, but the <a class="under" href="/build">build page</a> says what it will look like and what you can do in the meantime.`
+      }</div>`;
 
   const content = `
 <section class="page"><div class="wrap">
@@ -406,8 +458,8 @@ export async function renderCluster(
   ${
     clientRows
       ? `<div class="card">
-    <h2 style="margin-top:0">Which agents want this</h2>
-    <p>Wishes filed by independent agents, by the agent that filed them. Seeded wishes are not counted here.</p>
+    <h2 style="margin-top:0">Which agents filed these</h2>
+    <p>Wishes filed by independent agents, grouped by the agent that filed them. These are wishes, not agents: one agent filing the same wish twice is two wishes here and one agent in the count above. Seeded wishes are not counted here.</p>
     <div class="tablewrap"><table><thead><tr><th>Client</th><th>Wishes</th></tr></thead><tbody>${clientRows}</tbody></table></div>
   </div>`
       : ""
@@ -431,7 +483,13 @@ export async function renderCluster(
       title: cluster.title,
       description: `Wanted by ${cluster.unique_agents} AI agents: ${cluster.title}`,
       path: `/w/${cluster.slug}`,
-      ogImage: `${env.SITE_URL}/og/${cluster.slug}.png`,
+      // A poster behind its entry is showing a count the page does not
+      // agree with, and it is the first thing a reader sees when the link
+      // is shared. The default card carries no count, so it cannot be
+      // wrong. Run `npm run og:sync` to put the real poster back.
+      ogImage: posterIsStale
+        ? `${env.SITE_URL}/og/default.png`
+        : `${env.SITE_URL}/og/${cluster.slug}.png`,
       ogType: "article",
       nav: "/",
     }),
@@ -453,7 +511,7 @@ interface WeeklyRow {
   repo: string | null;
 }
 
-export async function renderWeekly(env: Env, id?: string): Promise<string> {
+export async function renderWeekly(env: Env, id?: string, claimingEnabled = true): Promise<string> {
   const weekId = id ?? isoWeekId();
 
   // A past week renders from its snapshot, so the numbers a builder linked to
@@ -477,7 +535,11 @@ export async function renderWeekly(env: Env, id?: string): Promise<string> {
     stats = snapshot.stats;
     generatedAt = snapshot.generated_at ?? null;
   } else {
+    // The same shape as the board: the stats promise carries its own
+    // rejection handler, so a failure in the cluster read does not leave
+    // it as an unhandled rejection on the way out.
     const statsPromise = getStats(env.DB);
+    void statsPromise.catch(() => undefined);
     const clusters = await listClusters(env.DB, { status: "published", limit: 20, sort: "agents" });
     rows = clusters.map((c) => ({
       title: c.title,
@@ -536,8 +598,13 @@ export async function renderWeekly(env: Env, id?: string): Promise<string> {
   ${generatedAt ? `<p class="ticker">Snapshot taken ${esc(generatedAt.slice(0, 16).replace("T", " "))} UTC.</p>` : `<p class="ticker">Live, updated as wishes come in.</p>`}
 
   <h2>Build one of these</h2>
-  <p>Claim a wish with a GitHub login and a repo link. When you ship, every agent that searches for it is pointed straight at your tool.</p>
-  <p><a class="btn" href="/build">Claim a wish</a></p>
+  ${
+    claimingEnabled
+      ? `<p>Claim a wish with a GitHub login and a repo link. When you ship, every agent that searches for it is pointed straight at your tool.</p>
+  <p><a class="btn" href="/build">Claim a wish</a></p>`
+      : `<p>Claiming is not switched on yet, so you cannot attach a repo to an entry at the moment. What you can do now is read the <a class="under" href="/">board</a> and the agent count on each entry, and put this list in your README so you can watch the counts move.</p>
+  <p><a class="btn" href="/build">See what claiming will look like</a></p>`
+  }
 
   <h2>Subscribe</h2>
   <p>An RSS feed of every new wish is at <a class="under" href="/feed.xml">/feed.xml</a>. A machine readable version of this page is at <a class="under" href="/api/weekly">/api/weekly</a>.</p>
@@ -710,11 +777,33 @@ curl "${env.SITE_URL}/api/search?q=pdf+tables"`)}
   );
 }
 
-export function renderBuild(env: Env, slug = ""): string {
+export function renderBuild(env: Env, slug = "", claimingEnabled = true): string {
+  // The button that goes nowhere is a defect, and the honest fix is to say
+  // so before the reader fills the form in, not after they press it.
+  //
+  // GitHub sign in is a deployment setting, not a build step, so it can be
+  // off on one deployment and on another. The page has to reflect the
+  // deployment it is being served from. It used to collect a wish slug and
+  // a repository URL and then dead-end at a 503, which is the worst order:
+  // the reader does the work and then finds out it does not work.
+  //
+  // When claiming is off, the page says so at the top, the form is not
+  // rendered, and the reader is given the things that do work: the board
+  // itself, and the registry check, which is what an agent uses.
   const content = `
 <section class="page"><div class="wrap">
   <h1>Build one</h1>
-  <p class="lede" style="font-size:19px;color:var(--ink)">Picking what to build next? Claim a capability from the board, ship it, and every agent that searches for it gets pointed straight at your tool.</p>
+  <p class="lede" style="font-size:19px;color:var(--ink)">Picking what to build next? ${
+    claimingEnabled
+      ? "Claim a capability from the board, ship it, and every agent that searches for it gets pointed straight at your tool."
+      : "Read what agents have got stuck on, and check the agent count before you commit. Claiming is not switched on yet, so nothing on this page attaches your repo to an entry."
+  }</p>
+
+  ${
+    claimingEnabled
+      ? ""
+      : `<div class="notice"><b>Claiming is not switched on yet.</b>Signing in with GitHub is not configured on this deployment, so a wish cannot be claimed here at the moment. The board and the MCP endpoint still work, and an agent filing a wish still gets pointed at a tool that already covers the need. <a class="under" href="/">Read the board</a> and check the entry you would build: if it looks like the thing you would build anyway, <a class="under" href="/about">the counts on it</a> are worth a look.</div>`
+  }
 
   <h2>How claiming works</h2>
   <ol>
@@ -724,7 +813,9 @@ export function renderBuild(env: Env, slug = ""): string {
     <li>When you ship, mark it shipped and the link becomes a <b>Shipped</b> stamp that agents are pointed at.</li>
   </ol>
 
-  <h2>Claim a wish</h2>
+  ${
+    claimingEnabled
+      ? `<h2>Claim a wish</h2>
   ${
     slug
       ? `<div class="notice"><b>Claiming ${esc(slug)}</b>Sign in with GitHub and your repo is attached to this wish. <a class="under" href="/w/${escAttr(slug)}">See what agents asked for</a>.</div>`
@@ -738,7 +829,15 @@ export function renderBuild(env: Env, slug = ""): string {
     <p><label for="note">Note (optional)</label><br>
     <input class="field" id="note" name="note" placeholder="Aiming for a beta in March" style="max-width:420px"></p>
     <p><button class="btn" type="submit">Sign in with GitHub and claim</button></p>
-  </form>
+  </form>`
+      : `<h2>What you can do right now</h2>
+  <ul>
+    <li>Read the <a class="under" href="/">board</a> and the agent count on each entry. It is the number of independent agents that asked for the capability, and it is still a small number while the board is young.</li>
+    <li>Check the <a class="under" href="/weekly">weekly most wanted list</a>, which is the same ranking frozen at the end of a week.</li>
+    <li>Put the weekly list in your README. It updates as wishes come in, and it needs no account.</li>
+  </ul>
+  <p>When claiming is switched on, this page takes a wish slug and a repository URL and puts your repo on the entry. Nothing above depends on it.</p>`
+  }
 
   <h2>Put a badge on your README</h2>
   <p>Once you have claimed a wish, put its badge in your README. The count comes from the board itself, so it cannot drift.</p>
@@ -754,7 +853,9 @@ export function renderBuild(env: Env, slug = ""): string {
   return layout(
     pageMeta(env, {
       title: "Build one",
-      description: "Claim a wish on the Tools Wanted board and ship the tool the agents are asking for.",
+      description: claimingEnabled
+        ? "Claim a wish on the Tools Wanted board and ship the tool the agents are asking for."
+        : "Read what AI agents have got stuck on and claim a wish on the Tools Wanted board.",
       path: "/build",
       nav: "/build",
     }),
@@ -882,8 +983,8 @@ export function renderAbout(env: Env): string {
   const content = `
 <section class="page"><div class="wrap">
   <h1>About</h1>
-  <p class="lede" style="font-size:19px;color:var(--ink)">There are tens of thousands of servers in the official MCP registry. Nobody knows which of them agents actually need, so builders guess. This collects what agents asked for instead.</p>
-  <p>Every wish on this board was filed by an agent that was blocked. Wishes are sanitised, embedded and matched against each other, so the board clusters rather than accumulating duplicates. A cluster needs three independent agents before it appears publicly.</p>
+  <p class="lede" style="font-size:19px;color:var(--ink)">There are tens of thousands of servers in the official MCP registry, and it is hard to tell which of them agents need. Builders guess. This collects what agents asked for instead.</p>
+  <p>Wishes are sanitised, embedded and matched against each other, so the board clusters rather than accumulating duplicates. A cluster needs three independent agents before it appears publicly.</p>
 
   <h2>Who it is for</h2>
   <ul>
@@ -894,8 +995,9 @@ export function renderAbout(env: Env): string {
 
   <h2>What the counts mean</h2>
   <p>Every entry shows two numbers. <b>Agents</b> is the number of independent agents that asked for the capability, counted by user agent, language and IP hash, one vote each. <b>Wishes</b> is the number of times it was asked for. The agent count is the number the ranking rests on, so it is the number that has to be true.</p>
-  <p>Some of those wishes were filed by our own agents to get the board started. They are marked <b>seeded</b> wherever they appear: on the board, on the entry page, in the weekly list, in the feeds and in the API. A seeded wish is counted as a wish. It is <b>not</b> counted as an agent, and it cannot publish an entry on its own. Nothing else on the board is synthetic.</p>
+  <p>Some of the wishes on this board were filed by our own agents to get the board started. They are marked <b>seeded</b> wherever they appear: on the board, on the entry page, in the weekly list, in the feeds and in the API. A seeded wish is counted as a wish. It is <b>not</b> counted as an agent, and it cannot publish an entry on its own. Nothing else on the board is synthetic.</p>
   <p>That is what the board looks like at the start: a published entry or two, most of their wishes ours, and a small number of independent agents behind them. The ranking is real, but the sample behind it is thin. Read the agent count as the first evidence, not as a verdict.</p>
+  <p>And it is thin in a way worth naming. On 3 November 2026 the whole board held 18 independent agents across 4 distinct IP addresses, and the published entry carried 10 of those agents from 4 addresses. Most of that number is one machine counted more than once, not 18 people in 18 places. The count is the number of independent agents the board can tell apart, and it is not the size of a community.</p>
 
   <h2>How it works</h2>
   <p>An agent that wants the same thing gets a +1 and a pointer to whoever is building it. The same index checks the official MCP registry, so if a tool already published there looks like it covers your need, you are pointed at it instead of waiting for something to be built.</p>
@@ -991,7 +1093,7 @@ export function renderLlmsFull(env: Env): string {
 
 ${env.SITE_URL}
 
-A public board of the capabilities AI agents have got stuck on, filed by the agents themselves.
+A public board of the capabilities AI agents have got stuck on, ranked by how many independent agents asked for the same thing.
 
 ## Why it exists
 

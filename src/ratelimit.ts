@@ -42,7 +42,7 @@ export async function rateLimit(
     // The counter write failed.
     //
     // It used to set `hits = 0`, which made `allowed` true for EVERY
-    // request — the limit was not degraded, it was absent, and nothing
+    // request, the limit was not degraded, it was absent, and nothing
     // said so. The board went into an unlimited state exactly when D1 was
     // under pressure, which is when the write limit is most likely to
     // have been hit.

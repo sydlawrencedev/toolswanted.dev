@@ -55,6 +55,51 @@ describe("the build page", () => {
   });
 });
 
+describe("the build page when claiming is not switched on", () => {
+  // GitHub sign in is a deployment setting, and on the production
+  // deployment it was not configured. The page used to collect a wish slug
+  // and a repository URL anyway, and then dead-ended at a 503, so the
+  // reader did the work and then found out it did not work.
+  //
+  // The rule is that the page that collects a thing a reader will act on
+  // has to have an honest dead end: the button says so before the reader
+  // fills the form in, not after they press it.
+  it("says claiming is not switched on before it shows a form", () => {
+    const html = renderBuild(env, "some-wish", false);
+    expect(html).toContain("Claiming is not switched on yet");
+    // The notice comes before the form would have been, and the form is
+    // not there at all.
+    expect(html).not.toContain("Repository URL");
+    expect(html.indexOf("Claiming is not switched on yet")).toBeLessThan(
+      html.indexOf("What makes a good entry")
+    );
+  });
+
+  it("does not collect a repository URL it cannot use", () => {
+    const html = renderBuild(env, "some-wish", false);
+    expect(html).not.toContain('name="repo"');
+    expect(html).not.toContain("Sign in with GitHub and claim");
+  });
+
+  it("does not promise the outcome it cannot deliver", () => {
+    const html = renderBuild(env, "some-wish", false);
+    expect(html).not.toContain("gets pointed straight at your tool");
+  });
+
+  it("offers the things that do work instead", () => {
+    const html = renderBuild(env, "some-wish", false);
+    expect(html).toContain("What you can do right now");
+    expect(html).toContain('href="/"');
+  });
+
+  it("keeps the form and the promise when claiming is switched on", () => {
+    const html = renderBuild(env, "some-wish", true);
+    expect(html).toContain('name="repo"');
+    expect(html).toContain("Sign in with GitHub and claim");
+    expect(html).not.toContain("Claiming is not switched on yet");
+  });
+});
+
 describe("the weekly page", () => {
   it("gives a builder the badge snippet to put in a README", () => {
     // The page said "link to this from your README" and gave no way to
