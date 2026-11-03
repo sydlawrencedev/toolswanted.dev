@@ -42,7 +42,7 @@ export async function renderFeed(env: Env): Promise<string> {
         link: `${env.SITE_URL}/w/${c.slug}`,
         description: `Wanted by ${c.unique_agents} agent${c.unique_agents === 1 ? "" : "s"} (${c.count} wish${c.count === 1 ? "" : "es"}).${
           c.claim_repo ? ` ${c.shipped === 1 ? "Shipped" : "Being built"}: ${c.claim_repo}` : ""
-        }`,
+        }${c.seeded === 1 ? " Seeded: some of these wishes were filed by the operator's own agents." : ""}`,
         guid: `${weekId}:${c.slug}`,
         date: c.last_seen,
       })

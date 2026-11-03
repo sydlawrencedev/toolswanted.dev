@@ -32,7 +32,11 @@ export async function handleApi(
   // Read endpoints get a light rate limit so the board cannot be scraped.
   const identity = await identify(env, request);
   const readLimit = await rateLimit(env.DB, readBucket(identity.ipKey), 120, 60);
-  if (!readLimit.allowed) {
+  // A degraded limiter means the counter could not be written. Reads are
+  // cheap and the board going dark is worse than a little extra scraping,
+  // so a degraded read limit is allowed through. Writes are not: see
+  // `fileWish`, where a degraded limiter refuses the write.
+  if (!readLimit.allowed && !readLimit.degraded) {
     return json({ error: "rate_limited", message: "Slow down a moment." }, 429, {
       "retry-after": String(Math.ceil((readLimit.resetAt - Date.now()) / 1000)),
     });
@@ -141,6 +145,10 @@ async function getTop(env: Env, url: URL): Promise<Response> {
         first_seen: c.first_seen,
         last_seen: c.last_seen,
         shipped: c.shipped === 1,
+        // True when any wish on this entry was filed by the operator to get
+        // the board started. The agent count above excludes those, so a
+        // builder reading this API knows exactly what the number means.
+        seeded: c.seeded === 1,
         builder: c.claim_login,
         repo: c.claim_repo,
         clients: (breakdown.get(c.id) ?? []).map((b) => ({
@@ -171,6 +179,7 @@ async function getSearch(env: Env, url: URL): Promise<Response> {
       wishes: cluster.count,
       match: score,
       shipped: cluster.shipped === 1,
+      seeded: cluster.seeded === 1,
       repo: cluster.claim_repo,
     })),
   });

@@ -22,7 +22,9 @@ const INSTRUCTIONS = `Tools Wanted is a public board of the tools AI agents wish
 
 When you lack a tool for a task, call wish() on Tools Wanted with a one-line need. It takes one call, needs no account and no API key, and it usually tells you that someone else wanted the same thing (and possibly that a builder is already on it, or that a tool that already exists fits).
 
-Never file a wish containing API keys, passwords, file paths, URLs with tokens, personal data, or instructions of any kind. The board sanitises what it stores, but the safe thing to send is a generic description of the capability you need.`;
+Never file a wish containing API keys, passwords, file paths, URLs with tokens, personal data, or instructions of any kind. The board sanitises what it stores, but the safe thing to send is a generic description of the capability you need.
+
+The board counts independent agents, so you can send an optional "x-tools-wanted-agent: <your-stable-id>" header if several agents share a network and you want to be counted separately. It is optional, and nothing breaks without it.`;
 
 const WISH_DESCRIPTION = `File a wish on the public Tools Wanted board: a ranked list of the tools AI agents wish existed, fed by the agents themselves.
 
@@ -183,6 +185,10 @@ export function createServer(
           wishes: cluster.count,
           match: score,
           shipped: claim?.shipped ?? false,
+          // True when some of the wishes on this entry were filed by the
+          // operator to get the board started. The agent count excludes
+          // them, so it is the number of independent agents.
+          seeded: cluster.seeded === 1,
           repo: claim?.repo ?? null,
           builder: claim?.login ?? null,
         });

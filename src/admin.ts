@@ -53,7 +53,7 @@ export async function handleAdmin(
   }
 
   if (!(await isAdmin(env, request))) {
-    const body = `<section class="page"><div class="wrap">
+    const body = `<section class="page quiet"><div class="wrap">
   <h1>Admin</h1>
   <form method="post" action="/admin/login">
     <p><label for="token">Passphrase</label><br>
@@ -139,26 +139,26 @@ export async function handleAdmin(
     )
     .join("");
 
-  const body = `<section class="page"><div class="wrap">
+  const body = `<section class="page quiet"><div class="wrap">
   <h1>Admin</h1>
   <p>${num(stats.clusters)} published · ${num(stats.pending)} in review · ${num(stats.wishes)} wishes · ${num(stats.agents)} agents · ${num(stats.shipped)} shipped</p>
 
   <h2>Review queue</h2>
   <p>New clusters stay hidden until enough independent agents want them, or you publish them.</p>
   <div class="card">
-    <table>
+    <div class="tablewrap"><table>
       <thead><tr><th>Cluster</th><th>Wishes</th><th>First seen</th><th>Builder</th><th>Actions</th></tr></thead>
       <tbody>${pendingRows.join("") || `<tr><td colspan="5">Nothing waiting.</td></tr>`}</tbody>
-    </table>
+    </table></div>
   </div>
 
   <h2>Flagged wishes</h2>
   <p>Text that looked like an attempt to give the board instructions. These are counted but not published automatically.</p>
   <div class="card">
-    <table>
+    <div class="tablewrap"><table>
       <thead><tr><th>Wish</th><th>Reason</th><th>Client</th><th>When</th></tr></thead>
       <tbody>${flaggedRows || `<tr><td colspan="4">Nothing flagged.</td></tr>`}</tbody>
-    </table>
+    </table></div>
   </div>
 
   <p><a class="under" href="/admin/logout">Log out</a></p>

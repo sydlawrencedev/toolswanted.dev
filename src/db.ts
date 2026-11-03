@@ -280,13 +280,20 @@ export async function recordWish(
   // One batch, one round trip. The order matters: the counter update reads
   // the votes table to decide whether this source is new to the cluster, so
   // it has to run before the vote is inserted.
+  //
+  // A seeded wish is the operator's own, not an agent's. It is counted as a
+  // wish, and it is labelled, but it is NOT counted as an independent
+  // agent and it cannot auto-publish a cluster on its own. Otherwise the
+  // board's headline number — "wanted by N agents" — would be counting the
+  // operator's own wishes as agent demand.
   const results = await db.batch([
     db
       .prepare(
         `UPDATE clusters SET
            count = count + 1,
            unique_agents = unique_agents + CASE
-             WHEN EXISTS (SELECT 1 FROM votes WHERE source_key = ? AND cluster_id = ?) THEN 0
+             WHEN ? = 1 THEN 0
+             WHEN EXISTS (SELECT 1 FROM votes WHERE source_key = ? AND cluster_id = ? AND seeded = 0) THEN 0
              ELSE 1 END,
            week_count = week_count + ?,
            last_seen = ?,
@@ -295,18 +302,21 @@ export async function recordWish(
            status = CASE
              WHEN status = 'pending'
               AND unique_agents + CASE
-                    WHEN EXISTS (SELECT 1 FROM votes WHERE source_key = ? AND cluster_id = ?) THEN 0
+                    WHEN ? = 1 THEN 0
+                    WHEN EXISTS (SELECT 1 FROM votes WHERE source_key = ? AND cluster_id = ? AND seeded = 0) THEN 0
                     ELSE 1 END >= ?
              THEN 'published'
              ELSE status END
          WHERE id = ?`
       )
       .bind(
+        input.seeded ? 1 : 0,
         input.sourceKey,
         input.clusterId,
         isNewWeek ? 1 : 0,
         input.now,
         input.now,
+        input.seeded ? 1 : 0,
         input.seeded ? 1 : 0,
         input.sourceKey,
         input.clusterId,
@@ -315,10 +325,10 @@ export async function recordWish(
       ),
     db
       .prepare(
-        `INSERT INTO votes (source_key, cluster_id, created_at) VALUES (?, ?, ?)
+        `INSERT INTO votes (source_key, cluster_id, created_at, seeded) VALUES (?, ?, ?, ?)
          ON CONFLICT(source_key, cluster_id) DO NOTHING`
       )
-      .bind(input.sourceKey, input.clusterId, input.now),
+      .bind(input.sourceKey, input.clusterId, input.now, input.seeded ? 1 : 0),
     db
       .prepare(
         `INSERT INTO wishes (id, cluster_id, need, need_generic, context, client, model,
@@ -391,6 +401,7 @@ export async function getStats(db: D1Database): Promise<{
   clusters: number;
   wishes: number;
   agents: number;
+  seededWishes: number;
   shipped: number;
   pending: number;
 }> {
@@ -399,13 +410,28 @@ export async function getStats(db: D1Database): Promise<{
       `SELECT
          (SELECT COUNT(*) FROM clusters WHERE status = 'published') AS clusters,
          (SELECT COUNT(*) FROM wishes) AS wishes,
-         (SELECT COUNT(DISTINCT source_key) FROM wishes) AS agents,
+         (SELECT COUNT(DISTINCT source_key) FROM wishes WHERE seeded = 0) AS agents,
+         (SELECT COUNT(*) FROM wishes WHERE seeded = 1) AS seededWishes,
          (SELECT COUNT(*) FROM clusters WHERE shipped = 1) AS shipped,
          (SELECT COUNT(*) FROM clusters WHERE status = 'pending') AS pending`
     )
-    .first<{ clusters: number; wishes: number; agents: number; shipped: number; pending: number }>();
+    .first<{
+    clusters: number;
+    wishes: number;
+    agents: number;
+    seededWishes: number;
+    shipped: number;
+    pending: number;
+  }>();
   return (
-    row ?? { clusters: 0, wishes: 0, agents: 0, shipped: 0, pending: 0 }
+    row ?? {
+      clusters: 0,
+      wishes: 0,
+      agents: 0,
+      seededWishes: 0,
+      shipped: 0,
+      pending: 0,
+    }
   );
 }
 
@@ -472,6 +498,27 @@ export async function mergeClusters(
   const now = new Date().toISOString();
   await db.batch([
     db.prepare(`UPDATE wishes SET cluster_id = ? WHERE cluster_id = ?`).bind(intoId, fromId),
+    // Move the votes with the wishes.
+    //
+    // A vote is what proves an agent asked for a capability, and the
+    // one-vote-per-agent rule is checked against the votes table for the
+    // target cluster. Without moving them, an agent that had already
+    // wished in the cluster being merged away counted as a NEW
+    // independent agent in the target — so three wishes from one agent
+    // could auto-publish a cluster, which is exactly what the rule
+    // exists to prevent.
+    //
+    // The insert is `ON CONFLICT DO NOTHING`: an agent that voted in both
+    // clusters keeps one vote, and the count of distinct agents is
+    // unchanged by the merge.
+    db
+      .prepare(
+        `INSERT INTO votes (source_key, cluster_id, created_at)
+         SELECT source_key, ?, created_at FROM votes WHERE cluster_id = ?
+         ON CONFLICT(source_key, cluster_id) DO NOTHING`
+      )
+      .bind(intoId, fromId),
+    db.prepare(`DELETE FROM votes WHERE cluster_id = ?`).bind(fromId),
     db.prepare(`UPDATE cluster_clients SET count = 0 WHERE cluster_id = ?`).bind(fromId),
     db.prepare(`DELETE FROM cluster_clients WHERE cluster_id = ?`).bind(fromId),
     db

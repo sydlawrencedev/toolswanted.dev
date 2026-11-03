@@ -40,7 +40,12 @@ export const CSS = `
   --paper:#f3eee1; --paper-2:#fffdf7; --ink:#151210; --ink-soft:#514a42;
   --red:#d32a1c; --red-ink:#b32016; --line:#151210; --chip:#e8e1d1;
   --shadow:4px 4px 0 #151210;
-  --radius:2px;
+  --radius:4px;
+  /* The height of the sticky top bar. The filter bar sticks below it, so
+     the two have to agree. It used to be a hard-coded 58px in the filter
+     rule while the bar was actually taller on a narrow screen, and the
+     filter bar slid underneath it. */
+  --topbar-h:60px;
   --font-display:ui-sans-serif,system-ui,"Helvetica Neue",Arial,"Segoe UI",Roboto,sans-serif;
   --font-body:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --font-mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
@@ -48,7 +53,7 @@ export const CSS = `
 @media (prefers-color-scheme:dark){
   :root{
     --paper:#100e0d; --paper-2:#1a1715; --ink:#f3eee1; --ink-soft:#a89f93;
-    --red:#ff5c4a; --red-ink:#ff7a6a; --line:#3a342e; --chip:#241f1c;
+    --red:#ff5c4a; --red-ink:#ff7a6a; --line:#726859; --chip:#241f1c;
     --shadow:4px 4px 0 #000;
   }
 }
@@ -58,7 +63,7 @@ html[data-theme="light"]{
 }
 html[data-theme="dark"]{
   --paper:#100e0d; --paper-2:#1a1715; --ink:#f3eee1; --ink-soft:#a89f93;
-  --red:#ff5c4a; --red-ink:#ff7a6a; --line:#3a342e; --chip:#241f1c; --shadow:4px 4px 0 #000;
+  --red:#ff5c4a; --red-ink:#ff7a6a; --line:#726859; --chip:#241f1c; --shadow:4px 4px 0 #000;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -68,7 +73,7 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 a{color:inherit}
-.wrap{max-width:1040px;margin:0 auto;padding:0 18px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
 .mono{font-family:var(--font-mono)}
 
 /* ---------- top bar ---------- */
@@ -76,7 +81,7 @@ a{color:inherit}
   border-bottom:3px solid var(--line); background:var(--paper);
   position:sticky; top:0; z-index:20;
 }
-.top .wrap{display:flex;align-items:center;gap:14px;min-height:58px;flex-wrap:wrap}
+.top .wrap{display:flex;align-items:center;gap:16px;min-height:var(--topbar-h);flex-wrap:wrap}
 .logo{
   font-family:var(--font-display); font-weight:900; letter-spacing:-.03em;
   font-size:19px; text-transform:uppercase; text-decoration:none; white-space:nowrap;
@@ -85,47 +90,51 @@ a{color:inherit}
 .top nav{margin-left:auto;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
 .top nav a{
   text-decoration:none;font-weight:700;font-size:13px;text-transform:uppercase;
-  letter-spacing:.06em;padding:7px 9px;border-radius:var(--radius);
+  letter-spacing:.06em;padding:8px;border-radius:var(--radius);
 }
 .top nav a:hover{background:var(--chip)}
 .top nav a[aria-current="page"]{background:var(--ink);color:var(--paper)}
 .tally{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);white-space:nowrap}
 @media (max-width:760px){
+  :root{--topbar-h:84px}
   .tally{display:none}
-  .top .wrap{min-height:0;padding-top:9px;padding-bottom:9px;row-gap:6px}
+  .top .wrap{min-height:0;padding-top:8px;padding-bottom:8px;row-gap:4px}
   .logo{order:1;font-size:17px}
-  .top nav{order:2;margin-left:0;width:100%;overflow-x:auto;flex-wrap:nowrap;gap:2px;scrollbar-width:none}
+  .top nav{order:2;margin-left:0;width:100%;overflow-x:auto;flex-wrap:nowrap;gap:4px;scrollbar-width:none}
   .top nav::-webkit-scrollbar{display:none}
-  .top nav a{padding:6px 8px;font-size:12px;white-space:nowrap}
+  .top nav a{padding:8px; font-size:12px;white-space:nowrap}
+  /* A scroll affordance: the nav is cut off mid-word at a narrow width and
+     there is no other hint that there is more of it. */
+  .top nav{-webkit-mask-image:linear-gradient(to right,#000 88%,transparent);mask-image:linear-gradient(to right,#000 88%,transparent)}
 }
 
 /* ---------- hero ---------- */
-.hero{padding:38px 0 8px;border-bottom:3px solid var(--line)}
+.hero{padding:40px 0 8px;border-bottom:3px solid var(--line)}
 .hero h1{
   font-family:var(--font-display); font-weight:900; letter-spacing:-.035em;
-  font-size:clamp(38px,9vw,86px); line-height:.92; margin:0 0 14px; text-transform:uppercase;
+  font-size:clamp(38px,9vw,86px); line-height:.92; margin:0 0 16px; text-transform:uppercase;
 }
 .hero h1 em{font-style:normal;color:var(--red)}
-.hero p{max-width:60ch;color:var(--ink-soft);margin:0 0 18px;font-size:17px}
+.hero p{max-width:60ch;color:var(--ink-soft);margin:0 0 16px;font-size:17px}
 .hero .lede{font-size:19px;color:var(--ink)}
 .btn{
   display:inline-block;background:var(--ink);color:var(--paper);text-decoration:none;
-  font-weight:800;font-size:14px;padding:11px 16px;border-radius:var(--radius);
+  font-weight:800;font-size:14px;padding:12px 16px;border-radius:var(--radius);
   text-transform:uppercase;letter-spacing:.04em;border:2px solid var(--line);
 }
 .btn:hover{background:var(--red);color:#fff;border-color:var(--red)}
 .btn.ghost{background:transparent;color:var(--ink)}
 .btn.ghost:hover{background:var(--ink);color:var(--paper)}
-.btn.sm{padding:7px 11px;font-size:12px}
+.btn.sm{padding:8px 12px;font-size:12px}
 
 /* ---------- filters ---------- */
 .filters{
   display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:16px 0;
-  border-bottom:3px solid var(--line); position:sticky; top:58px; background:var(--paper); z-index:15;
+  border-bottom:3px solid var(--line); position:sticky; top:var(--topbar-h); background:var(--paper); z-index:15;
 }
-.filters .label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);font-weight:800}
+.filters .label{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);font-weight:800}
 .chip{
-  display:inline-block;padding:6px 11px;border:2px solid var(--line);border-radius:var(--radius);
+  display:inline-block;padding:8px 12px;border:2px solid var(--line);border-radius:var(--radius);
   text-decoration:none;font-weight:700;font-size:13px;background:var(--paper-2);
 }
 .chip:hover{background:var(--chip)}
@@ -133,12 +142,12 @@ a{color:inherit}
 .count-pill{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
 
 /* ---------- board ---------- */
-.board{padding:26px 0 60px}
+.board{padding:24px 0 60px}
 .cluster{
   border:3px solid var(--line);background:var(--paper-2);border-radius:var(--radius);
-  margin:0 0 18px;box-shadow:var(--shadow);position:relative;overflow:hidden;
+  margin:0 0 16px;box-shadow:var(--shadow);position:relative;overflow:hidden;
 }
-.cluster .topline{display:flex;align-items:flex-start;gap:16px;padding:18px 18px 6px}
+.cluster .topline{display:flex;align-items:flex-start;gap:16px;padding:16px 16px 4px}
 .rank{
   font-family:var(--font-display);font-weight:900;font-size:13px;color:var(--paper);
   background:var(--ink);width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;
@@ -146,90 +155,121 @@ a{color:inherit}
 }
 .cluster h2{
   font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;line-height:1.1;
-  margin:0;font-size:clamp(19px,3.4vw,26px);flex:1;min-width:0;
+  margin:0;font-size:clamp(20px,3.4vw,28px);flex:1;min-width:0;
 }
 .cluster h2 a{text-decoration:none}
-.cluster h2 a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.cluster h2 a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
 .tallybig{
-  font-family:var(--font-display);font-weight:900;font-size:clamp(40px,11vw,64px);
+  font-family:var(--font-display);font-weight:900;font-size:clamp(32px,8vw,48px);
   line-height:.85;letter-spacing:-.05em;font-variant-numeric:tabular-nums;text-align:right;
   flex:0 0 auto;
 }
-.tallybig small{display:block;font-size:11px;letter-spacing:.12em;font-weight:800;color:var(--ink-soft);text-transform:uppercase;margin-top:6px}
-.meta{display:flex;flex-wrap:wrap;gap:6px 14px;padding:4px 18px 14px;font-size:13px;color:var(--ink-soft)}
+.tallybig small{display:block;font-size:12px;letter-spacing:.12em;font-weight:800;color:var(--ink-soft);text-transform:uppercase;margin-top:8px}
+.meta{display:flex;flex-wrap:wrap;gap:4px 12px;padding:4px 16px 16px;font-size:13px;color:var(--ink-soft)}
 .meta b{color:var(--ink);font-variant-numeric:tabular-nums}
-.samples{border-top:2px solid var(--line);padding:12px 18px;background:var(--chip)}
+.samples{border-top:2px solid var(--line);padding:12px 16px;background:var(--chip)}
 .samples p{margin:0 0 8px;font-size:14px;color:var(--ink-soft)}
 .samples p:last-child{margin-bottom:0}
 .samples .q{color:var(--ink)}
 .tag{
-  display:inline-block;font-family:var(--font-mono);font-size:11px;padding:2px 7px;
+  display:inline-block;font-family:var(--font-mono);font-size:12px;padding:2px 8px;
   border:1px solid var(--line);border-radius:99px;background:var(--paper-2);margin:0 4px 4px 0;
 }
 .stamp{
   display:inline-block;border:2px solid var(--red);color:var(--red);font-weight:900;
-  font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:3px 8px;
+  font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:4px 8px;
   transform:rotate(-3deg);border-radius:var(--radius);
 }
 .stamp.shipped{background:var(--red);color:#fff}
-.builders{padding:0 18px 16px;font-size:13px}
+.builders{padding:0 16px 16px;font-size:13px}
 .builders a{font-weight:700}
 @media (min-width:720px){
-  .cluster .topline{padding:20px 22px 8px}
-  .cluster .meta{padding:6px 22px 16px}
-  .samples{padding:14px 22px}
-  .builders{padding:0 22px 18px}
+  .cluster .topline{padding:20px 24px 8px}
+  .cluster .meta{padding:8px 24px 16px}
+  .samples{padding:16px 24px}
+  .builders{padding:0 24px 16px}
 }
 
 /* ---------- generic page ---------- */
-.page{padding:30px 0 70px;max-width:760px}
+.page{padding:32px 0 72px;max-width:760px}
 .page h1{
   font-family:var(--font-display);font-weight:900;letter-spacing:-.03em;text-transform:uppercase;
-  font-size:clamp(30px,7vw,56px);line-height:.95;margin:0 0 8px;
+  font-size:clamp(32px,7vw,56px);line-height:.95;margin:0 0 8px;
 }
-.page h2{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em;margin:34px 0 10px;text-transform:uppercase}
-.page h3{font-weight:800;font-size:16px;margin:22px 0 6px}
+.page h2{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em;margin:32px 0 8px;text-transform:uppercase}
+.page h3{font-weight:800;font-size:20px;margin:24px 0 8px}
 .page p,.page li{color:var(--ink-soft)}
 .page p strong,.page li strong{color:var(--ink)}
 .page code{
-  font-family:var(--font-mono);font-size:.88em;background:var(--chip);
-  padding:2px 6px;border-radius:var(--radius);color:var(--ink);overflow-wrap:anywhere;
+  font-family:var(--font-mono);font-size:.92em;background:var(--chip);
+  padding:2px 4px;border-radius:var(--radius);color:var(--ink);overflow-wrap:anywhere;
 }
 pre{
-  background:var(--ink);color:var(--paper);padding:14px 16px;border-radius:var(--radius);
-  overflow-x:auto;font-family:var(--font-mono);font-size:13px;line-height:1.55;border:3px solid var(--line);
+  background:var(--ink);color:var(--paper);padding:12px 16px;border-radius:var(--radius);
+  overflow-x:auto;font-family:var(--font-mono);font-size:13px;line-height:1.55;border:2px solid var(--line);
 }
+/* In dark mode the ink variable is the light colour and the paper variable
+   is the dark one, so the code block inverted into a bright slab on a black
+   page. The code block has its own colours rather than following the
+   ink/paper swap. */
+@media (prefers-color-scheme:dark){
+  pre{background:#241f1c;color:#f3eee1;border-color:#726859}
+}
+html[data-theme="dark"] pre{background:#241f1c;color:#f3eee1;border-color:#726859}
 pre code{background:none;padding:0;color:inherit}
+/* A wide table gets its own scroll container, so the page itself does not
+   overflow. Without it the weekly table lost its whole Status column at a
+   320px viewport, with nothing to say that it had. */
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{border-collapse:collapse;width:100%;font-size:14px;margin:12px 0}
-th,td{border:2px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
 th{background:var(--chip);font-family:var(--font-display);text-transform:uppercase;font-size:12px;letter-spacing:.06em}
-ul,ol{padding-left:22px}
-a.under{text-decoration:underline;text-underline-offset:3px}
+@media (max-width:760px){
+  th,td{white-space:nowrap}
+  th:first-child,td:first-child{position:sticky;left:0;background:var(--paper)}
+  th:first-child{background:var(--chip)}
+}
+ul,ol{padding-left:24px}
+a.under{text-decoration:underline;text-underline-offset:4px}
 
 /* ---------- cards / lists ---------- */
-.card{border:3px solid var(--line);background:var(--paper-2);border-radius:var(--radius);padding:20px;margin:0 0 20px;box-shadow:var(--shadow)}
+.card{border:2px solid var(--line);background:var(--paper-2);border-radius:var(--radius);padding:20px;margin:0 0 20px}
 .grid{display:grid;gap:16px;grid-template-columns:1fr}
 @media (min-width:760px){ .grid.two{grid-template-columns:1fr 1fr} }
 .kv{font-family:var(--font-mono);font-size:13px}
 
+/* ---------- the quiet register ----------
+   A work surface: the admin panel, where the reader is one person doing a
+   repetitive job, and where the worst outcome of a beautiful but
+   unreadable screen is that they publish the wrong cluster. It gets the
+   same tokens and the same grid, and it speaks much more quietly. */
+.page.quiet{max-width:1040px}
+.page.quiet h1{font-size:24px;text-transform:none;letter-spacing:-.01em;margin:0 0 16px}
+.page.quiet h2{font-size:18px;text-transform:none;margin:28px 0 8px}
+.page.quiet .card{border-width:1px;padding:16px}
+.page.quiet .btn{text-transform:none;letter-spacing:0;font-weight:700}
+.page.quiet .btn.sm{font-size:13px;padding:8px 12px}
+.page.quiet th,.page.quiet td{border-bottom:1px solid var(--line);padding:8px}
+.page.quiet input{font-size:14px;padding:8px}
+
 /* ---------- footer ---------- */
-.foot{border-top:3px solid var(--line);padding:26px 0 40px;margin-top:20px}
-.foot .wrap{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.foot{border-top:3px solid var(--line);padding:24px 0 40px;margin-top:20px}
+.foot .wrap{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 .foot p{color:var(--ink-soft);font-size:14px;margin:0}
 .foot nav{margin-left:auto;display:flex;gap:12px;flex-wrap:wrap}
 .foot nav a{font-size:13px;font-weight:700;text-decoration:none;color:var(--ink-soft)}
 .foot nav a:hover{color:var(--ink);text-decoration:underline}
 
 /* ---------- misc ---------- */
-.snippet{margin:22px 0 0;border:3px solid var(--line);border-radius:var(--radius);background:var(--paper-2);box-shadow:var(--shadow);padding:16px 18px}
-.snippet-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:800;color:var(--red);margin-bottom:9px}
+.snippet{margin:24px 0 0;border:2px solid var(--line);border-radius:var(--radius);background:var(--paper-2);padding:16px}
+.snippet-label{font-size:12px;text-transform:uppercase;letter-spacing:.12em;font-weight:800;color:var(--red-ink);margin-bottom:8px}
 .snippet pre{margin:0 0 12px}
-.notice{border:2px solid var(--line);border-left:6px solid var(--red);padding:12px 14px;margin:0 0 18px;background:var(--paper-2);font-size:14px}
-.notice b{display:block;margin-bottom:3px}
+.notice{border:2px solid var(--line);border-left:6px solid var(--red);padding:12px 16px;margin:0 0 16px;background:var(--paper-2);font-size:14px}
+.notice b{display:block;margin-bottom:4px}
 .empty{border:3px dashed var(--line);padding:40px 20px;text-align:center;color:var(--ink-soft);border-radius:var(--radius)}
-.split{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.split{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .ticker{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
-.ticker b{color:var(--red)}
+.ticker b{color:var(--red-ink)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .new{animation:flash 2.4s ease-out}
 @keyframes flash{from{background:var(--red);color:#fff}to{background:transparent}}
