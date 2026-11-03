@@ -22,8 +22,13 @@ export async function spendNeurons(env: Env, estimate: number): Promise<boolean>
     // meant a REFUSED call was still charged. Once the budget was spent the
     // counter kept climbing, so `neuronsUsed` reported a number that had
     // drifted above what had actually been spent.
+    //
+    // The value inserted is the estimate. It was zero, which meant the
+    // counter never moved at all: the board spent Workers AI neurons
+    // against a limit it was not measuring, and the daily figure stayed
+    // at whatever the first day happened to leave.
     const row = await env.DB.prepare(
-      `INSERT INTO neuron_budget (day, used) VALUES (?, 0)
+      `INSERT INTO neuron_budget (day, used) VALUES (?, ?)
        ON CONFLICT(day) DO UPDATE SET used = used + excluded.used
        RETURNING used`
     )
@@ -72,8 +77,11 @@ export async function neuronsUsed(env: Env): Promise<number> {
 export async function backgroundBudget(env: Env, estimate: number): Promise<boolean> {
   const today = new Date().toISOString().slice(0, 10);
   try {
+    // The estimate is the value inserted, for the same reason it is in
+    // `spendNeurons`: a zero meant the background work was never counted
+    // against the reserve it was supposed to be kept to.
     const row = await env.DB.prepare(
-      `INSERT INTO neuron_budget (day, used) VALUES (?, 0)
+      `INSERT INTO neuron_budget (day, used) VALUES (?, ?)
        ON CONFLICT(day) DO UPDATE SET used = used + excluded.used
        RETURNING used`
     )

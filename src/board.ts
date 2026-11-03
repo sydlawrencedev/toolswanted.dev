@@ -48,6 +48,14 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
   const client = opts.client ?? "all";
   const sort = opts.sort ?? (filter === "rising" ? "rising" : filter === "new" ? "new" : "agents");
 
+  // The board's four reads were sequential, and the page is edge-cached so
+  // a cache miss pays for all of them. The board's render costs 1.3ms; the
+  // peaks of 20ms were the D1 round-trips waiting for each other.
+  //
+  // `getStats` does not depend on the clusters, so it runs alongside the
+  // first query rather than after it.
+  const statsPromise = getStats(env.DB);
+
   const clusters = await listClusters(env.DB, {
     status: "published",
     limit: 100,
@@ -60,7 +68,7 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
     env.DB,
     clusters.map((c) => c.id)
   );
-  const stats = await getStats(env.DB);
+  const stats = await statsPromise;
 
   // One query for every sample, not one per cluster.
   //
@@ -167,7 +175,7 @@ ${liveTickerScript(env)}`;
 function clusterCard(
   cluster: Cluster,
   rank: number,
-  clients: Array<{ client: string; count: number }>,
+  clients: Array<{ client: string; count: number; total: number }>,
   samples: Wish[]
 ): string {
   // The client list has to say when it is cut.
@@ -180,7 +188,9 @@ function clusterCard(
   // seeded wishes are not in them. The label says so, because "Claude Code
   // 5" next to "9 agents want this" reads as nine Claude Codes otherwise.
   const shownClients = clients.slice(0, 4);
-  const hiddenClients = clients.length - shownClients.length;
+  // The total comes from the query, so it is the number of distinct
+  // clients and not the number of pairs that fitted in the window.
+  const hiddenClients = (shownClients[0]?.total ?? clients.length) - shownClients.length;
   const tags = [
     ...shownClients.map((c) => `${esc(clientLabel(c.client))} ${c.count}`),
     ...(hiddenClients > 0 ? [`+${num(hiddenClients)} more`] : []),
@@ -310,7 +320,11 @@ export async function renderCluster(
   const cluster = await getClusterBySlug(env.DB, slug);
   if (!cluster || cluster.status === "merged" || cluster.status === "rejected") return null;
 
-  const breakdown = (await getClientBreakdown(env.DB, [cluster.id])).get(cluster.id) ?? [];
+  // The breakdown and the grouped rows do not depend on each other, so they
+  // run together rather than in series.
+  const breakdownPromise = getClientBreakdown(env.DB, [cluster.id]);
+  const groupedPromise = getGroupedSamples(env.DB, cluster.id);
+  const breakdown = (await breakdownPromise).get(cluster.id) ?? [];
 
   // The rows are grouped by what was asked for.
   //
@@ -330,7 +344,7 @@ export async function renderCluster(
   // a cluster with sixteen wishes read as "4 times" on a row that had
   // been asked for more, and the table never added up to the number in
   // the heading above it.
-  const grouped = await getGroupedSamples(env.DB, cluster.id);
+  const grouped = await groupedPromise;
 
   const sampleRows = grouped
     .map(
@@ -463,6 +477,7 @@ export async function renderWeekly(env: Env, id?: string): Promise<string> {
     stats = snapshot.stats;
     generatedAt = snapshot.generated_at ?? null;
   } else {
+    const statsPromise = getStats(env.DB);
     const clusters = await listClusters(env.DB, { status: "published", limit: 20, sort: "agents" });
     rows = clusters.map((c) => ({
       title: c.title,
@@ -473,7 +488,7 @@ export async function renderWeekly(env: Env, id?: string): Promise<string> {
       shipped: c.shipped === 1,
       repo: c.claim_repo,
     }));
-    stats = await getStats(env.DB);
+    stats = await statsPromise;
   }
 
   const tableRows = rows

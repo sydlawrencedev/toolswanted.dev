@@ -323,9 +323,14 @@ Two of them bite, and both are tracked in code rather than discovered:
   cap is a share of the same 100,000. The registry crawl only writes rows that
   actually changed, so it cannot take the board down with it. When the budget
   is spent, the board says so plainly and says when it resets.
-- **Workers AI gives 10,000 neurons a day.** The sanitiser's rewrite gets the
-  product's share; the registry crawl gets what is left and stops when there
-  is none.
+- **Workers AI gives 10,000 neurons a day.** A wish costs about 1,300: three
+  embeddings for the clustering, and the rewrite. So the free tier takes
+  roughly seven wishes a day on the product's share, and the registry crawl
+  gets what is left and stops when there is none. The counter is charged
+  before the work is done and refunded when it is refused, so the daily
+  figure is what was actually spent rather than what was reserved. When the
+  budget is spent the wish is still filed: it keeps its sanitised text and
+  skips the rewrite.
 
 `npm run seed` marks every wish it files as seeded. Seeded wishes are labelled
 everywhere they appear (the board, the cluster page, the weekly list, the feeds

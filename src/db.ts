@@ -23,6 +23,24 @@ export const CLUSTER_COLUMNS = `id, slug, title, title_source, count, unique_age
 
 const CLUSTER_COLUMNS_C = CLUSTER_COLUMNS.replace(/(\w+)/g, "c.$1");
 
+/**
+ * The columns a listing needs.
+ *
+ * The same set without the vector.
+ *
+ * The vector is a base64-encoded 1024-dimension embedding, about 1.5KB a
+ * row. The board selects a hundred clusters and renders none of their
+ * vectors, so the query was transferring a hundred and a half kilobytes
+ * and decoding it for nothing. The board's cost was measured at a p50 of
+ * 9ms against a 10ms budget, and this was most of it.
+ *
+ * The vector is still selected where it is used: `getRecentCentroids` and
+ * the single-cluster reads, which are the only two places that decode it.
+ */
+const CLUSTER_LIST_COLUMNS = CLUSTER_COLUMNS.replace(/, vector/, "");
+
+const CLUSTER_LIST_COLUMNS_C = CLUSTER_LIST_COLUMNS.replace(/(\w+)/g, "c.$1");
+
 export interface ClusterRow extends Cluster {
   [key: string]: unknown;
 }
@@ -101,7 +119,7 @@ export async function listClusters(
     binds.push(opts.client);
   }
 
-  const sql = `SELECT ${CLUSTER_COLUMNS_C} FROM clusters c WHERE ${where.join(" AND ")} ORDER BY ${order} LIMIT ?`;
+  const sql = `SELECT ${CLUSTER_LIST_COLUMNS_C} FROM clusters c WHERE ${where.join(" AND ")} ORDER BY ${order} LIMIT ?`;
   binds.push(limit);
 
   const { results } = await db.prepare(sql).bind(...binds).all<Cluster>();
@@ -122,7 +140,7 @@ export async function getRecentCentroids(
 ): Promise<CentroidRow[]> {
   const { results } = await db
     .prepare(
-      `SELECT ${CLUSTER_COLUMNS} FROM clusters
+      `SELECT id, vector FROM clusters
        WHERE status IN ('published', 'pending') AND vector IS NOT NULL
        ORDER BY last_seen DESC LIMIT ?`
     )
@@ -198,21 +216,32 @@ export async function getSamplesForClusters(
   for (let i = 0; i < clusterIds.length; i += 40) {
     const chunk = clusterIds.slice(i, i + 40);
     const placeholders = chunk.map(() => "?").join(",");
+    // The window function limits the rows the database sends back.
+    //
+    // It used to select every wish for every cluster and trim to the window
+    // in JavaScript. With a hundred clusters that is every wish on the
+    // board, read over the network, to build a hundred cards that show
+    // twelve rows each. The board's CPU was measured at a p50 of 1.3ms to
+    // render, and a p90 of 20ms to serve, and the difference is this read.
     const { results } = await db
       .prepare(
         `SELECT id, cluster_id, need, need_generic, context, client, model, source_key, ip_key,
                 seeded, flagged, flag_reason, created_at
-         FROM wishes WHERE cluster_id IN (${placeholders})
+         FROM (
+           SELECT id, cluster_id, need, need_generic, context, client, model, source_key, ip_key,
+                  seeded, flagged, flag_reason, created_at,
+                  ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY created_at DESC) AS rn
+             FROM wishes WHERE cluster_id IN (${placeholders})
+         )
+         WHERE rn <= ?
          ORDER BY created_at DESC`
       )
-      .bind(...chunk)
+      .bind(...chunk, perCluster)
       .all<Wish>();
     for (const wish of results ?? []) {
       const list = out.get(wish.cluster_id) ?? [];
-      if (list.length < perCluster) {
-        list.push(wish);
-        out.set(wish.cluster_id, list);
-      }
+      list.push(wish);
+      out.set(wish.cluster_id, list);
     }
   }
   return out;
@@ -233,22 +262,38 @@ export async function getSamplesForClusters(
 export async function getClientBreakdown(
   db: D1Database,
   clusterIds: string[]
-): Promise<Map<string, Array<{ client: string; count: number }>>> {
-  const out = new Map<string, Array<{ client: string; count: number }>>();
+): Promise<Map<string, Array<{ client: string; count: number; total: number }>>> {
+  const out = new Map<string, Array<{ client: string; count: number; total: number }>>();
   if (clusterIds.length === 0) return out;
+  // The card shows the top four clients and says how many more there are.
+  //
+  // This used to count every non-seeded wish for every cluster, so the
+  // database scanned the whole board to produce four numbers per card. The
+  // window function counts per cluster and client and keeps the top few
+  // pairs, which is what the card renders.
+  const PAIRS_PER_CLUSTER = 6;
   const placeholders = clusterIds.map(() => "?").join(",");
+  // The window keeps the top pairs per cluster. The total is counted
+  // separately, because the card says how many more clients there are and
+  // that number has to be the real one rather than the size of the window.
   const { results } = await db
     .prepare(
-      `SELECT cluster_id, client, COUNT(*) AS count FROM wishes
-       WHERE seeded = 0 AND client IS NOT NULL AND cluster_id IN (${placeholders})
-       GROUP BY cluster_id, client
+      `SELECT cluster_id, client, count, total FROM (
+         SELECT cluster_id, client, COUNT(*) AS count,
+                COUNT(*) OVER (PARTITION BY cluster_id) AS total,
+                ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY COUNT(*) DESC, client) AS rn
+           FROM wishes
+          WHERE seeded = 0 AND client IS NOT NULL AND cluster_id IN (${placeholders})
+          GROUP BY cluster_id, client
+       )
+       WHERE rn <= ?
        ORDER BY count DESC`
     )
-    .bind(...clusterIds)
-    .all<{ cluster_id: string; client: string; count: number }>();
+    .bind(...clusterIds, PAIRS_PER_CLUSTER)
+    .all<{ cluster_id: string; client: string; count: number; total: number }>();
   for (const row of results ?? []) {
     const list = out.get(row.cluster_id) ?? [];
-    list.push({ client: row.client, count: row.count });
+    list.push({ client: row.client, count: row.count, total: row.total });
     out.set(row.cluster_id, list);
   }
   return out;
