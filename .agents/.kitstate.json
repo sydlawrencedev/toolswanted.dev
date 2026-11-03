@@ -1,0 +1,690 @@
+{
+  "version": 1,
+  "kit_version": "1.0.0",
+  "generated_at": "2026-11-03T09:18:05.759Z",
+  "agents": [
+    "ceo",
+    "content-brand",
+    "design-delight",
+    "frontend-engineer",
+    "icp",
+    "test-manager"
+  ],
+  "files": {
+    "agents/ceo/AGENTS.md": {
+      "sha256": "02ebf9016cb69f53d19988531683ffa4f0c875bf6f544de9b9f33a398d77946d",
+      "ownership": "managed",
+      "sources": [
+        "agents/ceo/AGENTS.md"
+      ]
+    },
+    "agents/ceo/SOUL.md": {
+      "sha256": "99d2582fea7502b31c461d4795bdfda0eb0f0432eacbf03bd98e13b14ff18f39",
+      "ownership": "managed",
+      "sources": [
+        "agents/ceo/SOUL.md"
+      ]
+    },
+    "agents/ceo/HEARTBEAT.md": {
+      "sha256": "e8ddc380713b74de2696125fb4848336a38ca938b9c1954a2bf5ae35d9c03f93",
+      "ownership": "managed",
+      "sources": [
+        "agents/ceo/HEARTBEAT.md"
+      ]
+    },
+    "agents/ceo/TOOLS.md": {
+      "sha256": "eb16592b38f1a88e64fb60ec2594385a762d4e88c44d5001b6fe89b312513195",
+      "ownership": "managed",
+      "sources": [
+        "agents/ceo/TOOLS.md"
+      ]
+    },
+    "agents/ceo/NOTES.md": {
+      "sha256": "313e22f39c24b67d44cad110b5a68ae91a75c21d458732c411b74b045b74962a",
+      "ownership": "seeded",
+      "sources": [
+        "templates/NOTES.md"
+      ]
+    },
+    "agents/ceo/memory/README.md": {
+      "sha256": "51df474ea0456863d6326bbbd896a57cface23a04a5c71ced8294ddc466b5b92",
+      "ownership": "seeded",
+      "sources": [
+        "templates/memory/README.md"
+      ]
+    },
+    "agents/ceo/work/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ownership": "seeded",
+      "sources": []
+    },
+    "agents/ceo/evolution/evolution.cjs": {
+      "sha256": "a29de5f9143368b9e144a608c042da000058c2a0f92d7fa5cf44a9c0991c2baa",
+      "ownership": "managed",
+      "sources": [
+        "templates/evolution/evolution.cjs"
+      ]
+    },
+    "agents/ceo/evolution/signalScanner.cjs": {
+      "sha256": "d3fee327899a15b513ed49e1b1da9bfcd80b61474e0467e03a9308129a520660",
+      "ownership": "managed",
+      "sources": [
+        "templates/evolution/signalScanner.cjs"
+      ]
+    },
+    "agents/ceo/evolution/geneStore.json": {
+      "sha256": "05c91b0431d482e4e6b45c067d8fd097412c38370365b99499945bd5438504dc",
+      "ownership": "state",
+      "sources": []
+    },
+    "agents/ceo/evolution/mutationLog.jsonl": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ownership": "state",
+      "sources": []
+    },
+    ".opencode/agents/ceo.md": {
+      "sha256": "dcae80a7c74a5c6b5e3be02d2eb3921a557e2ee538310ab3146f01fb9f4d4c9e",
+      "ownership": "managed",
+      "sources": [
+        "agents/ceo/AGENTS.md",
+        "agents/ceo/SOUL.md",
+        "agents/ceo/HEARTBEAT.md",
+        "agents/ceo/TOOLS.md",
+        "agents/ceo/_meta.json"
+      ]
+    },
+    ".claude/agents/ceo.md": {
+      "sha256": "d1a1c71931936f0cbdfe1a8404880743a5647d0efd588e1dd26841825b925963",
+      "ownership": "managed",
+      "sources": [
+        "agents/ceo/AGENTS.md",
+        "agents/ceo/SOUL.md",
+        "agents/ceo/HEARTBEAT.md",
+        "agents/ceo/TOOLS.md",
+        "agents/ceo/_meta.json"
+      ]
+    },
+    "agents/content-brand/AGENTS.md": {
+      "sha256": "cabb028373862168cb60fe7516bf5c8842549f22ef80ab064653c9d441b2a2c1",
+      "ownership": "managed",
+      "sources": [
+        "agents/content-brand/AGENTS.md"
+      ]
+    },
+    "agents/content-brand/SOUL.md": {
+      "sha256": "19d518de8e939e9508ef50a068b7523d8df9df4afefca3e159aa18919cbf684c",
+      "ownership": "managed",
+      "sources": [
+        "agents/content-brand/SOUL.md"
+      ]
+    },
+    "agents/content-brand/HEARTBEAT.md": {
+      "sha256": "e901fe657a3dcbbf3431c93c1f22606d769a9c709dc29add4d421b1cb8cd7787",
+      "ownership": "managed",
+      "sources": [
+        "agents/content-brand/HEARTBEAT.md"
+      ]
+    },
+    "agents/content-brand/TOOLS.md": {
+      "sha256": "0166f46ec0de1604911041f32064d7cddb927bb93b120d0fad8880db721e10f4",
+      "ownership": "managed",
+      "sources": [
+        "agents/content-brand/TOOLS.md"
+      ]
+    },
+    "agents/content-brand/NOTES.md": {
+      "sha256": "313e22f39c24b67d44cad110b5a68ae91a75c21d458732c411b74b045b74962a",
+      "ownership": "seeded",
+      "sources": [
+        "templates/NOTES.md"
+      ]
+    },
+    "agents/content-brand/memory/README.md": {
+      "sha256": "51df474ea0456863d6326bbbd896a57cface23a04a5c71ced8294ddc466b5b92",
+      "ownership": "seeded",
+      "sources": [
+        "templates/memory/README.md"
+      ]
+    },
+    "agents/content-brand/work/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ownership": "seeded",
+      "sources": []
+    },
+    "agents/content-brand/evolution/evolution.cjs": {
+      "sha256": "e1a98bf3ef1b397c0508a26cc3a6da95ad3927094307539fd6666758a7dd3c00",
+      "ownership": "managed",
+      "sources": [
+        "templates/evolution/evolution.cjs"
+      ]
+    },
+    "agents/content-brand/evolution/signalScanner.cjs": {
+      "sha256": "2f6f21167c47fd844d55faf8df4d109be6b27839cd49c10476df66b0ed67cdfc",
+      "ownership": "managed",
+      "sources": [
+        "templates/evolution/signalScanner.cjs"
+      ]
+    },
+    "agents/content-brand/evolution/geneStore.json": {
+      "sha256": "05c91b0431d482e4e6b45c067d8fd097412c38370365b99499945bd5438504dc",
+      "ownership": "state",
+      "sources": []
+    },
+    "agents/content-brand/evolution/mutationLog.jsonl": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ownership": "state",
+      "sources": []
+    },
+    ".opencode/agents/content-brand.md": {
+      "sha256": "80fb33a8498f14cb34b99df1cccdd61389cd4c86e5fcc0106fa4b1baffa6d573",
+      "ownership": "managed",
+      "sources": [
+        "agents/content-brand/AGENTS.md",
+        "agents/content-brand/SOUL.md",
+        "agents/content-brand/HEARTBEAT.md",
+        "agents/content-brand/TOOLS.md",
+        "agents/content-brand/_meta.json"
+      ]
+    },
+    ".claude/agents/content-brand.md": {
+      "sha256": "2cb63581644b14255ced6e8f6f0098dc1b01e893e133080adbee3881f3f949d7",
+      "ownership": "managed",
+      "sources": [
+        "agents/content-brand/AGENTS.md",
+        "agents/content-brand/SOUL.md",
+        "agents/content-brand/HEARTBEAT.md",
+        "agents/content-brand/TOOLS.md",
+        "agents/content-brand/_meta.json"
+      ]
+    },
+    "agents/design-delight/AGENTS.md": {
+      "sha256": "24af559fada2a31a42860d20ab6281f33417324b986a243b1b439beac4dc23e0",
+      "ownership": "managed",
+      "sources": [
+        "agents/design-delight/AGENTS.md"
+      ]
+    },
+    "agents/design-delight/SOUL.md": {
+      "sha256": "f7052313bc8ecf6f7e241330c94ae7e104a2f260b04bb1193ef1e2b90248a944",
+      "ownership": "managed",
+      "sources": [
+        "agents/design-delight/SOUL.md"
+      ]
+    },
+    "agents/design-delight/HEARTBEAT.md": {
+      "sha256": "9b40caef746c7cf659200a6590a69ff0d07e4acb3e658f1752d94d368931f770",
+      "ownership": "managed",
+      "sources": [
+        "agents/design-delight/HEARTBEAT.md"
+      ]
+    },
+    "agents/design-delight/TOOLS.md": {
+      "sha256": "f95b2bc8e1c3ada03bc2520eb99d2047d643e58fc99c1c7fd4da52f88eccde9c",
+      "ownership": "managed",
+      "sources": [
+        "agents/design-delight/TOOLS.md"
+      ]
+    },
+    "agents/design-delight/NOTES.md": {
+      "sha256": "313e22f39c24b67d44cad110b5a68ae91a75c21d458732c411b74b045b74962a",
+      "ownership": "seeded",
+      "sources": [
+        "templates/NOTES.md"
+      ]
+    },
+    "agents/design-delight/memory/README.md": {
+      "sha256": "51df474ea0456863d6326bbbd896a57cface23a04a5c71ced8294ddc466b5b92",
+      "ownership": "seeded",
+      "sources": [
+        "templates/memory/README.md"
+      ]
+    },
+    "agents/design-delight/work/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ownership": "seeded",
+      "sources": []
+    },
+    "agents/design-delight/evolution/evolution.cjs": {
+      "sha256": "59318b3abc054444b51970f4245cfb244ffa060214bf34cd070f28556d10872a",
+      "ownership": "managed",
+      "sources": [
+        "templates/evolution/evolution.cjs"
+      ]
+    },
+    "agents/design-delight/evolution/signalScanner.cjs": {
+      "sha256": "3db53b97405f704abc25f61ebf1dff438e60e3f24b1dd4fe578e5788874cf729",
+      "ownership": "managed",
+      "sources": [
+        "templates/evolution/signalScanner.cjs"
+      ]
+    },
+    "agents/design-delight/evolution/geneStore.json": {
+      "sha256": "05c91b0431d482e4e6b45c067d8fd097412c38370365b99499945bd5438504dc",
+      "ownership": "state",
+      "sources": []
+    },
+    "agents/design-delight/evolution/mutationLog.jsonl": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ownership": "state",
+      "sources": []
+    },
+    ".opencode/agents/design-delight.md": {
+      "sha256": "d60cd1668588b11941508263f90f9242885ee46659b209a2d9d5ca04f5f355e9",
+      "ownership": "managed",
+      "sources": [
+        "agents/design-delight/AGENTS.md",
+        "agents/design-delight/SOUL.md",
+        "agents/design-delight/HEARTBEAT.md",
+        "agents/design-delight/TOOLS.md",
+        "agents/design-delight/_meta.json"
+      ]
+    },
+    ".claude/agents/design-delight.md": {
+      "sha256": "5c543f42d5e4abef03af66abb243dcc0b33b23e5182acd98fbf7ecbde7e0d8f7",
+      "ownership": "managed",
+      "sources": [
+        "agents/design-delight/AGENTS.md",
+        "agents/design-delight/SOUL.md",
+        "agents/design-delight/HEARTBEAT.md",
+        "agents/design-delight/TOOLS.md",
+        "agents/design-delight/_meta.json"
+      ]
+    },
+    "agents/frontend-engineer/AGENTS.md": {
+      "sha256": "21f2d6e09836bcdb68e1842a3e38b60e1858f9cfbcbad60ffbd404369f98cf81",
+      "ownership": "managed",
+      "sources": [
+        "agents/frontend-engineer/AGENTS.md"
+      ]
+    },
+    "agents/frontend-engineer/SOUL.md": {
+      "sha256": "606c33c553a2f761a1605b33ff54acb546fc9a10ebb72b5fa31db7590c8bec8a",
+      "ownership": "managed",
+      "sources": [
+        "agents/frontend-engineer/SOUL.md"
+      ]
+    },
+    "agents/frontend-engineer/HEARTBEAT.md": {
+      "sha256": "4d5c6a6367f2bb959ffcdb9fcfbbdc845d69b3c9201cf9f2f4fa1e67ac9fef56",
+      "ownership": "managed",
+      "sources": [
+        "agents/frontend-engineer/HEARTBEAT.md"
+      ]
+    },
+    "agents/frontend-engineer/TOOLS.md": {
+      "sha256": "95b2ca48e4076df3ecde9dc945d2d40cd511aef37b3af63e8e0bcb7106b11174",
+      "ownership": "managed",
+      "sources": [
+        "agents/frontend-engineer/TOOLS.md"
+      ]
+    },
+    "agents/frontend-engineer/NOTES.md": {
+      "sha256": "313e22f39c24b67d44cad110b5a68ae91a75c21d458732c411b74b045b74962a",
+      "ownership": "seeded",
+      "sources": [
+        "templates/NOTES.md"
+      ]
+    },
+    "agents/frontend-engineer/memory/README.md": {
+      "sha256": "51df474ea0456863d6326bbbd896a57cface23a04a5c71ced8294ddc466b5b92",
+      "ownership": "seeded",
+      "sources": [
+        "templates/memory/README.md"
+      ]
+    },
+    "agents/frontend-engineer/work/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ownership": "seeded",
+      "sources": []
+    },
+    "agents/frontend-engineer/evolution/evolution.cjs": {
+      "sha256": "62facc9d3de177c7c0b54104c9d13a205c96e38c1dd778aaf7b2fca9377e50ea",
+      "ownership": "managed",
+      "sources": [
+        "templates/evolution/evolution.cjs"
+      ]
+    },
+    "agents/frontend-engineer/evolution/signalScanner.cjs": {
+      "sha256": "be9bac83d65830f282ace152df21936be72cba5c9ee1f15a991332f07d96c3b5",
+      "ownership": "managed",
+      "sources": [
+        "templates/evolution/signalScanner.cjs"
+      ]
+    },
+    "agents/frontend-engineer/evolution/geneStore.json": {
+      "sha256": "05c91b0431d482e4e6b45c067d8fd097412c38370365b99499945bd5438504dc",
+      "ownership": "state",
+      "sources": []
+    },
+    "agents/frontend-engineer/evolution/mutationLog.jsonl": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ownership": "state",
+      "sources": []
+    },
+    ".opencode/agents/frontend-engineer.md": {
+      "sha256": "0e90dd4d4baccdbce1b1c6bd3c9e424e08e17150555bd1b17fbd052c26e566c7",
+      "ownership": "managed",
+      "sources": [
+        "agents/frontend-engineer/AGENTS.md",
+        "agents/frontend-engineer/SOUL.md",
+        "agents/frontend-engineer/HEARTBEAT.md",
+        "agents/frontend-engineer/TOOLS.md",
+        "agents/frontend-engineer/_meta.json"
+      ]
+    },
+    ".claude/agents/frontend-engineer.md": {
+      "sha256": "4bc316ed4e965c8e5626deba3c6cc206bc7d999ce3e2e60292a0f4397899ae3c",
+      "ownership": "managed",
+      "sources": [
+        "agents/frontend-engineer/AGENTS.md",
+        "agents/frontend-engineer/SOUL.md",
+        "agents/frontend-engineer/HEARTBEAT.md",
+        "agents/frontend-engineer/TOOLS.md",
+        "agents/frontend-engineer/_meta.json"
+      ]
+    },
+    "agents/icp/AGENTS.md": {
+      "sha256": "3f207de5806cfda3b4e21c6e1e3e3aea79ad00ef7220a7fa4e0c4a0d39da431d",
+      "ownership": "managed",
+      "sources": [
+        "agents/icp/AGENTS.md"
+      ]
+    },
+    "agents/icp/SOUL.md": {
+      "sha256": "b255cef0ce329d5942df1d0ace6eff39a13a9a915e8ee7ee3fa4c8ef8dc1f10b",
+      "ownership": "managed",
+      "sources": [
+        "agents/icp/SOUL.md"
+      ]
+    },
+    "agents/icp/HEARTBEAT.md": {
+      "sha256": "8b8c0a72e6e6030923d785e0e3b48640c98ee5832694251642b37451a703ecaa",
+      "ownership": "managed",
+      "sources": [
+        "agents/icp/HEARTBEAT.md"
+      ]
+    },
+    "agents/icp/TOOLS.md": {
+      "sha256": "38e7902324614d358287af9db8ec660967760a68de81a152af0d7227f3ee9b26",
+      "ownership": "managed",
+      "sources": [
+        "agents/icp/TOOLS.md"
+      ]
+    },
+    "agents/icp/NOTES.md": {
+      "sha256": "313e22f39c24b67d44cad110b5a68ae91a75c21d458732c411b74b045b74962a",
+      "ownership": "seeded",
+      "sources": [
+        "templates/NOTES.md"
+      ]
+    },
+    "agents/icp/memory/README.md": {
+      "sha256": "51df474ea0456863d6326bbbd896a57cface23a04a5c71ced8294ddc466b5b92",
+      "ownership": "seeded",
+      "sources": [
+        "templates/memory/README.md"
+      ]
+    },
+    "agents/icp/work/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ownership": "seeded",
+      "sources": []
+    },
+    "agents/icp/evolution/evolution.cjs": {
+      "sha256": "f5dbcbfbd8e462fb44b0770f85d265b2c070bafa38b549e748bee36b93a80785",
+      "ownership": "managed",
+      "sources": [
+        "templates/evolution/evolution.cjs"
+      ]
+    },
+    "agents/icp/evolution/signalScanner.cjs": {
+      "sha256": "a2e2010360b776c7cb3ddad02dd2404718a7ed63ccd2d20b26b16a24fdeaef54",
+      "ownership": "managed",
+      "sources": [
+        "templates/evolution/signalScanner.cjs"
+      ]
+    },
+    "agents/icp/evolution/geneStore.json": {
+      "sha256": "05c91b0431d482e4e6b45c067d8fd097412c38370365b99499945bd5438504dc",
+      "ownership": "state",
+      "sources": []
+    },
+    "agents/icp/evolution/mutationLog.jsonl": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ownership": "state",
+      "sources": []
+    },
+    ".opencode/agents/icp.md": {
+      "sha256": "4d5f5b89984d6bb60258d2105b17683aff74574082230c08a5fce40051f6116c",
+      "ownership": "managed",
+      "sources": [
+        "agents/icp/AGENTS.md",
+        "agents/icp/SOUL.md",
+        "agents/icp/HEARTBEAT.md",
+        "agents/icp/TOOLS.md",
+        "agents/icp/_meta.json"
+      ]
+    },
+    ".claude/agents/icp.md": {
+      "sha256": "1ff14bb538b89d4913295e3c1eeec9969b0361c1fe3cc071b09f7ebabfff227a",
+      "ownership": "managed",
+      "sources": [
+        "agents/icp/AGENTS.md",
+        "agents/icp/SOUL.md",
+        "agents/icp/HEARTBEAT.md",
+        "agents/icp/TOOLS.md",
+        "agents/icp/_meta.json"
+      ]
+    },
+    "agents/test-manager/AGENTS.md": {
+      "sha256": "85248a30fdd0614b3120795f5366ebe87ebc543e9df17b26c20bb777df923db6",
+      "ownership": "managed",
+      "sources": [
+        "agents/test-manager/AGENTS.md"
+      ]
+    },
+    "agents/test-manager/SOUL.md": {
+      "sha256": "ea405e46877d503aa7f0002c04a859c9c35d1264e7fb796824f627b54af7bb09",
+      "ownership": "managed",
+      "sources": [
+        "agents/test-manager/SOUL.md"
+      ]
+    },
+    "agents/test-manager/HEARTBEAT.md": {
+      "sha256": "23b88e7a7cce6bb68d1bb0d3918a749df4fb9bd2e7d1fbdf3c81224bbc9b92f3",
+      "ownership": "managed",
+      "sources": [
+        "agents/test-manager/HEARTBEAT.md"
+      ]
+    },
+    "agents/test-manager/TOOLS.md": {
+      "sha256": "5ac8ca493b8af7cbcccb8e7845d5ae09baf18beffc626dee8945e60834fb2c47",
+      "ownership": "managed",
+      "sources": [
+        "agents/test-manager/TOOLS.md"
+      ]
+    },
+    "agents/test-manager/NOTES.md": {
+      "sha256": "313e22f39c24b67d44cad110b5a68ae91a75c21d458732c411b74b045b74962a",
+      "ownership": "seeded",
+      "sources": [
+        "templates/NOTES.md"
+      ]
+    },
+    "agents/test-manager/memory/README.md": {
+      "sha256": "51df474ea0456863d6326bbbd896a57cface23a04a5c71ced8294ddc466b5b92",
+      "ownership": "seeded",
+      "sources": [
+        "templates/memory/README.md"
+      ]
+    },
+    "agents/test-manager/work/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ownership": "seeded",
+      "sources": []
+    },
+    "agents/test-manager/evolution/evolution.cjs": {
+      "sha256": "6e2e5ac2bb001f5505ef050d5a30466893d0607b6b7ff328978d3fbd6cbcb916",
+      "ownership": "managed",
+      "sources": [
+        "templates/evolution/evolution.cjs"
+      ]
+    },
+    "agents/test-manager/evolution/signalScanner.cjs": {
+      "sha256": "4d18f636b07bdfba8f17375ccc5edd59809ba5c5fa6cc7a5d4f405726461190d",
+      "ownership": "managed",
+      "sources": [
+        "templates/evolution/signalScanner.cjs"
+      ]
+    },
+    "agents/test-manager/evolution/geneStore.json": {
+      "sha256": "05c91b0431d482e4e6b45c067d8fd097412c38370365b99499945bd5438504dc",
+      "ownership": "state",
+      "sources": []
+    },
+    "agents/test-manager/evolution/mutationLog.jsonl": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "ownership": "state",
+      "sources": []
+    },
+    ".opencode/agents/test-manager.md": {
+      "sha256": "36502e6de49bb0fd3e4c094c6450eb88342231f3443e8dbbcfee4ad3bb5c77e7",
+      "ownership": "managed",
+      "sources": [
+        "agents/test-manager/AGENTS.md",
+        "agents/test-manager/SOUL.md",
+        "agents/test-manager/HEARTBEAT.md",
+        "agents/test-manager/TOOLS.md",
+        "agents/test-manager/_meta.json"
+      ]
+    },
+    ".claude/agents/test-manager.md": {
+      "sha256": "9e4aa9d95c80683858be1f0b6cedab6a6addab360cca069c034d9ef912cfac3f",
+      "ownership": "managed",
+      "sources": [
+        "agents/test-manager/AGENTS.md",
+        "agents/test-manager/SOUL.md",
+        "agents/test-manager/HEARTBEAT.md",
+        "agents/test-manager/TOOLS.md",
+        "agents/test-manager/_meta.json"
+      ]
+    },
+    "agents/_shared/QUALITY_BAR.md": {
+      "sha256": "5285589ba683e1c0460b25473f16bdf6161a91909e3ff73b218135fee2882859",
+      "ownership": "managed",
+      "sources": [
+        "agents/_shared/QUALITY_BAR.md"
+      ]
+    },
+    "agents/_shared/REPORTING.md": {
+      "sha256": "2c74e4c9c7babb92f067a5fe9f4a4b3c70c4ed040308d7060be50745bfa8efab",
+      "ownership": "managed",
+      "sources": [
+        "agents/_shared/REPORTING.md"
+      ]
+    },
+    "agents/_shared/HANDOFF.md": {
+      "sha256": "b6bd2887d94a7e1c131fb5bfef3fedbeb6071f8c0ea4ecfacd3ddb42f364028a",
+      "ownership": "managed",
+      "sources": [
+        "agents/_shared/HANDOFF.md"
+      ]
+    },
+    "agents/_shared/SKILLS.md": {
+      "sha256": "d44b7115f550684c1bb15eb5ef8c0e10e143729716564d94eaaf8ad731a8281e",
+      "ownership": "managed",
+      "sources": [
+        "agents/_shared/SKILLS.md"
+      ]
+    },
+    "agents/README.md": {
+      "sha256": "812f079505f3a706089de03fd626e220296af28b13bb35bc7b16c8646e27f22f",
+      "ownership": "managed",
+      "sources": [
+        "agents/README.md"
+      ]
+    },
+    "brand/VOICE.md": {
+      "sha256": "e76174170fbacb62d3c694df7985481605dc572fc3fc1ffcac9e966c612b3550",
+      "ownership": "managed",
+      "sources": [
+        "brand/VOICE.md"
+      ]
+    },
+    "brand/DESIGN.md": {
+      "sha256": "b53b492f942cb4f7d0522188e8a80c2a44136199991e1f63979fdafcb9c1b4c0",
+      "ownership": "managed",
+      "sources": [
+        "brand/DESIGN.md"
+      ]
+    },
+    "brand/CONTENT.md": {
+      "sha256": "edede9a0a19ce16a6e2111a7d523f8eec6d6cc1e8e5bf2fc31e108b43a79ff1f",
+      "ownership": "managed",
+      "sources": [
+        "brand/CONTENT.md"
+      ]
+    },
+    "brand/README.md": {
+      "sha256": "89b021ca1d351e4698f56bdf1eb4ecd797c5fa7a07f347632c9b1ed579e1f168",
+      "ownership": "managed",
+      "sources": [
+        "brand/README.md"
+      ]
+    },
+    "brand/profiles/README.md": {
+      "sha256": "24dd87a00bd04201bf95b75f0d7689912a6707f0390b40b826d665075a72511c",
+      "ownership": "managed",
+      "sources": [
+        "brand/profiles/README.md"
+      ]
+    },
+    ".opencode/skills/coaching-plan/SKILL.md": {
+      "sha256": "5fd9abe241de4bb11660a9a7f934a7659c100789219924ac0b1a3f4beb0bd200",
+      "ownership": "managed",
+      "sources": [
+        "skills/coaching-plan/SKILL.md"
+      ]
+    },
+    ".claude/skills/coaching-plan/SKILL.md": {
+      "sha256": "5fd9abe241de4bb11660a9a7f934a7659c100789219924ac0b1a3f4beb0bd200",
+      "ownership": "managed",
+      "sources": [
+        "skills/coaching-plan/SKILL.md"
+      ]
+    },
+    ".opencode/skills/para-memory-files/SKILL.md": {
+      "sha256": "200bfb697193ac4e2cc1227b94fe972978a3cc39ca6fa9d4cc6dcc0dbfdb9e65",
+      "ownership": "managed",
+      "sources": [
+        "skills/para-memory-files/SKILL.md"
+      ]
+    },
+    ".claude/skills/para-memory-files/SKILL.md": {
+      "sha256": "200bfb697193ac4e2cc1227b94fe972978a3cc39ca6fa9d4cc6dcc0dbfdb9e65",
+      "ownership": "managed",
+      "sources": [
+        "skills/para-memory-files/SKILL.md"
+      ]
+    },
+    ".opencode/skills/para-memory-files/references/schemas.md": {
+      "sha256": "7223ba4d51f168ce4b88f9303c8e869cc661a02151cd476691e6736705d68e32",
+      "ownership": "managed",
+      "sources": [
+        "skills/para-memory-files/references/schemas.md"
+      ]
+    },
+    ".claude/skills/para-memory-files/references/schemas.md": {
+      "sha256": "7223ba4d51f168ce4b88f9303c8e869cc661a02151cd476691e6736705d68e32",
+      "ownership": "managed",
+      "sources": [
+        "skills/para-memory-files/references/schemas.md"
+      ]
+    },
+    ".agents/project.config.json": {
+      "sha256": null,
+      "ownership": "project",
+      "sources": []
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "//": "The project's own facts. The kit reads this and never writes it.",
+  "//2": "brand_profile: 'none' uses the core voice only.",
+
+  "product_name": "Tools Wanted",
+  "product_tagline": "A public board of the tools AI agents wish existed, fed by the agents themselves.",
+  "product_url": "https://toolswanted.dev",
+  "market": "UK",
+  "locale": "en-GB",
+  "currency": "£",
+  "currency_code": "GBP",
+  "date_format": "DD/MM/YYYY",
+
+  "audience_name": "AI agent builders",
+  "audience_description": "Builders of MCP servers, agent tools and agent infrastructure, who want to know what to build next.",
+
+  "brand_profile": "none",
+  "team_name": "Tools Wanted",
+
+  "design": {
+    "ink": "#151210",
+    "surface": "#f3eee1",
+    "accent_positive": "#d32a1c",
+    "accent_authority": "#b32016",
+    "accent_warning": "#e8e1d1",
+    "accent_negative": "#ff5c4a"
+  },
+
+  "agents": {
+    "included": [],
+    "excluded": [],
+    "mode_overrides": {}
+  }
+}
