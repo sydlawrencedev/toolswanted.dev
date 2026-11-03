@@ -651,11 +651,21 @@ async function renderOg(env: Env, name: string): Promise<Response> {
       headers: { "content-type": "text/plain" },
     });
   }
-  return new Response(object, {
+
+  // A poster carries a number, and the number moves. When the poster is
+  // older than the cluster it draws, it is showing a count that has
+  // changed, and it is the first thing a reader sees. The header says so
+  // rather than leaving a stale image to be discovered by a reader.
+  const cluster = await db.getClusterBySlug(env.DB, slug);
+  const stale = !isDefault && cluster ? object.updatedAt < cluster.updated_at : false;
+
+  return new Response(object.bytes, {
     headers: {
       "content-type": "image/png",
       "cache-control": "public, max-age=86400",
       "x-og-default": isDefault ? "1" : "0",
+      "x-og-updated-at": object.updatedAt,
+      ...(stale ? { "x-og-stale": "1" } : {}),
     },
   });
 }

@@ -12,6 +12,7 @@ import {
   setClaim,
   setClusterStatus,
   getStats,
+  staleOgImages,
 } from "./db";
 import { num, relativeTime, shortDate, type Env } from "./types";
 import { readSession, sessionSecret, signSession, sessionCookie, clearCookie } from "./auth";
@@ -139,6 +140,14 @@ export async function handleAdmin(
     )
     .join("");
 
+  // Posters that are older than the cluster they draw.
+  //
+  // A poster is a rendering of a number and the number moves. The poster
+  // on the live board said four agents while the board said nine, because
+  // it was rendered before the rule that counts seeded wishes changed, and
+  // nothing noticed. This is the check that would have.
+  const stalePosters = await staleOgImages(env.DB);
+
   const body = `<section class="page quiet"><div class="wrap">
   <h1>Admin</h1>
   <p>${num(stats.clusters)} published · ${num(stats.pending)} in review · ${num(stats.wishes)} wishes · ${num(stats.agents)} agents · ${num(stats.shipped)} shipped</p>
@@ -151,6 +160,22 @@ export async function handleAdmin(
       <tbody>${pendingRows.join("") || `<tr><td colspan="5">Nothing waiting.</td></tr>`}</tbody>
     </table></div>
   </div>
+
+  ${
+    stalePosters.length
+      ? `<h2>Stale posters</h2>
+  <p>These posters are older than the entry they draw, so they show a count that has since changed. They are the first thing a reader sees, before the click.</p>
+  <ul>
+    ${stalePosters
+      .map(
+        (p: { slug: string; title: string; og_updated_at: string; cluster_updated_at: string }) =>
+          `<li><a class="under" href="/w/${escAttr(p.slug)}">${esc(p.title)}</a> — poster from ${esc(p.og_updated_at.slice(0, 16).replace("T", " "))}, entry changed ${esc(p.cluster_updated_at.slice(0, 16).replace("T", " "))}</li>`
+      )
+      .join("")}
+  </ul>
+  <p>Fix them with <code>npm run og:sync</code>.</p>`
+      : ""
+  }
 
   <h2>Flagged wishes</h2>
   <p>Text that looked like an attempt to give the board instructions. These are counted but not published automatically.</p>

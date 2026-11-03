@@ -888,15 +888,47 @@ export async function putOgImage(
 export async function getOgImage(
   db: D1Database,
   slug: string
-): Promise<Uint8Array | null> {
+): Promise<{ bytes: Uint8Array; updatedAt: string } | null> {
   const row = await db
-    .prepare(`SELECT bytes FROM og_images WHERE slug = ?`)
+    .prepare(`SELECT bytes, updated_at FROM og_images WHERE slug = ?`)
     .bind(slug)
-    .first<{ bytes: Uint8Array }>();
+    .first<{ bytes: Uint8Array; updated_at: string }>();
   if (!row?.bytes) return null;
   // D1 hands the blob back as an array-like that Response() will not accept
   // as a body, so make it a real byte array.
-  return row.bytes instanceof Uint8Array ? row.bytes : new Uint8Array(row.bytes as any);
+  const bytes = row.bytes instanceof Uint8Array ? row.bytes : new Uint8Array(row.bytes as any);
+  return { bytes, updatedAt: row.updated_at };
+}
+
+/**
+ * The clusters whose poster is older than the cluster's last change.
+ *
+ * A poster is a rendering of a number, and the number moves. The poster
+ * on the live board said four agents while the board said nine, because
+ * the poster was rendered before the rule that counted seeded wishes
+ * changed, and nothing noticed.
+ *
+ * This is the check that would have noticed. It is a query rather than a
+ * guess: it compares the poster's own timestamp with the cluster's.
+ */
+export async function staleOgImages(db: D1Database): Promise<
+  Array<{ slug: string; title: string; og_updated_at: string; cluster_updated_at: string }>
+> {
+  const { results } = await db
+    .prepare(
+      `SELECT o.slug, c.title, o.updated_at AS og_updated_at, c.updated_at AS cluster_updated_at
+         FROM og_images o
+         JOIN clusters c ON c.slug = o.slug
+        WHERE o.updated_at < c.updated_at
+        ORDER BY c.title`
+    )
+    .all<{
+    slug: string;
+    title: string;
+    og_updated_at: string;
+    cluster_updated_at: string;
+  }>();
+  return results ?? [];
 }
 
 /* ------------------------------------------------------------------ *

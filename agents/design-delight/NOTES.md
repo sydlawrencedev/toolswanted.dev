@@ -79,7 +79,7 @@ The board is the claim. The registry check is the product that works today.
 
 A reader can open the board on day one and see one entry, and one entry is
 not a ranking. The same reader can ask the board for a capability and get
-back four working tools out of 55,274 that already exist, and that is
+back four working tools out of 55,279 that already exist, and that is
 useful before a single claim has been made.
 
 So the product leads with the thing that works and keeps the board as the
@@ -90,6 +90,53 @@ This does not mean hiding the board. It means the board's own copy leads with
 what the reader came for, which is the builder deciding what to build next,
 and does not pretend to have more evidence than it has.
 
+**Updated, 3 November 2026.** Unchanged. The registry check was verified
+working on production again today: filing "the current weather forecast for a
+city" returned four working weather servers out of the mirror, and the reply
+told the agent it could carry on working. It is the one part of the product
+that is useful with no crowd at all.
+
+### The four decisions that need the human, revisited
+
+The founder's review of 3 November 2026 left four questions for the project
+owner. The second review on the same day, after the code fixes landed,
+revisited all four. The recommendations did not move, because the situation
+that caused them did not move.
+
+**1. The snapshot-as-public-contract cut: confirmed, and it is done.**
+`GET /api/weekly` returned a snapshot taken under the old counting rule,
+reporting 60 agents where the board reported 15, in public, on the endpoint
+the launch post tells builders to link to. It returns the live list now and
+carries `"live": true`. Verified on production: `/api/weekly` and
+`/api/stats` report identical numbers, and the HTML page at `/weekly` agrees
+with both. The cut was right and it has been taken.
+
+**2. The registry check as the front door: confirmed.** The board is one
+entry. One entry is not a ranking, and a reader who opens the board first
+sees a number with a "SEEDED" stamp beside it. The registry check works with
+no crowd, no claim and no builder, so it leads. The board does not get hidden:
+it is the reason to come back, and it is the story the launch post links to.
+
+**3. The publish threshold: hold the line at three.** Lowering it to two
+would publish five more clusters, and the pending queue shows why that is
+wrong: the top of it is `query-database` (2 agents, 2 addresses),
+`read-weather-forecast-cli-tool` (2 agents, 1 address) and
+`rotate-tls-certificate-on-load-balancer-without-downtime` (2 agents, 1
+address). Publishing those would give the board a ranking whose second entry
+is two agents from one machine. That is a worse board than one honest entry,
+and it contradicts the seeded-wish labelling the whole board's honesty rests
+on. Three agents from three addresses is the bar. It is not lowering.
+
+**4. Open `/api/servers` publicly: still no, and now there is a reason.**
+It returns 403 "forbidden" today. The mirror holds 55,279 servers and it
+works, and it is the part of the product with scale. But the mirror is
+already reachable by the person who matters: an agent filing a wish gets
+matching servers back in the reply, which is the moment the check is
+useful. Opening the endpoint adds a public surface whose query space nobody
+has measured, on a plan with a 10ms CPU budget, for a builder who has not
+been shown to want it. The decision should be made on a request from a
+builder, not on the fact that the mirror is there.
+
 ### What the design line works on next
 
 One thing: making the agent count trustworthy on the page.
@@ -97,7 +144,7 @@ One thing: making the agent count trustworthy on the page.
 The board's headline number is the number the ranking rests on, and it is
 currently the number most likely to be wrong, because it comes from a
 fingerprint that splits one machine into several agents. The evidence is in
-the board's own data: on 3 November 2026 the board held 14 independent agents
+the board's own data: on 3 November 2026 the board held 15 independent agents
 across 4 distinct IP addresses, and the published entry carried 9 of those
 agents from 3 addresses.
 
@@ -111,6 +158,36 @@ The options are open. A distinct-IP count next to the agent count, a
 prominently. What is not open is shipping more surface area that does not
 help a builder decide.
 
+**Updated, 3 November 2026, after the second founder review.** The agent
+count is still the number the ranking rests on and it is still the number most
+likely to be wrong. The stable-id header is now in both snippets an agent
+copies, so the split should stop growing on its own. That makes the card's
+missing address count the single most useful thing the design line can add
+next: it turns "9 agents" into something a reader can judge, and it is the
+one number on the board that does not yet appear anywhere a reader can see.
+
+It is also the number that makes the seeded stamp legible. Nine agents from
+three addresses is not nine people, and a builder deciding what to build
+needs to know that before they commit a week.
+
+### The board and the poster have to agree
+
+The board and the OG poster are the same product, and a reader sees them
+together: the poster in a link preview, the board when they click. They must
+carry the same number.
+
+They did not, on 3 November 2026. The poster for the published entry said
+4 agents where the board said 9, because the poster had been rendered before
+the counting rule changed and nothing re-rendered it. The board's own
+copy was honest and its poster was not, and the poster is the thing that
+reaches a reader first.
+
+So the design line treats "the poster is stale" as a defect, not as a
+housekeeping chore. `npm run og:sync` runs against the deployed board, and
+the count it renders has to match `GET /api/top` on the day it goes up. The
+same rule as the launch post: the copy in the poster, the copy on the board
+and the copy in the post are one copy.
+
 ### What the design line does not work on
 
 - **New surfaces.** The product has nine pages. A tenth is not the problem.
@@ -122,6 +199,28 @@ help a builder decide.
 - **Anything that dresses up the thin sample.** The board looks better with
   one honest entry than it does with a full page of seeded wishes presented
   as a ranking.
+
+### A button that goes nowhere is a design defect
+
+The `/build` page says "Sign in with GitHub and claim" and takes a slug and
+a repository URL. On production on 3 November 2026 that path ends at a 503
+page reading "Not configured: GitHub sign in is not set up on this
+deployment, so a wish cannot be claimed here."
+
+The screen is well made. It is the destination that is missing, and a
+well-made screen that dead-ends is worse than one that admits its state,
+because the form collects a repository URL before telling the reader it
+cannot be used.
+
+So the rule for the design line: the page that collects a thing a reader
+will act on has to have an honest dead end. If the action behind the button
+cannot run on this deployment, the button says so before the reader fills
+the form in, not after they press it. That is a copy and flow change, not
+new surface area, and it sits inside the work the design line already does.
+
+It is also the reason the launch post cannot tell a reader that claiming
+works until GitHub sign in is configured. The post, the board and the
+button all have to be true at the same time.
 
 ### The empty state is a real state
 

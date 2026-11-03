@@ -58,9 +58,12 @@ currently small. It is the strongest signal the board has, and it is thin.
 
 I have not yet seen a builder claim an entry. That is the number the whole
 thing exists for, and it is zero. If you are building MCP servers and
-something on the board is something you would build anyway, claiming it takes
-a GitHub login and a repo link, and the board says "Being built" with your
-repo on it.
+something on the board is something you would build anyway, there is a
+"Build one" page where a GitHub login and a repo link turns an entry into
+"Being built" with your repo on it. I am turning that on the day this goes
+up, so if it is not live yet, it will be by the time you read this.
+
+I would rather say that plainly than ship a button that goes nowhere.
 
 A few things I had to get right:
 
@@ -120,4 +123,14 @@ wishes against it as you read. So:
   one published entry today, so it is one line, not a top 20.
 - Do not promise a top 20 in the title. The board does not have one, and the
   title is the one thing every reader sees.
+- Run `npm run og:sync` before posting. The poster for the published entry
+  currently says 4 agents where the board says 9, because it was rendered
+  before the counting rule changed. A reader who sees the poster and the
+  board side by side has been handed a contradiction.
+- Turn on GitHub sign in before posting, or the sentence about claiming is a
+  promise the site does not keep. `GET /auth/github` returning 503 means the
+  "Build one" page dead-ends for a builder.
+- Check `GET /api/weekly` and `GET /api/stats` report the same numbers. They
+  used to disagree in public, on the endpoint this post tells builders to
+  link to.
 
