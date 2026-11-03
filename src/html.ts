@@ -108,6 +108,7 @@ a{color:inherit}
   .logo{order:1;font-size:17px}
   .top nav{order:2;margin-left:0;width:100%;overflow-x:auto;flex-wrap:nowrap;gap:4px;scrollbar-width:none}
   .top nav::-webkit-scrollbar{display:none}
+  .top nav:focus-visible{outline:3px solid var(--red);outline-offset:2px}
   .top nav a{padding:8px; font-size:12px;white-space:nowrap}
   /* A scroll affordance: the nav is cut off mid-word at a narrow width and
      there is no other hint that there is more of it. */
@@ -184,6 +185,15 @@ a{color:inherit}
 .meta{display:flex;flex-wrap:wrap;gap:4px 12px;padding:4px 16px 16px;font-size:13px;color:var(--ink-soft)}
 .meta b{color:var(--ink);font-variant-numeric:tabular-nums}
 .meta .clients{color:var(--ink-soft)}
+/* The seed stamp sits in the meta row now, next to the counts it
+   qualifies. A boxed stamp in a line of text reads as a widget; here it
+   reads as a word with a rule under it. */
+.meta .stamp{
+  display:inline-block;border:0;padding:0;background:none;
+  color:var(--red-ink);font-weight:700;font-size:12px;
+  letter-spacing:.1em;text-transform:uppercase;
+  border-bottom:1px solid var(--red);padding-bottom:1px;
+}
 .samples{border-top:1px solid var(--line);padding:12px 16px;background:var(--chip)}
 .samples p{margin:0;font-size:14px;color:var(--ink-soft)}
 .samples .q{color:var(--ink)}
@@ -252,6 +262,9 @@ th{background:var(--chip);font-family:var(--font-display);text-transform:upperca
 }
 ul,ol{padding-left:24px}
 a.under{text-decoration:underline;text-underline-offset:4px}
+ul.archive{list-style:none;padding-left:0}
+ul.archive li{margin:0 0 4px}
+ul.archive li::before{content:"— ";color:var(--ink-soft)}
 
 /* ---------- cards / lists ---------- */
 .card{border:2px solid var(--line);background:var(--paper-2);border-radius:var(--radius);padding:20px;margin:0 0 20px}
@@ -291,14 +304,19 @@ a.under{text-decoration:underline;text-underline-offset:4px}
    is part of the snippet rather than a nicety next to it. The code stays
    selectable by hand, so the button is a shortcut and not a requirement. */
 .copyrow{position:relative}
-.copyrow pre{padding-right:80px}
+.copyrow pre{padding-right:96px}
 .copybtn{
   position:absolute;top:8px;right:8px;
   font-family:var(--font-mono);font-size:12px;line-height:1;
   padding:8px 12px;border:1px solid var(--line);border-radius:var(--radius);
   background:var(--paper-2);color:var(--ink);cursor:pointer;
   font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  z-index:1;
 }
+/* A long snippet needs to wrap rather than run under the button. The
+   markdown badge snippet is 130 characters and was disappearing behind
+   the copy control. */
+.copyrow pre code{white-space:pre-wrap;word-break:break-all}
 .copybtn:hover{background:var(--chip)}
 .copybtn:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .copybtn.done{background:var(--ink);color:var(--paper);border-color:var(--ink)}
@@ -310,6 +328,10 @@ a.under{text-decoration:underline;text-underline-offset:4px}
 .snippet pre{margin:0 0 12px}
 .notice{border:2px solid var(--line);border-left:6px solid var(--red);padding:12px 16px;margin:0 0 16px;background:var(--paper-2);font-size:14px}
 .notice b{display:block;margin-bottom:4px}
+/* The "I have shipped this" control sits inside the notice, on its own
+   line, so it does not run on from the sentence. */
+.shipform{display:inline-block;margin:0}
+.shipform .btn{margin-top:8px}
 .empty{border:3px dashed var(--line);padding:40px 20px;text-align:center;color:var(--ink-soft);border-radius:var(--radius)}
 .split{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .ticker{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
@@ -383,7 +405,7 @@ ${meta.extraHead ?? ""}
 <body>
 <header class="top"><div class="wrap">
   <a class="logo" href="/"><b>Tools</b> Wanted</a>
-  <nav>${nav(meta.nav ?? "")}</nav>
+  <nav aria-label="Main" tabindex="0">${nav(meta.nav ?? "")}</nav>
 </div></header>
 <main>
 ${content}

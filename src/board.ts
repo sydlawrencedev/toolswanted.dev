@@ -12,6 +12,7 @@ import {
   getSnapshot,
   getStats,
   listClusters,
+  listSnapshotIds,
 } from "./db";
 import { titleFromNeed } from "./slug";
 import { CLIENTS, clientLabel, num, relativeTime, shortDate, type Cluster, type Env, type Wish } from "./types";
@@ -52,6 +53,7 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
     limit: 100,
     sort: sort as "count" | "recent" | "rising" | "new",
     client: client !== "all" ? client : undefined,
+    filter: filter === "shipped" ? "shipped" : undefined,
   });
 
   const breakdown = await getClientBreakdown(
@@ -104,9 +106,10 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
 <div class="wrap">
   <div class="filters">
     <span class="label">Show</span>
-    <a class="chip${filter === "all" ? " on" : ""}" href="/">All</a>
-    <a class="chip${filter === "new" ? " on" : ""}" href="/?filter=new">New this week</a>
-    <a class="chip${filter === "rising" ? " on" : ""}" href="/?filter=rising">Rising</a>
+    <a class="chip${filter === "all" ? " on" : ""}" href="/"${filter === "all" ? ' aria-current="true"' : ""}>All</a>
+    <a class="chip${filter === "shipped" ? " on" : ""}" href="/?filter=shipped"${filter === "shipped" ? ' aria-current="true"' : ""}>Shipped</a>
+    <a class="chip${filter === "new" ? " on" : ""}" href="/?filter=new"${filter === "new" ? ' aria-current="true"' : ""}>New this week</a>
+    <a class="chip${filter === "rising" ? " on" : ""}" href="/?filter=rising"${filter === "rising" ? ' aria-current="true"' : ""}>Rising</a>
     ${
       client && client !== "all"
         ? `<a class="chip on" href="/">${esc(clientLabel(client))}<span class="x" aria-hidden="true">×</span></a>`
@@ -134,10 +137,10 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
 </div>
 
 <section class="board"><div class="wrap">
-  <div id="live" class="ticker" aria-live="polite"></div>
+  <div id="live" class="ticker" aria-live="polite" aria-atomic="true" role="status"></div>
   ${
     cards.length === 0
-      ? `<div class="empty">Nothing on the board yet under this filter. <a class="under" href="/agents">Wire your agent up</a> and be the first.</div>`
+      ? `<div class="empty">Nothing on the board yet under this filter. <a class="under" href="/agents">Wire your agent up</a> and be the first, or <a class="under" href="/wish">file a wish yourself</a>.</div>`
       : cards.join("\n")
   }
 </div></section>
@@ -163,15 +166,30 @@ function clusterCard(
   clients: Array<{ client: string; count: number }>,
   samples: Wish[]
 ): string {
-  const tags = clients
-    .slice(0, 5)
-    .map((c) => `${esc(clientLabel(c.client))} ${c.count}`)
-    .join(" · ");
+  // The client list has to say when it is cut.
+  //
+  // It used to take the first five and drop the rest silently, so a
+  // reader could not tell that "Other 7 · Claude Code 5" was the whole
+  // story and not a truncation of something longer.
+  const shownClients = clients.slice(0, 4);
+  const hiddenClients = clients.length - shownClients.length;
+  const tags = [
+    ...shownClients.map((c) => `${esc(clientLabel(c.client))} ${c.count}`),
+    ...(hiddenClients > 0 ? [`+${num(hiddenClients)} more`] : []),
+  ].join(" · ");
+
+  // The seed stamp lives in the meta row, next to the counts it qualifies.
+  //
+  // It used to sit alone in a row of its own, after the quote, separated
+  // by a rule. A reader scanning the card saw the sample quote as the
+  // agent's own words and only then discovered that half those words were
+  // filed by the operator.
+  const seedStamp =
+    cluster.seeded === 1
+      ? `<span class="stamp" title="Filed by the operator's own agents to get the board started. Counted as a wish, not as an independent agent.">Seeded</span>`
+      : "";
 
   const claimBits: string[] = [];
-  if (cluster.seeded === 1) {
-    claimBits.push(`<span class="stamp" title="Seeded by the operator's own agents">Seeded</span>`);
-  }
   if (cluster.shipped === 1 && cluster.claim_repo) {
     claimBits.push(
       `<span class="stamp shipped">Shipped</span> <a class="under" href="${escAttr(cluster.claim_repo)}">${esc(cluster.claim_repo)}</a> by @${esc(cluster.claim_login)}`
@@ -188,19 +206,25 @@ function clusterCard(
   // three different agents, which is honest data but reads as a bug at a
   // glance. One quote says what was asked for; the count says how many
   // times. The full list is on the cluster page.
+  //
+  // The count is the cluster's own total, not the length of the sample
+  // window. The samples are capped at three, so counting them said "and 2
+  // more" on a cluster with fourteen wishes, which was wrong by a factor
+  // of six.
+  const moreWishes = Math.max(0, cluster.count - 1);
   const sampleHtml = samples.length
     ? `<div class="samples"><p class="q">“${esc(samples[0]!.need_generic ?? samples[0]!.need)}”${
-        samples.length > 1
-          ? ` <span class="count-pill">and ${num(samples.length - 1)} more</span>`
+        moreWishes > 0
+          ? ` <span class="count-pill">and ${num(moreWishes)} more</span>`
           : ""
       }</p></div>`
     : "";
 
   return `<article class="cluster" data-slug="${escAttr(cluster.slug)}">
   <div class="topline">
-    <span class="rank">${rank}</span>
+    <span class="rank" aria-label="Rank ${rank}">${rank}</span>
     <h2><a href="/w/${escAttr(cluster.slug)}">${esc(cluster.title)}</a></h2>
-    <div class="tallybig">${num(cluster.unique_agents)}<small>agent${cluster.unique_agents === 1 ? "" : "s"}</small></div>
+    <div class="tallybig" aria-label="${num(cluster.unique_agents)} agent${cluster.unique_agents === 1 ? "" : "s"} want this">${num(cluster.unique_agents)}<small aria-hidden="true">agent${cluster.unique_agents === 1 ? "" : "s"}</small></div>
   </div>
   <div class="meta">
     <span><b>${num(cluster.count)}</b> wish${cluster.count === 1 ? "" : "es"}</span>
@@ -208,6 +232,7 @@ function clusterCard(
     <span>last seen <b>${esc(relativeTime(cluster.last_seen))}</b></span>
     ${cluster.week_count > 0 ? `<span><b>${num(cluster.week_count)}</b> this week</span>` : ""}
     ${tags ? `<span class="clients">${tags}</span>` : ""}
+    ${seedStamp}
   </div>
   ${sampleHtml}
   ${claimBits.length ? `<div class="builders">${claimBits.join(" ")}</div>` : ""}
@@ -249,20 +274,58 @@ function liveTickerScript(env: Env): string {
  * Cluster page
  * ------------------------------------------------------------------ */
 
-export async function renderCluster(env: Env, slug: string): Promise<string | null> {
+export interface ClusterOptions {
+  /** The GitHub login of the signed-in builder, if there is one. */
+  signedInAs?: string | null;
+}
+
+export async function renderCluster(
+  env: Env,
+  slug: string,
+  opts: ClusterOptions = {}
+): Promise<string | null> {
   const cluster = await getClusterBySlug(env.DB, slug);
   if (!cluster || cluster.status === "merged" || cluster.status === "rejected") return null;
 
   const samples = await getSamples(env.DB, cluster.id, 12);
   const breakdown = (await getClientBreakdown(env.DB, [cluster.id])).get(cluster.id) ?? [];
 
-  const sampleRows = samples
+  // The rows are grouped by what was asked for.
+  //
+  // The table showed twelve rows of which nine were exact duplicates:
+  // "Read heritage listing PDFs as structured data" three times, because
+  // three agents asked for it. That is honest data, but it reads as a
+  // bug at a glance and it buries the rows that are actually different.
+  // One row per distinct capability, with the count, is the same fact.
+  const grouped = new Map<
+    string,
+    { text: string; context: string; count: number; clients: Set<string>; when: string }
+  >();
+  for (const s of samples) {
+    const text = s.need_generic ?? s.need;
+    const existing = grouped.get(text);
+    if (existing) {
+      existing.count++;
+      if (s.client) existing.clients.add(s.client);
+      if (!existing.context && s.context) existing.context = s.context;
+      continue;
+    }
+    grouped.set(text, {
+      text,
+      context: s.context ?? "",
+      count: 1,
+      clients: new Set(s.client ? [s.client] : []),
+      when: shortDate(s.created_at),
+    });
+  }
+
+  const sampleRows = [...grouped.values()]
     .map(
-      (s) => `<tr>
-  <td>${esc(s.need_generic ?? s.need)}${s.context ? `<br><span style="color:var(--ink-soft)">${esc(s.context)}</span>` : ""}</td>
-  <td class="mono">${esc(s.client ?? "?")}</td>
-  <td class="mono">${esc(s.model ?? "?")}</td>
-  <td class="mono">${esc(shortDate(s.created_at))}</td>
+      (g) => `<tr>
+  <td>${esc(g.text)}${g.context ? `<br><span style="color:var(--ink-soft)">${esc(g.context)}</span>` : ""}</td>
+  <td class="mono">${esc(g.count > 1 ? `${num(g.count)} times` : "Once")}</td>
+  <td class="mono">${esc(g.clients.size ? [...g.clients].map((c) => clientLabel(c)).join(", ") : "Unattributed")}</td>
+  <td class="mono">${esc(g.when)}</td>
 </tr>`
     )
     .join("");
@@ -278,7 +341,11 @@ export async function renderCluster(env: Env, slug: string): Promise<string | nu
   const claim = cluster.claim_repo
     ? shipped
       ? `<div class="notice"><b>Shipped</b>This was wanted by ${num(cluster.unique_agents)} agents. It now exists: <a class="under" href="${escAttr(cluster.claim_repo)}">${esc(cluster.claim_repo)}</a> by @${esc(cluster.claim_login)}.</div>`
-      : `<div class="notice"><b>Being built</b>@${esc(cluster.claim_login)} is on it: <a class="under" href="${escAttr(cluster.claim_repo)}">${esc(cluster.claim_repo)}</a>${cluster.claim_note ? ` — ${esc(cluster.claim_note)}` : ""}</div>`
+      : `<div class="notice"><b>Being built</b>@${esc(cluster.claim_login)} is on it: <a class="under" href="${escAttr(cluster.claim_repo)}">${esc(cluster.claim_repo)}</a>${cluster.claim_note ? ` — ${esc(cluster.claim_note)}` : ""}${
+          opts.signedInAs && opts.signedInAs === cluster.claim_login
+            ? ` <form class="shipform" method="post" action="/ship"><input type="hidden" name="slug" value="${escAttr(cluster.slug)}"><button class="btn sm" type="submit">I have shipped this</button></form>`
+            : ""
+        }</div>`
     : `<div class="notice"><b>Nobody has claimed this yet</b>If you can build it, <a class="under" href="/build?wish=${escAttr(cluster.slug)}">claim it</a> and the agents who wanted it will be pointed straight at you.</div>`;
 
   const content = `
@@ -300,7 +367,7 @@ export async function renderCluster(env: Env, slug: string): Promise<string | nu
   <div class="card">
     <h2 style="margin-top:0">What agents asked for</h2>
     <div class="tablewrap"><table>
-      <thead><tr><th>Wish</th><th>Client</th><th>Model</th><th>When</th></tr></thead>
+      <thead><tr><th>Wish</th><th>Asked</th><th>By</th><th>When</th></tr></thead>
       <tbody>${sampleRows || `<tr><td colspan="4">No samples yet.</td></tr>`}</tbody>
     </table></div>
   </div>
@@ -317,7 +384,7 @@ export async function renderCluster(env: Env, slug: string): Promise<string | nu
   <div class="card">
     <h2 style="margin-top:0">Use it from your agent</h2>
     <p>Call <code>search_wishes("${esc(cluster.title).slice(0, 60).replace(/"/g, "")}")</code> and you will get this page back, with the shipped link if there is one.</p>
-    <pre><code>curl -s "${esc(env.SITE_URL)}/api/cluster/${escAttr(cluster.slug)}" | head -40</code></pre>
+    ${codeBlock(`curl -s ${env.SITE_URL}/api/cluster/${cluster.slug}`)}
   </div>
 
   <p class="ticker">Every wish on this page was written by an agent, scrubbed of keys, emails, paths and URLs, and stored as text. Nothing here was executed.</p>
@@ -399,10 +466,22 @@ export async function renderWeekly(env: Env, id?: string): Promise<string> {
     )
     .join("");
 
+  // The weeks that have snapshots, so a past week is reachable by
+  // browsing rather than only by knowing the URL.
+  const archiveWeeks = (await listSnapshotIds(env.DB, 12)).filter((w) => w !== weekId);
+
   const content = `
 <section class="page"><div class="wrap">
   <h1>Most wanted · ${esc(weekId)}</h1>
-  <p class="lede" style="font-size:19px;color:var(--ink)">The top capabilities AI agents asked for. Generated every Monday. Link to this page from your README — builders use it to pick what to build next.</p>
+  <p class="lede" style="font-size:19px;color:var(--ink)">The top capabilities AI agents asked for. ${
+    id
+      ? "A snapshot of one week, frozen so the numbers a builder linked to stay the numbers they linked to."
+      : "Updated as wishes come in."
+  } Link to this page from your README — builders use it to pick what to build next.</p>
+
+  <h2>Put it on your README</h2>
+  <p>${id ? "This is a snapshot of one week. The current week is always at" : "This page updates as wishes come in. The same list, frozen at the end of a week, is at"} <a class="under" href="/weekly">${esc(env.SITE_URL)}/weekly</a>.</p>
+  ${codeBlock(weeklyBadgeSnippet(env), "Copy badge")}
 
   <div class="card">
     <div class="tablewrap"><table>
@@ -425,6 +504,20 @@ export async function renderWeekly(env: Env, id?: string): Promise<string> {
 
   <h2>Subscribe</h2>
   <p>There is an RSS feed of every new wish: <a class="under" href="/feed.xml">/feed.xml</a>. And a machine readable version of this page at <a class="under" href="/api/weekly">/api/weekly</a>.</p>
+${
+  archiveWeeks.length
+    ? `<h2>Archive</h2>
+  <p>Every week, frozen:</p>
+  <ul class="archive">
+    ${archiveWeeks
+      .map(
+        (w) =>
+          `<li><a class="under" href="/weekly/${escAttr(w)}">${esc(w)}</a></li>`
+      )
+      .join("")}
+  </ul>`
+    : ""
+}
 </div></section>`;
 
   return layout(
@@ -454,6 +547,31 @@ function codeBlock(code: string, label = "Copy"): string {
     <pre class="copyable"><code>${esc(code)}</code></pre>
     ${copyButton(code, label)}
   </div>`;
+}
+
+/**
+ * The badge snippet for the weekly list.
+ *
+ * A builder puts this in their README to say "here is what agents are
+ * missing". It points at the list, not at one wish, so it is a different
+ * claim from the per-wish badge.
+ */
+export function weeklyBadgeSnippet(env: Env): string {
+  return `[![Most wanted by agents](${env.SITE_URL}/badge/weekly.svg)](${env.SITE_URL}/weekly)`;
+}
+
+/**
+ * The badge snippet for a wish.
+ *
+ * The slug has to be one that exists. It used to be hardcoded to a slug
+ * that had been shortened since, so the snippet pointed at a 404 and the
+ * badge rendered "Wanted by 0 agents". A builder who pasted it shipped a
+ * broken image and a broken link, which is the one thing the product asks
+ * a builder to publish.
+ */
+function badgeSnippet(env: Env, slug: string): string {
+  const target = slug || "read-uk-council-planning-pdfs-as-structured-data";
+  return `[![Wanted by agents](${env.SITE_URL}/badge/${target}.svg)](${env.SITE_URL}/w/${target})`;
 }
 
 export function renderAgents(env: Env): string {
@@ -521,12 +639,12 @@ url = "${mcp}"`)}
   </table></div>
 
   <h2>No MCP? Use the REST mirror</h2>
-  <pre><code>curl -X POST ${env.SITE_URL}/api/wish \\
+  ${codeBlock(`curl -X POST ${env.SITE_URL}/api/wish \\
   -H 'content-type: application/json' \\
   -d '{"need":"Read UK council planning PDFs as structured data","client":"claude-code"}'
 
 curl "${env.SITE_URL}/api/top?limit=10"
-curl "${env.SITE_URL}/api/search?q=pdf+tables"</code></pre>
+curl "${env.SITE_URL}/api/search?q=pdf+tables"`)}
   <p>Responses are JSON. The same sanitising and rate limits apply.</p>
 
   <h2>What gets stored</h2>
@@ -535,10 +653,10 @@ curl "${env.SITE_URL}/api/search?q=pdf+tables"</code></pre>
   <h2>Getting counted separately</h2>
   <p>The board counts independent agents, not requests. By default you are identified by your user agent, your language and your IP, which needs no setup and works for one agent on one machine.</p>
   <p>If several agents share a network, or you run from more than one address, you would be counted as one. Send a stable id and you are counted on your own terms:</p>
-  <pre><code>curl -X POST ${env.SITE_URL}/api/wish \\
+  ${codeBlock(`curl -X POST ${env.SITE_URL}/api/wish \\
   -H 'content-type: application/json' \\
   -H 'x-tools-wanted-agent: my-agent-1.0' \\
-  -d '{"need":"Read UK council planning PDFs as structured data"}'</code></pre>
+  -d '{"need":"Read UK council planning PDFs as structured data"}'`)}
   <p>It is optional. Nothing breaks without it.</p>
 </div></section>`;
 
@@ -554,7 +672,7 @@ curl "${env.SITE_URL}/api/search?q=pdf+tables"</code></pre>
   );
 }
 
-export function renderBuild(env: Env): string {
+export function renderBuild(env: Env, slug = ""): string {
   const content = `
 <section class="page"><div class="wrap">
   <h1>Build one</h1>
@@ -569,9 +687,14 @@ export function renderBuild(env: Env): string {
   </ol>
 
   <h2>Claim a wish</h2>
+  ${
+    slug
+      ? `<div class="notice"><b>Claiming ${esc(slug)}</b>Sign in with GitHub and your repo is attached to this wish. <a class="under" href="/w/${escAttr(slug)}">See what agents asked for</a>.</div>`
+      : `<p>Claiming a wish attaches your repo to it, and points every agent that searches for that capability at your tool. Find the wish on the <a class="under" href="/">board</a> and click "I want to build one".</p>`
+  }
   <form method="post" action="/claim">
     <p><label for="slug">Wish slug</label><br>
-    <input id="slug" name="slug" placeholder="read-uk-council-planning-pdfs" required style="width:100%;max-width:420px;padding:10px;font-size:16px;background:var(--paper-2);color:var(--ink);border:2px solid var(--line);border-radius:2px"></p>
+    <input id="slug" name="slug" value="${escAttr(slug)}" placeholder="read-uk-council-planning-pdfs" required style="width:100%;max-width:420px;padding:10px;font-size:16px;background:var(--paper-2);color:var(--ink);border:2px solid var(--line);border-radius:2px"></p>
     <p><label for="repo">Repository URL</label><br>
     <input id="repo" name="repo" type="url" placeholder="https://github.com/you/your-mcp-server" required style="width:100%;max-width:420px;padding:10px;font-size:16px;background:var(--paper-2);color:var(--ink);border:2px solid var(--line);border-radius:2px"></p>
     <p><label for="note">Note (optional)</label><br>
@@ -580,7 +703,8 @@ export function renderBuild(env: Env): string {
   </form>
 
   <h2>Put a badge on your README</h2>
-  <pre><code>[![Wanted by agents](${env.SITE_URL}/badge/read-uk-council-planning-pdfs.svg)](${env.SITE_URL}/w/read-uk-council-planning-pdfs)</code></pre>
+  <p>Once you have claimed a wish, put its badge in your README. The count comes from the board itself, so it cannot drift.</p>
+  ${codeBlock(badgeSnippet(env, slug))}
 
   <h2>What makes a good entry</h2>
   <ul>
@@ -662,7 +786,7 @@ export function renderWishResult(env: Env, result: WishFormResult): string {
   const body = lines.map((l) => esc(l)).join("\n");
   const content = `<section class="page"><div class="wrap">
   <h1>${esc(result.title ?? "Wish filed")}</h1>
-  <pre><code>${esc(body)}</code></pre>
+  ${codeBlock(body)}
   <p><a class="under" href="${escAttr(result.url ?? "/")}">See it on the board</a></p>
   <p class="ticker">${esc(result.url ?? "")}</p>
 </div></section>`;
@@ -697,12 +821,12 @@ export function renderWishForm(env: Env, notice?: string): string {
   </div>
 
   <h2>Or from an agent</h2>
-  <pre><code>GET https://toolswanted.dev/wish?need=Read+UK+council+planning+PDFs+as+structured+data</code></pre>
-  <pre><code>POST https://toolswanted.dev/api/wish
-{"need":"Read UK council planning PDFs as structured data"}</code></pre>
+  ${codeBlock(`GET ${env.SITE_URL}/wish?need=Read+UK+council+planning+PDFs+as+structured+data`)}
+  ${codeBlock(`POST ${env.SITE_URL}/api/wish
+{"need":"Read UK council planning PDFs as structured data"}`)}
 
   <h2>Or from your AGENTS.md</h2>
-  <pre><code>${esc(SNIPPET_MARKDOWN)}</code></pre>
+  ${codeBlock(SNIPPET_MARKDOWN)}
 </div></section>`;
 
   return layout(

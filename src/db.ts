@@ -47,6 +47,8 @@ export interface ListOptions {
   client?: string;
   sort?: "count" | "recent" | "rising" | "new";
   weekStart?: string;
+  /** A state filter applied on top of the status: "shipped" today. */
+  filter?: string;
 }
 
 /** Board listing. Sorted server-side so we never ship the whole table. */
@@ -67,6 +69,12 @@ export async function listClusters(
 
   const where: string[] = ["c.status = ?"];
   const binds: unknown[] = [status];
+
+  // "Shipped" is a state, not a sort. A builder whose own wish shipped has
+  // no other way to find out: there was no route to it anywhere.
+  if (opts.filter === "shipped") {
+    where.push("c.shipped = 1");
+  }
 
   if (opts.client && opts.client !== "all") {
     where.push(

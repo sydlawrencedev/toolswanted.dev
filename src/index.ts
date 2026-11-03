@@ -136,7 +136,17 @@ function notFound(env: Env): Response {
         canonical: `${env.SITE_URL}/404`,
         noindex: true,
       },
-      `<section class="page"><div class="wrap"><h1>404</h1><p>Nothing here. <a class="under" href="/">Back to the board</a>.</p></div></section>`
+      `<section class="page"><div class="wrap">
+  <h1>404</h1>
+  <p>Nothing here. <a class="under" href="/">Back to the board</a>, or <a class="under" href="/weekly">this week's most wanted</a>.</p>
+  <div class="card">
+    <form method="get" action="/wish">
+      <p><label for="need">Looking for a capability? Try its name.</label></p>
+      <p><input id="need" name="need" placeholder="Read UK council planning PDFs as structured data" style="width:100%;padding:12px;font-size:17px;background:var(--paper-2);color:var(--ink);border:2px solid var(--line);border-radius:2px"></p>
+      <p><button class="btn" type="submit">Search the board</button></p>
+    </form>
+  </div>
+</div></section>`
     ),
     404
   );
@@ -349,7 +359,11 @@ async function route(
     });
   }
   if (path.startsWith("/badge/") && path.endsWith(".svg")) {
-    return renderBadge(env, path.slice("/badge/".length, -4));
+    const slug = path.slice("/badge/".length, -4);
+    // The weekly badge is a different animal: it points at the list, not
+    // at a single wish, so it carries the count of the whole board.
+    if (slug === "weekly") return renderWeeklyBadge(env);
+    return renderBadge(env, slug);
   }
   if (path.startsWith("/og/")) {
     return renderOg(env, path.slice("/og/".length));
@@ -364,6 +378,9 @@ async function route(
   }
   if (path === "/claim" && method === "POST") {
     return handleClaim(env, request);
+  }
+  if (path === "/ship" && method === "POST") {
+    return handleShip(env, request);
   }
 
   /* ---------------- admin ---------------- */
@@ -399,7 +416,10 @@ async function route(
       request,
       300,
       async () => {
-        const body = await renderCluster(env, slug);
+        const session = await readSession(env, request);
+        const body = await renderCluster(env, slug, {
+          signedInAs: session?.login ?? null,
+        });
         if (!body) return notFound(env);
         return html(body, 200, { "cache-control": "public, max-age=120, s-maxage=300" });
       },
@@ -431,10 +451,14 @@ async function route(
     );
   }
   if (path === "/build") {
+    // The claim form is prefilled from `?wish=`, so a builder who clicks
+    // "I want to build one" on a cluster does not have to go and find
+    // the slug. The page told them which wish; the form now carries it.
+    const slug = url.searchParams.get("wish") ?? "";
     return cached(
       request,
       600,
-      async () => html(renderBuild(env), 200, { "cache-control": "public, max-age=600" }),
+      async () => html(renderBuild(env, slug), 200, { "cache-control": "public, max-age=600" }),
       env.VERSION_METADATA?.id
     );
   }
@@ -631,9 +655,46 @@ async function renderOg(env: Env, name: string): Promise<Response> {
   });
 }
 
+/**
+ * The badge for the weekly list.
+ *
+ * It points at the list rather than at a single wish, so it carries the
+ * number of capabilities on the board rather than the number of agents on
+ * one of them. A builder puts this in their README to say "here is what
+ * agents are missing", which is a different claim from "here is how many
+ * people want this one thing".
+ */
+async function renderWeeklyBadge(env: Env): Promise<Response> {
+  const clusters = await db.listClusters(env.DB, { status: "published", limit: 50, sort: "count" });
+  const count = clusters.length;
+  const label = `${num(count)} most wanted`;
+  const width = 60 + label.length * 7;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="20" role="img" aria-label="${escAttr(`${label} on Tools Wanted`)}">
+<rect width="${width}" height="20" fill="#151210"/>
+<rect x="0" y="0" width="18" height="20" fill="#d32a1c"/>
+<text x="9" y="14" font-family="Helvetica,Arial,sans-serif" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">W</text>
+<text x="24" y="14" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#f3eee1">${esc(label)}</text>
+</svg>`;
+  return new Response(svg, {
+    headers: {
+      "content-type": "image/svg+xml; charset=utf-8",
+      "cache-control": "public, max-age=600",
+    },
+  });
+}
+
 async function renderBadge(env: Env, slug: string): Promise<Response> {
   const cluster = await db.getClusterBySlug(env.DB, slug);
-  const count = cluster?.unique_agents ?? 0;
+  // A badge for a wish that does not exist is a broken image and a broken
+  // link in somebody's README. It used to render "Wanted by 0 agents"
+  // with a 200, which is a lie rather than a 404.
+  if (!cluster) {
+    return new Response("Not found", {
+      status: 404,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+  const count = cluster.unique_agents;
   const label = `Wanted by ${num(count)} agent${count === 1 ? "" : "s"}`;
   const width = 60 + label.length * 7;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="20" role="img" aria-label="${escAttr(label)}">
@@ -789,6 +850,43 @@ interface PendingClaim {
   slug: string;
   repo: string;
   note: string;
+}
+
+/**
+ * Mark a claimed wish as shipped.
+ *
+ * The build page told a builder "when you ship, mark it shipped", and
+ * there was no control anywhere a builder could reach. The only way to
+ * set the shipped flag was the admin panel, so the step the product
+ * described was a step only the operator could take.
+ *
+ * The builder has to be the one who claimed it. That is checked against
+ * the GitHub login on the session, so a builder can ship their own wish
+ * and nobody else's.
+ */
+async function handleShip(env: Env, request: Request): Promise<Response> {
+  const form = await readForm(request);
+  const slug = String(form?.get("slug") ?? "").trim();
+  if (!slug) return new Response("slug is required", { status: 400 });
+
+  const session = await readSession(env, request);
+  if (!session) return new Response("Sign in with GitHub first", { status: 401 });
+
+  const cluster = await db.getClusterBySlug(env.DB, slug);
+  if (!cluster) return new Response("No such wish", { status: 404 });
+  if (cluster.claim_login !== session.login) {
+    return new Response("Only the builder who claimed this can mark it shipped", { status: 403 });
+  }
+
+  await db.setClaim(env.DB, {
+    clusterId: cluster.id,
+    login: cluster.claim_login ?? session.login,
+    repo: cluster.claim_repo ?? "",
+    note: cluster.claim_note ?? null,
+    shipped: true,
+  });
+  await purgeClusterCache(env, cluster.id, new URL(request.url).origin);
+  return new Response(null, { status: 302, headers: { location: `/w/${cluster.slug}` } });
 }
 
 /** Read a claim that was started before the GitHub sign in. */
