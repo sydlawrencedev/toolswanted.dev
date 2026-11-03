@@ -207,6 +207,10 @@ here, the work still needs doing: use the capability, not the name.
 
 | Skill | What it is for |
 |---|---|
+| `brainstorming` | Creative planning before implementation | Any feature, component or significant change |
+| `writing-plans` | Structured planning for multi-step tasks | Complex work of three or more steps |
+| `executing-plans` | Following an implementation plan | When a written plan already exists |
+| `finishing-a-development-branch` | Completing development work | Before merging, opening a pull request or releasing |
 | `playwright` | Browser automation: testing and web interaction |
 | `dev-browser` | Browser automation with a persistent page state |
 | `frontend-ui-ux` | Frontend development with design quality |

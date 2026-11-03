@@ -232,6 +232,9 @@ here, the work still needs doing: use the capability, not the name.
 
 | Skill | What it is for |
 |---|---|
+| `writing-plans` | Structured planning for multi-step tasks | Complex work of three or more steps |
+| `executing-plans` | Following an implementation plan | When a written plan already exists |
+| `finishing-a-development-branch` | Completing development work | Before merging, opening a pull request or releasing |
 | `customer-research` | Interviews, survey work, and mining reviews for what people actually say |
 | `ideal-customer-profile` | Building and refining the audience definition from research data |
 | `user-personas` | Turning research into usable personas |

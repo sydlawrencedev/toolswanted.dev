@@ -1,7 +1,7 @@
 {
   "version": 1,
   "kit_version": "1.0.0",
-  "generated_at": "2026-11-03T11:24:05.245Z",
+  "generated_at": "2026-11-03T19:42:55.262Z",
   "agents": [
     "ceo",
     "content-brand",
@@ -33,7 +33,7 @@
       ]
     },
     "agents/ceo/TOOLS.md": {
-      "sha256": "eb16592b38f1a88e64fb60ec2594385a762d4e88c44d5001b6fe89b312513195",
+      "sha256": "24d7cf0812279082a29fcdc759a8c74c459f4e4d909762af98439b689605e5d3",
       "ownership": "managed",
       "sources": [
         "agents/ceo/TOOLS.md"
@@ -83,7 +83,7 @@
       "sources": []
     },
     ".opencode/agents/ceo.md": {
-      "sha256": "dcae80a7c74a5c6b5e3be02d2eb3921a557e2ee538310ab3146f01fb9f4d4c9e",
+      "sha256": "b39fe40aa707d5cae1279ff8d68e5c8c00881b382fcba4656bf8a3e27f07457b",
       "ownership": "managed",
       "sources": [
         "agents/ceo/AGENTS.md",
@@ -94,7 +94,7 @@
       ]
     },
     ".claude/agents/ceo.md": {
-      "sha256": "d1a1c71931936f0cbdfe1a8404880743a5647d0efd588e1dd26841825b925963",
+      "sha256": "f4c33148bb45b4b36f9c02b471691d8ab1326689154eb97b1faad07fdc9fe25b",
       "ownership": "managed",
       "sources": [
         "agents/ceo/AGENTS.md",
@@ -126,7 +126,7 @@
       ]
     },
     "agents/content-brand/TOOLS.md": {
-      "sha256": "0166f46ec0de1604911041f32064d7cddb927bb93b120d0fad8880db721e10f4",
+      "sha256": "57e7bcbe9d783db6865216c6972471b0f48286e42a2d80a728d6c99032bc6cc8",
       "ownership": "managed",
       "sources": [
         "agents/content-brand/TOOLS.md"
@@ -176,7 +176,7 @@
       "sources": []
     },
     ".opencode/agents/content-brand.md": {
-      "sha256": "80fb33a8498f14cb34b99df1cccdd61389cd4c86e5fcc0106fa4b1baffa6d573",
+      "sha256": "ae04df7c2f613765646e023e4d58869c71fa61a279efaa9fab049e1c4a0ebdd9",
       "ownership": "managed",
       "sources": [
         "agents/content-brand/AGENTS.md",
@@ -187,7 +187,7 @@
       ]
     },
     ".claude/agents/content-brand.md": {
-      "sha256": "2cb63581644b14255ced6e8f6f0098dc1b01e893e133080adbee3881f3f949d7",
+      "sha256": "0402cd9e8541f35812ecb75bb6f5b4d8777b7d2080b09aed56ce118c5782e009",
       "ownership": "managed",
       "sources": [
         "agents/content-brand/AGENTS.md",
@@ -219,7 +219,7 @@
       ]
     },
     "agents/design-delight/TOOLS.md": {
-      "sha256": "f95b2bc8e1c3ada03bc2520eb99d2047d643e58fc99c1c7fd4da52f88eccde9c",
+      "sha256": "c39bee2c4bedeac44629a0dfc98fce08ec8883f8c3ecb8508b41d7dfaa09a0cb",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/TOOLS.md"
@@ -269,7 +269,7 @@
       "sources": []
     },
     ".opencode/agents/design-delight.md": {
-      "sha256": "a1cfaaa4b5e11ad9f3b3da918fa22479d42ee0236cddf4d1edea1a972d5c68db",
+      "sha256": "0cd597db16c0c069fa4054084a62fd01bf688251deb01240e0128c7472b0516a",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/AGENTS.md",
@@ -280,7 +280,7 @@
       ]
     },
     ".claude/agents/design-delight.md": {
-      "sha256": "12d5743532a6ef50f68ddfa0976886855ad60f540b65515ed363af635efe0d68",
+      "sha256": "75fc850f9b59a3b1838cc1472bf470ecf6e852bbe6bf5a5465137bc55f14bf4e",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/AGENTS.md",
@@ -312,7 +312,7 @@
       ]
     },
     "agents/frontend-engineer/TOOLS.md": {
-      "sha256": "95b2ca48e4076df3ecde9dc945d2d40cd511aef37b3af63e8e0bcb7106b11174",
+      "sha256": "62fb562bfeb93ef670272315ce9a0e0ea8b8d47c230fcc17588f6d644da290a8",
       "ownership": "managed",
       "sources": [
         "agents/frontend-engineer/TOOLS.md"
@@ -362,7 +362,7 @@
       "sources": []
     },
     ".opencode/agents/frontend-engineer.md": {
-      "sha256": "0e90dd4d4baccdbce1b1c6bd3c9e424e08e17150555bd1b17fbd052c26e566c7",
+      "sha256": "a9ac9f19e30425bd4101749f2ca0d4ccbc7ba403b6da0361e7affb76e5a66ffa",
       "ownership": "managed",
       "sources": [
         "agents/frontend-engineer/AGENTS.md",
@@ -373,7 +373,7 @@
       ]
     },
     ".claude/agents/frontend-engineer.md": {
-      "sha256": "4bc316ed4e965c8e5626deba3c6cc206bc7d999ce3e2e60292a0f4397899ae3c",
+      "sha256": "212f7d4a86c153cd9c4eac36efaa569be6f4c915cedc89c765f765ce35f7bc80",
       "ownership": "managed",
       "sources": [
         "agents/frontend-engineer/AGENTS.md",
@@ -405,7 +405,7 @@
       ]
     },
     "agents/icp/TOOLS.md": {
-      "sha256": "38e7902324614d358287af9db8ec660967760a68de81a152af0d7227f3ee9b26",
+      "sha256": "e29b221e650c0c40bec79e24eb8366607849f68640924aac866d91b908dded5f",
       "ownership": "managed",
       "sources": [
         "agents/icp/TOOLS.md"
@@ -455,7 +455,7 @@
       "sources": []
     },
     ".opencode/agents/icp.md": {
-      "sha256": "4d5f5b89984d6bb60258d2105b17683aff74574082230c08a5fce40051f6116c",
+      "sha256": "4db06ba52c43c9b5028bf5d44058072af6b232b07dc9aa0734de9a2a6cbacbf7",
       "ownership": "managed",
       "sources": [
         "agents/icp/AGENTS.md",
@@ -466,7 +466,7 @@
       ]
     },
     ".claude/agents/icp.md": {
-      "sha256": "1ff14bb538b89d4913295e3c1eeec9969b0361c1fe3cc071b09f7ebabfff227a",
+      "sha256": "30362f256212095a881f157e86a4d51104d40b8baea2cb2fde629aaebcdd13f0",
       "ownership": "managed",
       "sources": [
         "agents/icp/AGENTS.md",
@@ -498,7 +498,7 @@
       ]
     },
     "agents/test-manager/TOOLS.md": {
-      "sha256": "5ac8ca493b8af7cbcccb8e7845d5ae09baf18beffc626dee8945e60834fb2c47",
+      "sha256": "b40a0a8441395375de9c30095f44ea32779abb66e785c61dfb8526b502b6fc17",
       "ownership": "managed",
       "sources": [
         "agents/test-manager/TOOLS.md"
@@ -548,7 +548,7 @@
       "sources": []
     },
     ".opencode/agents/test-manager.md": {
-      "sha256": "36502e6de49bb0fd3e4c094c6450eb88342231f3443e8dbbcfee4ad3bb5c77e7",
+      "sha256": "40e4f3b5ae6a588ad178361094aba1e88f61a9d8a814690c8c5192465dd9f728",
       "ownership": "managed",
       "sources": [
         "agents/test-manager/AGENTS.md",
@@ -559,7 +559,7 @@
       ]
     },
     ".claude/agents/test-manager.md": {
-      "sha256": "9e4aa9d95c80683858be1f0b6cedab6a6addab360cca069c034d9ef912cfac3f",
+      "sha256": "e6d99e6618e54161e789aae0c238520c5080a98ccc0792bf2754e76d33d64b3e",
       "ownership": "managed",
       "sources": [
         "agents/test-manager/AGENTS.md",
@@ -591,7 +591,7 @@
       ]
     },
     "agents/_shared/SKILLS.md": {
-      "sha256": "2ad52768088ede810b20c395d1cb2c8cb0ee9687587a29f63ecd7bc991ed4f0f",
+      "sha256": "0603167d7c97a60888eaebcbf1ee91d1827593bd781b81930a6a6e5ea5f1d0fd",
       "ownership": "managed",
       "sources": [
         "agents/_shared/SKILLS.md"
@@ -639,20 +639,6 @@
         "brand/profiles/README.md"
       ]
     },
-    ".opencode/skills/coaching-plan/SKILL.md": {
-      "sha256": "5fd9abe241de4bb11660a9a7f934a7659c100789219924ac0b1a3f4beb0bd200",
-      "ownership": "managed",
-      "sources": [
-        "skills/coaching-plan/SKILL.md"
-      ]
-    },
-    ".claude/skills/coaching-plan/SKILL.md": {
-      "sha256": "5fd9abe241de4bb11660a9a7f934a7659c100789219924ac0b1a3f4beb0bd200",
-      "ownership": "managed",
-      "sources": [
-        "skills/coaching-plan/SKILL.md"
-      ]
-    },
     ".opencode/skills/para-memory-files/SKILL.md": {
       "sha256": "200bfb697193ac4e2cc1227b94fe972978a3cc39ca6fa9d4cc6dcc0dbfdb9e65",
       "ownership": "managed",
@@ -685,6 +671,1686 @@
       "sha256": null,
       "ownership": "project",
       "sources": []
+    },
+    ".opencode/skills/adapt/SKILL.md": {
+      "sha256": "f4f88ca97b5b7fb2aa8827615bdcab79a4e4af33d18a9a80ba36fd35708d1951",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/adapt/SKILL.md"
+      ]
+    },
+    ".claude/skills/adapt/SKILL.md": {
+      "sha256": "f4f88ca97b5b7fb2aa8827615bdcab79a4e4af33d18a9a80ba36fd35708d1951",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/adapt/SKILL.md"
+      ]
+    },
+    ".opencode/skills/animate/SKILL.md": {
+      "sha256": "7a523bffd0321dccc9ab7fe65cc53ef6a66022f67cf372581364c5c3914a99c3",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/animate/SKILL.md"
+      ]
+    },
+    ".claude/skills/animate/SKILL.md": {
+      "sha256": "7a523bffd0321dccc9ab7fe65cc53ef6a66022f67cf372581364c5c3914a99c3",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/animate/SKILL.md"
+      ]
+    },
+    ".opencode/skills/bolder/SKILL.md": {
+      "sha256": "8c98bb46e92baddb8597476e13f0d9892a516910a45a5ffecf8d693cd790686e",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/bolder/SKILL.md"
+      ]
+    },
+    ".claude/skills/bolder/SKILL.md": {
+      "sha256": "8c98bb46e92baddb8597476e13f0d9892a516910a45a5ffecf8d693cd790686e",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/bolder/SKILL.md"
+      ]
+    },
+    ".opencode/skills/brainstorming/SKILL.md": {
+      "sha256": "bba47904a7f6bbee3bf8a107ebbe84e65d392be683bbb898ded736b29e415f90",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/SKILL.md"
+      ]
+    },
+    ".claude/skills/brainstorming/SKILL.md": {
+      "sha256": "bba47904a7f6bbee3bf8a107ebbe84e65d392be683bbb898ded736b29e415f90",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/SKILL.md"
+      ]
+    },
+    ".opencode/skills/brainstorming/scripts/frame-template.html": {
+      "sha256": "fb22ba9d47f3b83b56e0a95d52a3c2727db03b0d4365078d92c850293a62457b",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/scripts/frame-template.html"
+      ]
+    },
+    ".claude/skills/brainstorming/scripts/frame-template.html": {
+      "sha256": "fb22ba9d47f3b83b56e0a95d52a3c2727db03b0d4365078d92c850293a62457b",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/scripts/frame-template.html"
+      ]
+    },
+    ".opencode/skills/brainstorming/scripts/helper.js": {
+      "sha256": "e763d82f32b4ebb320be2f0d08449d3e5a0585778edf5c407c1fdab3f39976a5",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/scripts/helper.js"
+      ]
+    },
+    ".claude/skills/brainstorming/scripts/helper.js": {
+      "sha256": "e763d82f32b4ebb320be2f0d08449d3e5a0585778edf5c407c1fdab3f39976a5",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/scripts/helper.js"
+      ]
+    },
+    ".opencode/skills/brainstorming/scripts/server.cjs": {
+      "sha256": "ea81185f581897c67d4b417eeb9bc7a158c50e0932c73047054fe53efc2683ef",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/scripts/server.cjs"
+      ]
+    },
+    ".claude/skills/brainstorming/scripts/server.cjs": {
+      "sha256": "ea81185f581897c67d4b417eeb9bc7a158c50e0932c73047054fe53efc2683ef",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/scripts/server.cjs"
+      ]
+    },
+    ".opencode/skills/brainstorming/scripts/start-server.sh": {
+      "sha256": "3442a54b5ee5511637d27bf696e092b72f94c2324f40b5ba4410da4dd0c23bc8",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/scripts/start-server.sh"
+      ]
+    },
+    ".claude/skills/brainstorming/scripts/start-server.sh": {
+      "sha256": "3442a54b5ee5511637d27bf696e092b72f94c2324f40b5ba4410da4dd0c23bc8",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/scripts/start-server.sh"
+      ]
+    },
+    ".opencode/skills/brainstorming/scripts/stop-server.sh": {
+      "sha256": "f65b7634a27343eab2086bdb6c59ba78695685f471b5a577b08a8817f7c50600",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/scripts/stop-server.sh"
+      ]
+    },
+    ".claude/skills/brainstorming/scripts/stop-server.sh": {
+      "sha256": "f65b7634a27343eab2086bdb6c59ba78695685f471b5a577b08a8817f7c50600",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/scripts/stop-server.sh"
+      ]
+    },
+    ".opencode/skills/brainstorming/spec-document-reviewer-prompt.md": {
+      "sha256": "12cb5ed58aef41b8da6fbb505547c71ca3f5658c83b66ca6e556c936308b3189",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/spec-document-reviewer-prompt.md"
+      ]
+    },
+    ".claude/skills/brainstorming/spec-document-reviewer-prompt.md": {
+      "sha256": "12cb5ed58aef41b8da6fbb505547c71ca3f5658c83b66ca6e556c936308b3189",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/spec-document-reviewer-prompt.md"
+      ]
+    },
+    ".opencode/skills/brainstorming/visual-companion.md": {
+      "sha256": "a2bc6fc47d0df1df981d02f707a16225b147f462e7059175ad2bc5e6dd29fcae",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/visual-companion.md"
+      ]
+    },
+    ".claude/skills/brainstorming/visual-companion.md": {
+      "sha256": "a2bc6fc47d0df1df981d02f707a16225b147f462e7059175ad2bc5e6dd29fcae",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/brainstorming/visual-companion.md"
+      ]
+    },
+    ".opencode/skills/browser-testing-with-devtools/SKILL.md": {
+      "sha256": "d50505e232bf61cd51caf6d249a39e14451fea34ce1d5d064d944b6780d4f4e6",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/browser-testing-with-devtools/SKILL.md"
+      ]
+    },
+    ".claude/skills/browser-testing-with-devtools/SKILL.md": {
+      "sha256": "d50505e232bf61cd51caf6d249a39e14451fea34ce1d5d064d944b6780d4f4e6",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/browser-testing-with-devtools/SKILL.md"
+      ]
+    },
+    ".opencode/skills/clarify/SKILL.md": {
+      "sha256": "128925d3b4b0c070ba641fe54aad6f7a7b3929fdc1c11599f9ec03f466184e00",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/clarify/SKILL.md"
+      ]
+    },
+    ".claude/skills/clarify/SKILL.md": {
+      "sha256": "128925d3b4b0c070ba641fe54aad6f7a7b3929fdc1c11599f9ec03f466184e00",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/clarify/SKILL.md"
+      ]
+    },
+    ".opencode/skills/cohort-analysis/SKILL.md": {
+      "sha256": "bd721a429e58c71a1a488ac1e89ba2bcbb9e179cb9c0b5eac44a3c3b3e9fdb15",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/cohort-analysis/SKILL.md"
+      ]
+    },
+    ".claude/skills/cohort-analysis/SKILL.md": {
+      "sha256": "bd721a429e58c71a1a488ac1e89ba2bcbb9e179cb9c0b5eac44a3c3b3e9fdb15",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/cohort-analysis/SKILL.md"
+      ]
+    },
+    ".opencode/skills/colorize/SKILL.md": {
+      "sha256": "3243c4db2620488a5b38e23998f52f5b3e262db13c327193610ee56d298cbd23",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/colorize/SKILL.md"
+      ]
+    },
+    ".claude/skills/colorize/SKILL.md": {
+      "sha256": "3243c4db2620488a5b38e23998f52f5b3e262db13c327193610ee56d298cbd23",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/colorize/SKILL.md"
+      ]
+    },
+    ".opencode/skills/critique/SKILL.md": {
+      "sha256": "244084b8fefc7f03790cfb92a545d0e4a96254dd4363c88ddf51ce37dc6f3baa",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/critique/SKILL.md"
+      ]
+    },
+    ".claude/skills/critique/SKILL.md": {
+      "sha256": "244084b8fefc7f03790cfb92a545d0e4a96254dd4363c88ddf51ce37dc6f3baa",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/critique/SKILL.md"
+      ]
+    },
+    ".opencode/skills/customer-research/SKILL.md": {
+      "sha256": "e61f3b6fe3e766cf8309c20ed14f25e56b24c7f3fdcde14292751d31066e8f73",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/customer-research/SKILL.md"
+      ]
+    },
+    ".claude/skills/customer-research/SKILL.md": {
+      "sha256": "e61f3b6fe3e766cf8309c20ed14f25e56b24c7f3fdcde14292751d31066e8f73",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/customer-research/SKILL.md"
+      ]
+    },
+    ".opencode/skills/customer-research/evals/evals.json": {
+      "sha256": "a024a1709e28ad867543e0be82f2d9e1712b67a9b76398fbc372751a5946ddab",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/customer-research/evals/evals.json"
+      ]
+    },
+    ".claude/skills/customer-research/evals/evals.json": {
+      "sha256": "a024a1709e28ad867543e0be82f2d9e1712b67a9b76398fbc372751a5946ddab",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/customer-research/evals/evals.json"
+      ]
+    },
+    ".opencode/skills/customer-research/references/source-guides.md": {
+      "sha256": "56682ea98d781060396fd4009739d071671b3489a0d4c81f0a0ef3078cb5c9ee",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/customer-research/references/source-guides.md"
+      ]
+    },
+    ".claude/skills/customer-research/references/source-guides.md": {
+      "sha256": "56682ea98d781060396fd4009739d071671b3489a0d4c81f0a0ef3078cb5c9ee",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/customer-research/references/source-guides.md"
+      ]
+    },
+    ".opencode/skills/debugging-and-error-recovery/SKILL.md": {
+      "sha256": "2539c0078466755c192123c34758aa432da5d29529340037113eeaecb6647b0e",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/debugging-and-error-recovery/SKILL.md"
+      ]
+    },
+    ".claude/skills/debugging-and-error-recovery/SKILL.md": {
+      "sha256": "2539c0078466755c192123c34758aa432da5d29529340037113eeaecb6647b0e",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/debugging-and-error-recovery/SKILL.md"
+      ]
+    },
+    ".opencode/skills/deep-research/.gitignore": {
+      "sha256": "8deaddb94b5dcb98b975843bdda26b968e4d223b85135c684b6bb352dcfeb4f9",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/.gitignore"
+      ]
+    },
+    ".claude/skills/deep-research/.gitignore": {
+      "sha256": "8deaddb94b5dcb98b975843bdda26b968e4d223b85135c684b6bb352dcfeb4f9",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/.gitignore"
+      ]
+    },
+    ".opencode/skills/deep-research/README.md": {
+      "sha256": "56a50ed8a0c8f0825130edda5d7237764319854470383b1f8ae7a48ee7dc49e9",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/README.md"
+      ]
+    },
+    ".claude/skills/deep-research/README.md": {
+      "sha256": "56a50ed8a0c8f0825130edda5d7237764319854470383b1f8ae7a48ee7dc49e9",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/README.md"
+      ]
+    },
+    ".opencode/skills/deep-research/SKILL.md": {
+      "sha256": "880770b4a84f05b2cf4d674315d9bee1afc1a590a36ddbce7612fa99aa67c370",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/SKILL.md"
+      ]
+    },
+    ".claude/skills/deep-research/SKILL.md": {
+      "sha256": "880770b4a84f05b2cf4d674315d9bee1afc1a590a36ddbce7612fa99aa67c370",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/SKILL.md"
+      ]
+    },
+    ".opencode/skills/deep-research/reference/continuation.md": {
+      "sha256": "b068e083f6f73209c4fd5249ac5ccfdc7c2a0486b03a7bf420054c0bf5699309",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/reference/continuation.md"
+      ]
+    },
+    ".claude/skills/deep-research/reference/continuation.md": {
+      "sha256": "b068e083f6f73209c4fd5249ac5ccfdc7c2a0486b03a7bf420054c0bf5699309",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/reference/continuation.md"
+      ]
+    },
+    ".opencode/skills/deep-research/reference/html-generation.md": {
+      "sha256": "a8ebc64d52b7cd9a78fee69f1f274f1ab791106ebd3449f17800735146ef644f",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/reference/html-generation.md"
+      ]
+    },
+    ".claude/skills/deep-research/reference/html-generation.md": {
+      "sha256": "a8ebc64d52b7cd9a78fee69f1f274f1ab791106ebd3449f17800735146ef644f",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/reference/html-generation.md"
+      ]
+    },
+    ".opencode/skills/deep-research/reference/methodology.md": {
+      "sha256": "1b9dad2ae6d3ac9972de811c414394946b7f249419a45393b3c9f062ef7b0d4d",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/reference/methodology.md"
+      ]
+    },
+    ".claude/skills/deep-research/reference/methodology.md": {
+      "sha256": "1b9dad2ae6d3ac9972de811c414394946b7f249419a45393b3c9f062ef7b0d4d",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/reference/methodology.md"
+      ]
+    },
+    ".opencode/skills/deep-research/reference/quality-gates.md": {
+      "sha256": "568d6fc6350c6c79dc1cccc6f86797e95e74a599db047fa7a745e44cb7495b85",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/reference/quality-gates.md"
+      ]
+    },
+    ".claude/skills/deep-research/reference/quality-gates.md": {
+      "sha256": "568d6fc6350c6c79dc1cccc6f86797e95e74a599db047fa7a745e44cb7495b85",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/reference/quality-gates.md"
+      ]
+    },
+    ".opencode/skills/deep-research/reference/report-assembly.md": {
+      "sha256": "0e8b2ada8f48e6785362617c7dd8f1363e92c76a235e5988b21e3bd8645b5cf3",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/reference/report-assembly.md"
+      ]
+    },
+    ".claude/skills/deep-research/reference/report-assembly.md": {
+      "sha256": "0e8b2ada8f48e6785362617c7dd8f1363e92c76a235e5988b21e3bd8645b5cf3",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/reference/report-assembly.md"
+      ]
+    },
+    ".opencode/skills/deep-research/reference/weasyprint_guidelines.md": {
+      "sha256": "d70421ea6985664d9fd1feaae94f36e3c749e74eb8703bc67236df9489165cdb",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/reference/weasyprint_guidelines.md"
+      ]
+    },
+    ".claude/skills/deep-research/reference/weasyprint_guidelines.md": {
+      "sha256": "d70421ea6985664d9fd1feaae94f36e3c749e74eb8703bc67236df9489165cdb",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/reference/weasyprint_guidelines.md"
+      ]
+    },
+    ".opencode/skills/deep-research/requirements.txt": {
+      "sha256": "de63fe8300f89040ccfb6229aee53b61345fa478946e043587d7f65d46df4ffa",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/requirements.txt"
+      ]
+    },
+    ".claude/skills/deep-research/requirements.txt": {
+      "sha256": "de63fe8300f89040ccfb6229aee53b61345fa478946e043587d7f65d46df4ffa",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/requirements.txt"
+      ]
+    },
+    ".opencode/skills/deep-research/scripts/citation_manager.py": {
+      "sha256": "0333c86beef3d0f09b9bd3004f11a9950a93266bf1696b55d5874a9e32110df1",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/citation_manager.py"
+      ]
+    },
+    ".claude/skills/deep-research/scripts/citation_manager.py": {
+      "sha256": "0333c86beef3d0f09b9bd3004f11a9950a93266bf1696b55d5874a9e32110df1",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/citation_manager.py"
+      ]
+    },
+    ".opencode/skills/deep-research/scripts/md_to_html.py": {
+      "sha256": "506c38771d32fbccf931a27b7b64cf20c0df5113b2914b051c17e9d178fc1b17",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/md_to_html.py"
+      ]
+    },
+    ".claude/skills/deep-research/scripts/md_to_html.py": {
+      "sha256": "506c38771d32fbccf931a27b7b64cf20c0df5113b2914b051c17e9d178fc1b17",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/md_to_html.py"
+      ]
+    },
+    ".opencode/skills/deep-research/scripts/research_engine.py": {
+      "sha256": "b627ffdce2d3041ac2ab156b38eff294c2e7344e8d4e80dc0c5e17c0e8c9a299",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/research_engine.py"
+      ]
+    },
+    ".claude/skills/deep-research/scripts/research_engine.py": {
+      "sha256": "b627ffdce2d3041ac2ab156b38eff294c2e7344e8d4e80dc0c5e17c0e8c9a299",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/research_engine.py"
+      ]
+    },
+    ".opencode/skills/deep-research/scripts/source_evaluator.py": {
+      "sha256": "8421efa7b862bb139108e6da40b285706188cb272843bf39082c8b9888d5050e",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/source_evaluator.py"
+      ]
+    },
+    ".claude/skills/deep-research/scripts/source_evaluator.py": {
+      "sha256": "8421efa7b862bb139108e6da40b285706188cb272843bf39082c8b9888d5050e",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/source_evaluator.py"
+      ]
+    },
+    ".opencode/skills/deep-research/scripts/validate_report.py": {
+      "sha256": "851c1de275c039b8e5858785010181500960b05a9be463cdd6cecd5bbf101aa3",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/validate_report.py"
+      ]
+    },
+    ".claude/skills/deep-research/scripts/validate_report.py": {
+      "sha256": "851c1de275c039b8e5858785010181500960b05a9be463cdd6cecd5bbf101aa3",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/validate_report.py"
+      ]
+    },
+    ".opencode/skills/deep-research/scripts/verify_citations.py": {
+      "sha256": "b77a9430aa2c9aec47a88434237879a02db75f87cd35a2429a5d7584f234f6ef",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/verify_citations.py"
+      ]
+    },
+    ".claude/skills/deep-research/scripts/verify_citations.py": {
+      "sha256": "b77a9430aa2c9aec47a88434237879a02db75f87cd35a2429a5d7584f234f6ef",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/verify_citations.py"
+      ]
+    },
+    ".opencode/skills/deep-research/scripts/verify_html.py": {
+      "sha256": "28bbba06906fa2f9bae87ea20b68390ce4f4bc76f00343991a8ad2119e21b36c",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/verify_html.py"
+      ]
+    },
+    ".claude/skills/deep-research/scripts/verify_html.py": {
+      "sha256": "28bbba06906fa2f9bae87ea20b68390ce4f4bc76f00343991a8ad2119e21b36c",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/scripts/verify_html.py"
+      ]
+    },
+    ".opencode/skills/deep-research/templates/mckinsey_report_template.html": {
+      "sha256": "6b2d742f5279e78df71543bfb6c4fd88d7ee1c726b54fa945616307b2157c1f1",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/templates/mckinsey_report_template.html"
+      ]
+    },
+    ".claude/skills/deep-research/templates/mckinsey_report_template.html": {
+      "sha256": "6b2d742f5279e78df71543bfb6c4fd88d7ee1c726b54fa945616307b2157c1f1",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/templates/mckinsey_report_template.html"
+      ]
+    },
+    ".opencode/skills/deep-research/templates/report_template.md": {
+      "sha256": "50788e213c78d42a2fcedbfe153e4c34bbea5b7b978f8646f1b4b5c83ba04115",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/templates/report_template.md"
+      ]
+    },
+    ".claude/skills/deep-research/templates/report_template.md": {
+      "sha256": "50788e213c78d42a2fcedbfe153e4c34bbea5b7b978f8646f1b4b5c83ba04115",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/templates/report_template.md"
+      ]
+    },
+    ".opencode/skills/deep-research/tests/fixtures/invalid_report.md": {
+      "sha256": "9b5177dbd31b80ea1d1e16f159989f232f6b6875dbc7ea7fddf70ba1fd0ad311",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/tests/fixtures/invalid_report.md"
+      ]
+    },
+    ".claude/skills/deep-research/tests/fixtures/invalid_report.md": {
+      "sha256": "9b5177dbd31b80ea1d1e16f159989f232f6b6875dbc7ea7fddf70ba1fd0ad311",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/tests/fixtures/invalid_report.md"
+      ]
+    },
+    ".opencode/skills/deep-research/tests/fixtures/valid_report.md": {
+      "sha256": "e6a24a5deec1ec65279cb446c58f9309a3d6f4e040e37f1bda09c64a73829b5a",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/tests/fixtures/valid_report.md"
+      ]
+    },
+    ".claude/skills/deep-research/tests/fixtures/valid_report.md": {
+      "sha256": "e6a24a5deec1ec65279cb446c58f9309a3d6f4e040e37f1bda09c64a73829b5a",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/deep-research/tests/fixtures/valid_report.md"
+      ]
+    },
+    ".opencode/skills/delight/SKILL.md": {
+      "sha256": "00513f6f0db47ca95c93b815a02e1d44543cbc20d984e93c55558f6301fdf20a",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/delight/SKILL.md"
+      ]
+    },
+    ".claude/skills/delight/SKILL.md": {
+      "sha256": "00513f6f0db47ca95c93b815a02e1d44543cbc20d984e93c55558f6301fdf20a",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/delight/SKILL.md"
+      ]
+    },
+    ".opencode/skills/distill/SKILL.md": {
+      "sha256": "c81175148eb979a2b914c9e323b8c2693633693d50ce362f0fd0b81cad1ea800",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/distill/SKILL.md"
+      ]
+    },
+    ".claude/skills/distill/SKILL.md": {
+      "sha256": "c81175148eb979a2b914c9e323b8c2693633693d50ce362f0fd0b81cad1ea800",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/distill/SKILL.md"
+      ]
+    },
+    ".opencode/skills/executing-plans/SKILL.md": {
+      "sha256": "a711f83fb762e2ea0fa151f598893da9911a408895c91cc7a7e0770dd59a27b3",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/executing-plans/SKILL.md"
+      ]
+    },
+    ".claude/skills/executing-plans/SKILL.md": {
+      "sha256": "a711f83fb762e2ea0fa151f598893da9911a408895c91cc7a7e0770dd59a27b3",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/executing-plans/SKILL.md"
+      ]
+    },
+    ".opencode/skills/extract/SKILL.md": {
+      "sha256": "b1678b4ab40defc6a777c911aa4208a8aa7e783b46fe1600f6cf910dc7bdb943",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/extract/SKILL.md"
+      ]
+    },
+    ".claude/skills/extract/SKILL.md": {
+      "sha256": "b1678b4ab40defc6a777c911aa4208a8aa7e783b46fe1600f6cf910dc7bdb943",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/extract/SKILL.md"
+      ]
+    },
+    ".opencode/skills/finishing-a-development-branch/SKILL.md": {
+      "sha256": "dd2f82c6dc8582b621f9eb57fcb65f557f88eadf872727ac81d0840ae12c504e",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/finishing-a-development-branch/SKILL.md"
+      ]
+    },
+    ".claude/skills/finishing-a-development-branch/SKILL.md": {
+      "sha256": "dd2f82c6dc8582b621f9eb57fcb65f557f88eadf872727ac81d0840ae12c504e",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/finishing-a-development-branch/SKILL.md"
+      ]
+    },
+    ".opencode/skills/frontend-design/LICENSE.txt": {
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/frontend-design/LICENSE.txt"
+      ]
+    },
+    ".claude/skills/frontend-design/LICENSE.txt": {
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/frontend-design/LICENSE.txt"
+      ]
+    },
+    ".opencode/skills/frontend-design/SKILL.md": {
+      "sha256": "b81e2ff87ed8fa4d6c377ccb127a7254c9e6a77e3ae94f21e6b514f7bb2945a0",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/frontend-design/SKILL.md"
+      ]
+    },
+    ".claude/skills/frontend-design/SKILL.md": {
+      "sha256": "b81e2ff87ed8fa4d6c377ccb127a7254c9e6a77e3ae94f21e6b514f7bb2945a0",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/frontend-design/SKILL.md"
+      ]
+    },
+    ".opencode/skills/geo/SKILL.md": {
+      "sha256": "591dd34bdf4e30b1a7c7f92f36d6a9a58c95fdb25ea40e7aa1906377a516e7d6",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/SKILL.md"
+      ]
+    },
+    ".claude/skills/geo/SKILL.md": {
+      "sha256": "591dd34bdf4e30b1a7c7f92f36d6a9a58c95fdb25ea40e7aa1906377a516e7d6",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/SKILL.md"
+      ]
+    },
+    ".opencode/skills/geo/requirements.txt": {
+      "sha256": "7b7468ef3b24be6e4c006a219532c95b726678e6cf0466a379f7c209f1534bb6",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/requirements.txt"
+      ]
+    },
+    ".claude/skills/geo/requirements.txt": {
+      "sha256": "7b7468ef3b24be6e4c006a219532c95b726678e6cf0466a379f7c209f1534bb6",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/requirements.txt"
+      ]
+    },
+    ".opencode/skills/geo/schema/article-author.json": {
+      "sha256": "cdbb12912bcc795f727ed1582081a0d5d26f154309c869bddc18ea26981960a6",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/schema/article-author.json"
+      ]
+    },
+    ".claude/skills/geo/schema/article-author.json": {
+      "sha256": "cdbb12912bcc795f727ed1582081a0d5d26f154309c869bddc18ea26981960a6",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/schema/article-author.json"
+      ]
+    },
+    ".opencode/skills/geo/schema/local-business.json": {
+      "sha256": "7a7eb97c4f91595a9079f6fdf4522b877e005aa02e4cfeb8a095f416304e78fd",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/schema/local-business.json"
+      ]
+    },
+    ".claude/skills/geo/schema/local-business.json": {
+      "sha256": "7a7eb97c4f91595a9079f6fdf4522b877e005aa02e4cfeb8a095f416304e78fd",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/schema/local-business.json"
+      ]
+    },
+    ".opencode/skills/geo/schema/organization.json": {
+      "sha256": "100db5d0fb1e7286dc2de97830638e2d97684b59e878769d583ed86bb3017bc7",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/schema/organization.json"
+      ]
+    },
+    ".claude/skills/geo/schema/organization.json": {
+      "sha256": "100db5d0fb1e7286dc2de97830638e2d97684b59e878769d583ed86bb3017bc7",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/schema/organization.json"
+      ]
+    },
+    ".opencode/skills/geo/schema/product-ecommerce.json": {
+      "sha256": "aeed9b2911c5b64880b6236683743d0be7877e2605d70e38d9c3e98e809d7da4",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/schema/product-ecommerce.json"
+      ]
+    },
+    ".claude/skills/geo/schema/product-ecommerce.json": {
+      "sha256": "aeed9b2911c5b64880b6236683743d0be7877e2605d70e38d9c3e98e809d7da4",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/schema/product-ecommerce.json"
+      ]
+    },
+    ".opencode/skills/geo/schema/software-saas.json": {
+      "sha256": "5e94011fcbacf745257c34df424f3688c3632909b63f94fbd9e22857dab938eb",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/schema/software-saas.json"
+      ]
+    },
+    ".claude/skills/geo/schema/software-saas.json": {
+      "sha256": "5e94011fcbacf745257c34df424f3688c3632909b63f94fbd9e22857dab938eb",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/schema/software-saas.json"
+      ]
+    },
+    ".opencode/skills/geo/schema/website-searchaction.json": {
+      "sha256": "e00438edec6b44385f6970d0f17b5f93e47cd142edcd1462214035ff66431acc",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/schema/website-searchaction.json"
+      ]
+    },
+    ".claude/skills/geo/schema/website-searchaction.json": {
+      "sha256": "e00438edec6b44385f6970d0f17b5f93e47cd142edcd1462214035ff66431acc",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/schema/website-searchaction.json"
+      ]
+    },
+    ".opencode/skills/geo/scripts/brand_scanner.py": {
+      "sha256": "ea6624c87e248f3f7f44ade345a2502a029445ce927f046b0fec7c24c793169f",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/scripts/brand_scanner.py"
+      ]
+    },
+    ".claude/skills/geo/scripts/brand_scanner.py": {
+      "sha256": "ea6624c87e248f3f7f44ade345a2502a029445ce927f046b0fec7c24c793169f",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/scripts/brand_scanner.py"
+      ]
+    },
+    ".opencode/skills/geo/scripts/citability_scorer.py": {
+      "sha256": "37d71c4a8f76648e529d709e3cb23fbb3277d03948bea417b61de942c8ebbb12",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/scripts/citability_scorer.py"
+      ]
+    },
+    ".claude/skills/geo/scripts/citability_scorer.py": {
+      "sha256": "37d71c4a8f76648e529d709e3cb23fbb3277d03948bea417b61de942c8ebbb12",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/scripts/citability_scorer.py"
+      ]
+    },
+    ".opencode/skills/geo/scripts/fetch_page.py": {
+      "sha256": "abc27c1dc0849e31e06bd7dfc1a8bfb7e369b33b698c07ca88eb63c17349a716",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/scripts/fetch_page.py"
+      ]
+    },
+    ".claude/skills/geo/scripts/fetch_page.py": {
+      "sha256": "abc27c1dc0849e31e06bd7dfc1a8bfb7e369b33b698c07ca88eb63c17349a716",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/scripts/fetch_page.py"
+      ]
+    },
+    ".opencode/skills/geo/scripts/generate_pdf_report.py": {
+      "sha256": "9235d68c8028b278de474c8e01beb972da2ca59c1e351bad83afbeb835a578d6",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/scripts/generate_pdf_report.py"
+      ]
+    },
+    ".claude/skills/geo/scripts/generate_pdf_report.py": {
+      "sha256": "9235d68c8028b278de474c8e01beb972da2ca59c1e351bad83afbeb835a578d6",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/scripts/generate_pdf_report.py"
+      ]
+    },
+    ".opencode/skills/geo/scripts/llmstxt_generator.py": {
+      "sha256": "83a72c959742970e6b6c7ec5d6921d766920c243a961597016ca20c6e3a8fbee",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/scripts/llmstxt_generator.py"
+      ]
+    },
+    ".claude/skills/geo/scripts/llmstxt_generator.py": {
+      "sha256": "83a72c959742970e6b6c7ec5d6921d766920c243a961597016ca20c6e3a8fbee",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/geo/scripts/llmstxt_generator.py"
+      ]
+    },
+    ".opencode/skills/ideal-customer-profile/SKILL.md": {
+      "sha256": "8d434df786db2290efb575f1d219c7e19650e7a7e3df9a5f4b82b0bd0d2ce298",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/ideal-customer-profile/SKILL.md"
+      ]
+    },
+    ".claude/skills/ideal-customer-profile/SKILL.md": {
+      "sha256": "8d434df786db2290efb575f1d219c7e19650e7a7e3df9a5f4b82b0bd0d2ce298",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/ideal-customer-profile/SKILL.md"
+      ]
+    },
+    ".opencode/skills/normalize/SKILL.md": {
+      "sha256": "190526c3049b33b281b5e990ebcd8b923aac8bdde11d667950751a3bb6b51c26",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/normalize/SKILL.md"
+      ]
+    },
+    ".claude/skills/normalize/SKILL.md": {
+      "sha256": "190526c3049b33b281b5e990ebcd8b923aac8bdde11d667950751a3bb6b51c26",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/normalize/SKILL.md"
+      ]
+    },
+    ".opencode/skills/optimize/SKILL.md": {
+      "sha256": "0e7df93123d465dacbcd91fe48e0288b9083f34784200e2db8868dc8c08f1fb5",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/optimize/SKILL.md"
+      ]
+    },
+    ".claude/skills/optimize/SKILL.md": {
+      "sha256": "0e7df93123d465dacbcd91fe48e0288b9083f34784200e2db8868dc8c08f1fb5",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/optimize/SKILL.md"
+      ]
+    },
+    ".opencode/skills/polish/SKILL.md": {
+      "sha256": "d2047bfd8259df8947f8df2e2a90a61a0987f05659c1dda178435e466e629a31",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/polish/SKILL.md"
+      ]
+    },
+    ".claude/skills/polish/SKILL.md": {
+      "sha256": "d2047bfd8259df8947f8df2e2a90a61a0987f05659c1dda178435e466e629a31",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/polish/SKILL.md"
+      ]
+    },
+    ".opencode/skills/quieter/SKILL.md": {
+      "sha256": "92fb00bc35e1defd8c615d5d011ac02d0ec80b84c57f6f0d94362dbe4901f527",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/quieter/SKILL.md"
+      ]
+    },
+    ".claude/skills/quieter/SKILL.md": {
+      "sha256": "92fb00bc35e1defd8c615d5d011ac02d0ec80b84c57f6f0d94362dbe4901f527",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/quieter/SKILL.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/SKILL.md": {
+      "sha256": "829d9e0b1c5a73699f527ba1d3e4e10edb5bf66052a83d488617d9ebf255a332",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/SKILL.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/SKILL.md": {
+      "sha256": "829d9e0b1c5a73699f527ba1d3e4e10edb5bf66052a83d488617d9ebf255a332",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/SKILL.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/3d.md": {
+      "sha256": "42cef6d68fb4a266ab495d35df0c60e03672b0d85c043f9b567f6aa7ff00dd0d",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/3d.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/3d.md": {
+      "sha256": "42cef6d68fb4a266ab495d35df0c60e03672b0d85c043f9b567f6aa7ff00dd0d",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/3d.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/assets/charts-bar-chart.tsx": {
+      "sha256": "6e5e219c596c8515336570a5bc89c233e32e695d5816dec88eb929e798eeea61",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/assets/charts-bar-chart.tsx"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/assets/charts-bar-chart.tsx": {
+      "sha256": "6e5e219c596c8515336570a5bc89c233e32e695d5816dec88eb929e798eeea61",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/assets/charts-bar-chart.tsx"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/assets/text-animations-typewriter.tsx": {
+      "sha256": "92b5f47d6d18387a0aa008ce9dceefd30f673ae5879e16892bd4b4ea97f5dddb",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/assets/text-animations-typewriter.tsx"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/assets/text-animations-typewriter.tsx": {
+      "sha256": "92b5f47d6d18387a0aa008ce9dceefd30f673ae5879e16892bd4b4ea97f5dddb",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/assets/text-animations-typewriter.tsx"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/assets/text-animations-word-highlight.tsx": {
+      "sha256": "30e707bbc90e3734fcdb0f9e869bdb9fbbaf8ded1d923951d616f5ba402ce03d",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/assets/text-animations-word-highlight.tsx"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/assets/text-animations-word-highlight.tsx": {
+      "sha256": "30e707bbc90e3734fcdb0f9e869bdb9fbbaf8ded1d923951d616f5ba402ce03d",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/assets/text-animations-word-highlight.tsx"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/audio-visualization.md": {
+      "sha256": "0f4043de86639b6390e5ab888eaa66a24a10a8bd540f1443327cb88107eae1e9",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/audio-visualization.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/audio-visualization.md": {
+      "sha256": "0f4043de86639b6390e5ab888eaa66a24a10a8bd540f1443327cb88107eae1e9",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/audio-visualization.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/audio.md": {
+      "sha256": "e931664ac23bc4acfa137d8b415702bb4860b4fbabd6caed0042c0902d3bec90",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/audio.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/audio.md": {
+      "sha256": "e931664ac23bc4acfa137d8b415702bb4860b4fbabd6caed0042c0902d3bec90",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/audio.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/calculate-metadata.md": {
+      "sha256": "7d6217deed7425c6662e8d112b933be162a99a9f26a5c10b7c0b2ba62329a269",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/calculate-metadata.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/calculate-metadata.md": {
+      "sha256": "7d6217deed7425c6662e8d112b933be162a99a9f26a5c10b7c0b2ba62329a269",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/calculate-metadata.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/compositions.md": {
+      "sha256": "49fb12d1bb9e9fc68823625e83d43d5f36904593ad738a9d7e5ef97a1230627b",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/compositions.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/compositions.md": {
+      "sha256": "49fb12d1bb9e9fc68823625e83d43d5f36904593ad738a9d7e5ef97a1230627b",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/compositions.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/display-captions.md": {
+      "sha256": "20b8898a90536fa427a5a39571fc7deac7bde96c4c7bfdf413eee1ef4ef85530",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/display-captions.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/display-captions.md": {
+      "sha256": "20b8898a90536fa427a5a39571fc7deac7bde96c4c7bfdf413eee1ef4ef85530",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/display-captions.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/ffmpeg.md": {
+      "sha256": "b67ff4e3ce01c48241ef92fa165398d427e9f676ae8e17d1ed19d5584bff5002",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/ffmpeg.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/ffmpeg.md": {
+      "sha256": "b67ff4e3ce01c48241ef92fa165398d427e9f676ae8e17d1ed19d5584bff5002",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/ffmpeg.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/get-audio-duration.md": {
+      "sha256": "720a5346ae79555e933498995d5cb04d1bfbeeee7232436d8835c3ec17d46281",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/get-audio-duration.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/get-audio-duration.md": {
+      "sha256": "720a5346ae79555e933498995d5cb04d1bfbeeee7232436d8835c3ec17d46281",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/get-audio-duration.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/get-video-dimensions.md": {
+      "sha256": "ed1bb6e0ae742e4bfcb18e7c50af23fc782a9d699b90d367250437c7f6da7304",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/get-video-dimensions.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/get-video-dimensions.md": {
+      "sha256": "ed1bb6e0ae742e4bfcb18e7c50af23fc782a9d699b90d367250437c7f6da7304",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/get-video-dimensions.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/get-video-duration.md": {
+      "sha256": "ed594a0d73a5274483f21c30e612aba57089d5bbc5437041aa32d07a8e789fd9",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/get-video-duration.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/get-video-duration.md": {
+      "sha256": "ed594a0d73a5274483f21c30e612aba57089d5bbc5437041aa32d07a8e789fd9",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/get-video-duration.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/gifs.md": {
+      "sha256": "db5d84bb8da4c52c133cdc9820a5b6995db94a548df5f9838efb8d1224065787",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/gifs.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/gifs.md": {
+      "sha256": "db5d84bb8da4c52c133cdc9820a5b6995db94a548df5f9838efb8d1224065787",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/gifs.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/google-fonts.md": {
+      "sha256": "c0860213dfde60dd188a8b7cb1368e2e92fe960584b9ca6340c6cd555fcbd141",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/google-fonts.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/google-fonts.md": {
+      "sha256": "c0860213dfde60dd188a8b7cb1368e2e92fe960584b9ca6340c6cd555fcbd141",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/google-fonts.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/html-in-canvas.md": {
+      "sha256": "503c125bc9532b12ebfa8c37e35558e9059228c322a65675f0bdbd05d4a5ffa3",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/html-in-canvas.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/html-in-canvas.md": {
+      "sha256": "503c125bc9532b12ebfa8c37e35558e9059228c322a65675f0bdbd05d4a5ffa3",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/html-in-canvas.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/images.md": {
+      "sha256": "6a93c05858a842ea380e4a92491fa2ef6e205b184e0d22cd32ae3692f2e27333",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/images.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/images.md": {
+      "sha256": "6a93c05858a842ea380e4a92491fa2ef6e205b184e0d22cd32ae3692f2e27333",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/images.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/import-srt-captions.md": {
+      "sha256": "ad89cc1834dcd63ff225593f699611a1a20b57eff4ed8e587f429b36516ec82c",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/import-srt-captions.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/import-srt-captions.md": {
+      "sha256": "ad89cc1834dcd63ff225593f699611a1a20b57eff4ed8e587f429b36516ec82c",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/import-srt-captions.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/light-leaks.md": {
+      "sha256": "17d2f136f7bf2f438274a0ade43df017c360ae31175d8367ce476415c222dfca",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/light-leaks.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/light-leaks.md": {
+      "sha256": "17d2f136f7bf2f438274a0ade43df017c360ae31175d8367ce476415c222dfca",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/light-leaks.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/local-fonts.md": {
+      "sha256": "51597b528837c3fda45a61241ecb87124dd8b72c191bd06986bfc967bb380f8c",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/local-fonts.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/local-fonts.md": {
+      "sha256": "51597b528837c3fda45a61241ecb87124dd8b72c191bd06986bfc967bb380f8c",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/local-fonts.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/lottie.md": {
+      "sha256": "6dd0a845f5cea9c0f3d2465b5678a16076f5778ad1a628abbf387dba0b929cbb",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/lottie.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/lottie.md": {
+      "sha256": "6dd0a845f5cea9c0f3d2465b5678a16076f5778ad1a628abbf387dba0b929cbb",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/lottie.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/maplibre.md": {
+      "sha256": "36bfaa77f345e272837d827c6e99160a573ab609b27b44c604bec06eae3daa7e",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/maplibre.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/maplibre.md": {
+      "sha256": "36bfaa77f345e272837d827c6e99160a573ab609b27b44c604bec06eae3daa7e",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/maplibre.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/measuring-dom-nodes.md": {
+      "sha256": "4017103b03f14a041ac433be78c521ec2e9961629fae419c8b196d349637585b",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/measuring-dom-nodes.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/measuring-dom-nodes.md": {
+      "sha256": "4017103b03f14a041ac433be78c521ec2e9961629fae419c8b196d349637585b",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/measuring-dom-nodes.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/measuring-text.md": {
+      "sha256": "5cab1807b9ae9f5be3fc0e1cb0e0513a69451e31e32657d6a665573331db6807",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/measuring-text.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/measuring-text.md": {
+      "sha256": "5cab1807b9ae9f5be3fc0e1cb0e0513a69451e31e32657d6a665573331db6807",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/measuring-text.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/parameters.md": {
+      "sha256": "9de38837a07dc406052dfbb759c58ca5298ca331d86d9aa0f4e177b339e288b5",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/parameters.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/parameters.md": {
+      "sha256": "9de38837a07dc406052dfbb759c58ca5298ca331d86d9aa0f4e177b339e288b5",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/parameters.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/sequencing.md": {
+      "sha256": "a3c448bfd99a5e7b6c838dab30c8aaf449d4f0732152203b65cf1b49977abb72",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/sequencing.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/sequencing.md": {
+      "sha256": "a3c448bfd99a5e7b6c838dab30c8aaf449d4f0732152203b65cf1b49977abb72",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/sequencing.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/sfx.md": {
+      "sha256": "96fcc4f0973b5ed5cd9cd0d4d0479c642984cfacd8010fc7d6186c468296626b",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/sfx.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/sfx.md": {
+      "sha256": "96fcc4f0973b5ed5cd9cd0d4d0479c642984cfacd8010fc7d6186c468296626b",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/sfx.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/silence-detection.md": {
+      "sha256": "ed95d46d078f3749b87ec3c6e25c1c5b0c8485fdcb41156d649266369748fdc2",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/silence-detection.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/silence-detection.md": {
+      "sha256": "ed95d46d078f3749b87ec3c6e25c1c5b0c8485fdcb41156d649266369748fdc2",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/silence-detection.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/subtitles.md": {
+      "sha256": "9f18ec4a9c88adf35d51b44aaf344442443fd687a4dc948366ebb683fc3ecd30",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/subtitles.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/subtitles.md": {
+      "sha256": "9f18ec4a9c88adf35d51b44aaf344442443fd687a4dc948366ebb683fc3ecd30",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/subtitles.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/tailwind.md": {
+      "sha256": "6212ce72abe5eaee0eb41822b2cdf944b77ad9b082426909beb2da07151e1788",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/tailwind.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/tailwind.md": {
+      "sha256": "6212ce72abe5eaee0eb41822b2cdf944b77ad9b082426909beb2da07151e1788",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/tailwind.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/text-animations.md": {
+      "sha256": "40ac6b1bccf1c57d9edd46c74e847ec6e86fe775d3ef4fd14e1338f4a2606171",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/text-animations.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/text-animations.md": {
+      "sha256": "40ac6b1bccf1c57d9edd46c74e847ec6e86fe775d3ef4fd14e1338f4a2606171",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/text-animations.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/timing.md": {
+      "sha256": "d7df8f74a08a86ff019cbd3bf528dd9d9528ae1860be70d54b3334544d6b36a7",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/timing.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/timing.md": {
+      "sha256": "d7df8f74a08a86ff019cbd3bf528dd9d9528ae1860be70d54b3334544d6b36a7",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/timing.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/transcribe-captions.md": {
+      "sha256": "ad1a62af35fe176b37ac4d98f796451ca66bcc9983207a9710ec3eca6e847738",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/transcribe-captions.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/transcribe-captions.md": {
+      "sha256": "ad1a62af35fe176b37ac4d98f796451ca66bcc9983207a9710ec3eca6e847738",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/transcribe-captions.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/transitions.md": {
+      "sha256": "f6b0ca21322d68ab516345e8d57a2039c48654c98604b673913382c854e79d86",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/transitions.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/transitions.md": {
+      "sha256": "f6b0ca21322d68ab516345e8d57a2039c48654c98604b673913382c854e79d86",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/transitions.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/transparent-videos.md": {
+      "sha256": "394ccda476e084522d544471fee92d7c65672e2cbaf2201a785c3dd5c74f31a4",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/transparent-videos.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/transparent-videos.md": {
+      "sha256": "394ccda476e084522d544471fee92d7c65672e2cbaf2201a785c3dd5c74f31a4",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/transparent-videos.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/trimming.md": {
+      "sha256": "ae00948f6a903e384c7c312896adba9b50ed592f24a5a090699b7345849b36b9",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/trimming.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/trimming.md": {
+      "sha256": "ae00948f6a903e384c7c312896adba9b50ed592f24a5a090699b7345849b36b9",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/trimming.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/videos.md": {
+      "sha256": "d9d3032a57f92c759daf0bd60b3282f6810ecc9958e9093a6b828de623b05328",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/videos.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/videos.md": {
+      "sha256": "d9d3032a57f92c759daf0bd60b3282f6810ecc9958e9093a6b828de623b05328",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/videos.md"
+      ]
+    },
+    ".opencode/skills/remotion-best-practices/rules/voiceover.md": {
+      "sha256": "60340034cf422052007183d031171b3c88422dd3fe85f0d915283dd8ec5df3e8",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/voiceover.md"
+      ]
+    },
+    ".claude/skills/remotion-best-practices/rules/voiceover.md": {
+      "sha256": "60340034cf422052007183d031171b3c88422dd3fe85f0d915283dd8ec5df3e8",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/remotion-best-practices/rules/voiceover.md"
+      ]
+    },
+    ".opencode/skills/sentiment-analysis/SKILL.md": {
+      "sha256": "516357ba8366845d13c4ee17acf96884571ad0fc8d3d48a2809c5cb84c95a01c",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/sentiment-analysis/SKILL.md"
+      ]
+    },
+    ".claude/skills/sentiment-analysis/SKILL.md": {
+      "sha256": "516357ba8366845d13c4ee17acf96884571ad0fc8d3d48a2809c5cb84c95a01c",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/sentiment-analysis/SKILL.md"
+      ]
+    },
+    ".opencode/skills/stop-slop/CHANGELOG.md": {
+      "sha256": "fe2f1484ef02abf22efc09def89bac186a2235831fd0da13d4895edb19cc6dd0",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/CHANGELOG.md"
+      ]
+    },
+    ".claude/skills/stop-slop/CHANGELOG.md": {
+      "sha256": "fe2f1484ef02abf22efc09def89bac186a2235831fd0da13d4895edb19cc6dd0",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/CHANGELOG.md"
+      ]
+    },
+    ".opencode/skills/stop-slop/LICENSE": {
+      "sha256": "2e2b2beaf41cc0ce28485455a62aed81777cdcdf68702e142427aef1cd720f2c",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/LICENSE"
+      ]
+    },
+    ".claude/skills/stop-slop/LICENSE": {
+      "sha256": "2e2b2beaf41cc0ce28485455a62aed81777cdcdf68702e142427aef1cd720f2c",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/LICENSE"
+      ]
+    },
+    ".opencode/skills/stop-slop/README.md": {
+      "sha256": "d5c699e712e62d286aa4314e6b4ba02cde7a9da36ce56102660f98d1a8ceebba",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/README.md"
+      ]
+    },
+    ".claude/skills/stop-slop/README.md": {
+      "sha256": "d5c699e712e62d286aa4314e6b4ba02cde7a9da36ce56102660f98d1a8ceebba",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/README.md"
+      ]
+    },
+    ".opencode/skills/stop-slop/SKILL.md": {
+      "sha256": "7432a1d9ebdd42b27666da8458af252edf549f723fb14bcd4791425103930310",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/SKILL.md"
+      ]
+    },
+    ".claude/skills/stop-slop/SKILL.md": {
+      "sha256": "7432a1d9ebdd42b27666da8458af252edf549f723fb14bcd4791425103930310",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/SKILL.md"
+      ]
+    },
+    ".opencode/skills/stop-slop/references/examples.md": {
+      "sha256": "49c592899eb4457f95d0767e15e3143569e2cef50f2927c3174e62432984cd3d",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/references/examples.md"
+      ]
+    },
+    ".claude/skills/stop-slop/references/examples.md": {
+      "sha256": "49c592899eb4457f95d0767e15e3143569e2cef50f2927c3174e62432984cd3d",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/references/examples.md"
+      ]
+    },
+    ".opencode/skills/stop-slop/references/phrases.md": {
+      "sha256": "4ca1b7e97123b5c67eff3dc97e5e977332e0b24021265c1553888a93ec33fa93",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/references/phrases.md"
+      ]
+    },
+    ".claude/skills/stop-slop/references/phrases.md": {
+      "sha256": "4ca1b7e97123b5c67eff3dc97e5e977332e0b24021265c1553888a93ec33fa93",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/references/phrases.md"
+      ]
+    },
+    ".opencode/skills/stop-slop/references/structures.md": {
+      "sha256": "ffbf1316c7fb5aaf552de005609a64a9639b546ecd76bfb0e482864d5bbe6f58",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/references/structures.md"
+      ]
+    },
+    ".claude/skills/stop-slop/references/structures.md": {
+      "sha256": "ffbf1316c7fb5aaf552de005609a64a9639b546ecd76bfb0e482864d5bbe6f58",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/stop-slop/references/structures.md"
+      ]
+    },
+    ".opencode/skills/summarize-interview/SKILL.md": {
+      "sha256": "5a2a0c8257f5e2f7ef098d4531acbbcd3087bb07bb87d4cabfe1a97ef1ad037c",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/summarize-interview/SKILL.md"
+      ]
+    },
+    ".claude/skills/summarize-interview/SKILL.md": {
+      "sha256": "5a2a0c8257f5e2f7ef098d4531acbbcd3087bb07bb87d4cabfe1a97ef1ad037c",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/summarize-interview/SKILL.md"
+      ]
+    },
+    ".opencode/skills/test-driven-development/SKILL.md": {
+      "sha256": "fc76d105d4672cc6e24b816ee59e01774582f8273e2a833d321a57ce7eb4407e",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/test-driven-development/SKILL.md"
+      ]
+    },
+    ".claude/skills/test-driven-development/SKILL.md": {
+      "sha256": "fc76d105d4672cc6e24b816ee59e01774582f8273e2a833d321a57ce7eb4407e",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/test-driven-development/SKILL.md"
+      ]
+    },
+    ".opencode/skills/user-personas/SKILL.md": {
+      "sha256": "012eb8ea4a6ec51bb72ddf41f48d8520f26c7f4e43ff82d69d1074e3503087ca",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/user-personas/SKILL.md"
+      ]
+    },
+    ".claude/skills/user-personas/SKILL.md": {
+      "sha256": "012eb8ea4a6ec51bb72ddf41f48d8520f26c7f4e43ff82d69d1074e3503087ca",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/user-personas/SKILL.md"
+      ]
+    },
+    ".opencode/skills/user-segmentation/SKILL.md": {
+      "sha256": "d91f745c9520e6a31c07e37c14bfa01e7982570e30a398be71cf324ac93be9c8",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/user-segmentation/SKILL.md"
+      ]
+    },
+    ".claude/skills/user-segmentation/SKILL.md": {
+      "sha256": "d91f745c9520e6a31c07e37c14bfa01e7982570e30a398be71cf324ac93be9c8",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/user-segmentation/SKILL.md"
+      ]
+    },
+    ".opencode/skills/verification-before-completion/SKILL.md": {
+      "sha256": "9dafcca198b68adf46824baa0eb1dd82cc491756f4c02fc3bcde1d286dbac10b",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/verification-before-completion/SKILL.md"
+      ]
+    },
+    ".claude/skills/verification-before-completion/SKILL.md": {
+      "sha256": "9dafcca198b68adf46824baa0eb1dd82cc491756f4c02fc3bcde1d286dbac10b",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/verification-before-completion/SKILL.md"
+      ]
+    },
+    ".opencode/skills/writing-plans/SKILL.md": {
+      "sha256": "90056bad3d5f196fa7c9fec0ffe592e6d9c86bc983e406642a51d1a4198b7024",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/writing-plans/SKILL.md"
+      ]
+    },
+    ".claude/skills/writing-plans/SKILL.md": {
+      "sha256": "90056bad3d5f196fa7c9fec0ffe592e6d9c86bc983e406642a51d1a4198b7024",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/writing-plans/SKILL.md"
+      ]
+    },
+    ".opencode/skills/writing-plans/plan-document-reviewer-prompt.md": {
+      "sha256": "6fce2aa83c63715697e9dd86050c820716100b91efbd9f12bab8477ecc060256",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/writing-plans/plan-document-reviewer-prompt.md"
+      ]
+    },
+    ".claude/skills/writing-plans/plan-document-reviewer-prompt.md": {
+      "sha256": "6fce2aa83c63715697e9dd86050c820716100b91efbd9f12bab8477ecc060256",
+      "ownership": "managed",
+      "sources": [
+        "vendor/skills/writing-plans/plan-document-reviewer-prompt.md"
+      ]
     }
   }
 }

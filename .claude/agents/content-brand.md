@@ -287,7 +287,14 @@ here, the work still needs doing: use the capability, not the name.
 
 | Skill | What it is for |
 |---|---|
-| `remotion` | Video and motion graphics, built programmatically |
+| `brainstorming` | Creative planning before implementation | Any feature, component or significant change |
+| `writing-plans` | Structured planning for multi-step tasks | Complex work of three or more steps |
+| `executing-plans` | Following an implementation plan | When a written plan already exists |
+| `finishing-a-development-branch` | Completing development work | Before merging, opening a pull request or releasing |
+| `extract` | Reusable components and patterns | Identifying reusable elements |
+| `verification-before-completion` | Validating work before claiming it is done | Before marking anything done |
+| `para-memory-files` | The memory system every agent uses |
+| `remotion-best-practices` | Video and motion graphics, built programmatically |
 | `video-generation` | Turning a script or a storyboard into a rendered video |
 | `playwright` | Browser automation: testing and web interaction |
 | `dev-browser` | Browser automation with a persistent page state |
