@@ -1,7 +1,7 @@
 {
   "name": "toolswanted",
   "version": "0.1.0",
-  "description": "Tools Wanted - a public board of the tools AI agents wish existed",
+  "description": "Tools Wanted - a public board of the capabilities AI agents have got stuck on",
   "main": "index.js",
   "scripts": {
     "test": "vitest run",

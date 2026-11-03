@@ -25,16 +25,6 @@ export function escAttr(value: unknown): string {
   return esc(value);
 }
 
-/** JSON for embedding in a <script> block, safe against `</script>` breakout. */
-export function jsonScript(value: unknown): string {
-  return JSON.stringify(value)
-    .replace(/</g, "\\u003c")
-    .replace(/>/g, "\\u003e")
-    .replace(/&/g, "\\u0026")
-    .replace(/\u2028/g, "\\u2028")
-    .replace(/\u2029/g, "\\u2029");
-}
-
 import { COPY_SCRIPT } from "./copy";
 
 export const CSS = `
@@ -46,8 +36,15 @@ export const CSS = `
   /* The height of the sticky top bar. The filter bar sticks below it, so
      the two have to agree. It used to be a hard-coded 58px in the filter
      rule while the bar was actually taller on a narrow screen, and the
-     filter bar slid underneath it. */
-  --topbar-h:60px;
+     filter bar slid underneath it.
+
+     This is the value for the first paint. The script in STICKY_SCRIPT
+     measures the real height and writes it back, because the bar's
+     height depends on the font, the wrapping and the reader's own font
+     size. The number here is a fallback, not the truth: it was one
+     pixel short at every width, because the header's 3px border sits
+     outside its content box. */
+  --topbar-h:66px;
   /* Archivo Black is a single weight, so there is no faux bold. The
      fallback is Arial Black, which is a real display face on every
      Windows and macOS machine, so the first frame is not a downgrade. */
@@ -86,7 +83,18 @@ a{color:inherit}
   border-bottom:3px solid var(--line); background:var(--paper);
   position:sticky; top:0; z-index:20;
 }
-.top .wrap{display:flex;align-items:center;gap:16px;min-height:var(--topbar-h);flex-wrap:wrap}
+/* The bar's height is not driven by --topbar-h.
+   It used to be: the wrap inside the bar had a min-height of
+   var(--topbar-h), and the script measured the bar and wrote its height
+   back into the token. That is circular — the bar's height depends on
+   the token, and the token is the bar's height — so the measurement
+   settled on whatever it was at the moment it ran. It read 63px on a
+   66px bar, and the filter bar stuck 3px inside the header again.
+
+   The bar's height comes from its own contents: a 44px nav link, the
+   padding above and below it, and the 3px border. The script measures
+   the result and writes it down. */
+.top .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:8px 16px}
 .logo{
   font-family:var(--font-display); font-weight:400; letter-spacing:-.03em;
   font-size:19px; text-transform:uppercase; text-decoration:none; white-space:nowrap;
@@ -100,20 +108,28 @@ a{color:inherit}
 .top nav a{
   text-decoration:none;font-weight:700;font-size:12px;text-transform:uppercase;
   letter-spacing:.06em;padding:8px;border-radius:var(--radius);
+  /* 44px touch target, at every width.
+     The 44px rule was written inside the mobile media query, so on a
+     tablet or a desktop the nav links were 34px tall: a smaller target
+     on a bigger screen. The browser measured 34px at 761px and above.
+     The link is a flex box so the padding sets the height without the
+     line box moving. */
+  min-height:44px;display:inline-flex;align-items:center;
 }
 .top nav a:hover{background:var(--chip)}
 .top nav a[aria-current="page"]{background:var(--ink);color:var(--paper)}
-.tally{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);white-space:nowrap}
 @media (max-width:760px){
   /* The top bar is the logo row plus two rows of 44px nav links. The
      filter bar sticks below it, so the two heights have to agree or the
      filter slides underneath the header.
      Measured: the bar is 159px tall at 390px and under 380px it is
-     207px. The token is the larger of the two in each band. */
-  :root{--topbar-h:160px}
+     207px, plus the 3px border. These are the first-paint values; the
+     script in STICKY_SCRIPT measures the real height and writes it
+     back, because a number measured by hand goes stale the moment the
+     bar's contents change. */
+  :root{--topbar-h:162px}
   .clientpick{margin-left:0}
-  .tally{display:none}
-  .top .wrap{min-height:0;padding-top:8px;padding-bottom:8px;row-gap:4px}
+  .top .wrap{row-gap:4px}
   /* The logo stays at 19px on a phone. It was 17px, and at 17px the red
      is 4.4:1 against the paper, which is under the 4.5:1 body text
      threshold. The wordmark fits at 19px in 288px, so there is no reason
@@ -133,15 +149,13 @@ a{color:inherit}
     padding:12px 4px;font-size:12px;white-space:nowrap;
     text-align:center;letter-spacing:.02em;
     display:flex;align-items:center;justify-content:center;
-    /* 44px touch target on the phone. */
-    min-height:44px;
   }
 }
 @media (max-width:380px){
   /* Two columns means three rows of links, so the bar is taller again.
-     Measured: 207px. */
+     Measured: 207px, plus the 3px border. */
   .top nav{grid-template-columns:repeat(2,1fr)}
-  :root{--topbar-h:208px}
+  :root{--topbar-h:210px}
 }
 
 /* ---------- hero ---------- */
@@ -171,7 +185,31 @@ a{color:inherit}
   display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:16px 0;
   border-bottom:3px solid var(--line); position:sticky; top:var(--topbar-h); background:var(--paper); z-index:15;
 }
+/* The filter bar sticks, so its containing block has to be taller than
+   it is. It used to sit in a .wrap of its own, and that wrap was
+   exactly as tall as the bar, so the bar had nowhere to travel: it
+   stayed pinned to the top of its own parent and the top of it, the
+   "Show" label and the top of the chips, was cut off by the header
+   above. It now sits at the top of the board's wrap, which is as tall
+   as the whole board, so it can stick properly. */
+.board > .wrap > .filters:first-child{margin-top:-24px;padding-top:24px}
+/* On a phone the bar is four rows of chips and a sentence: 242px of a
+   800px screen. A sticky bar that tall is a quarter of the viewport
+   held down permanently, over the board the reader came to scan, and
+   it cannot fit under the header anyway, so the browser pushes its top
+   back under it. It scrolls with the page on a phone and sticks from
+   the width where it fits. */
+@media (max-width:560px){
+  .filters{position:static}
+}
 .filters .label{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);font-weight:800}
+/* The ranking note. It is a sentence, not a label, so it is not uppercased
+   and it takes a whole line on a narrow screen rather than crowding the
+   chips. */
+.filters .rank-note{
+  flex-basis:100%;font-size:13px;color:var(--ink-soft);line-height:1.5;
+  padding:4px 0 0;
+}
 .chip{
   display:inline-block;padding:8px 12px;border:1px solid var(--line);border-radius:99px;
   text-decoration:none;font-weight:400;font-size:13px;background:var(--paper-2);
@@ -365,9 +403,6 @@ ul.archive li::before{content:"— ";color:var(--ink-soft)}
 
 /* ---------- cards / lists ---------- */
 .card{border:2px solid var(--line);background:var(--paper-2);border-radius:var(--radius);padding:20px;margin:0 0 20px}
-.grid{display:grid;gap:16px;grid-template-columns:1fr}
-@media (min-width:760px){ .grid.two{grid-template-columns:1fr 1fr} }
-.kv{font-family:var(--font-mono);font-size:13px}
 
 /* ---------- the quiet register ----------
    A work surface: the admin panel, where the reader is one person doing a
@@ -469,6 +504,63 @@ ul.archive li::before{content:"— ";color:var(--ink-soft)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 `;
 
+/**
+ * The filter bar sticks below the top bar, so the offset it sticks at
+ * has to be the top bar's height.
+ *
+ * The offset used to be a number in the stylesheet that somebody had
+ * measured by hand: 160px at 760px and under, 208px at 380px and under.
+ * Both were one pixel short, because the header has a 3px bottom border
+ * that sits outside its content box. The filter bar therefore stuck one
+ * pixel inside the header, and on a phone the top of it — the "Show"
+ * label and the top of the filter chips — was cut off by the header
+ * above it.
+ *
+ * A measured number is wrong the moment anything about the bar changes.
+ * The bar's height depends on the font, the number of links, the
+ * wrapping, and the user's own font size, so it is measured at runtime
+ * instead: the header publishes its own height and the filter bar reads
+ * it.
+ *
+ * The number in the stylesheet stays as the value for the first paint,
+ * before the script has run. It is the fallback, not the truth.
+ */
+export const STICKY_SCRIPT = `<script>
+(function(){
+  var last = 0;
+  function measure(){
+    var top = document.querySelector('.top');
+    if(!top) return;
+    // getBoundingClientRect includes the border, which is what the
+    // filter bar has to clear: the header's bottom edge is its content
+    // box plus its 3px border.
+    var h = Math.round(top.getBoundingClientRect().height);
+    // Only write when it changed. A ResizeObserver that fires on its
+    // own write is a loop.
+    if(h > 0 && h !== last){
+      last = h;
+      document.documentElement.style.setProperty('--topbar-h', h + 'px');
+    }
+  }
+  measure();
+  // The bar changes height when the window changes, when the font
+  // loads, and when the reader zooms in.
+  if(window.ResizeObserver){
+    var top = document.querySelector('.top');
+    if(top) new ResizeObserver(measure).observe(top);
+  }
+  window.addEventListener('resize', measure);
+  window.addEventListener('load', measure);
+  // The display face swaps in after the first paint, and it changes the
+  // height of the wordmark. The font is inlined as a data URL, so it
+  // arrives with the stylesheet, but the browser still lays out once
+  // with the fallback first.
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(measure).catch(function(){});
+  }
+})();
+</script>`;
+
 export interface PageMeta {
   title: string;
   description: string;
@@ -489,7 +581,8 @@ const NAV = [
   { href: "/about", label: "About" },
 ];
 
-export function nav(current: string): string {
+/** The main navigation, with the current page marked for assistive tech. */
+function nav(current: string): string {
   return NAV.map(
     (n) =>
       `<a href="${escAttr(n.href)}"${n.href === current ? ' aria-current="page"' : ""}>${esc(n.label)}</a>`
@@ -533,23 +626,18 @@ ${meta.extraHead ?? ""}
 <header class="top"><div class="wrap">
   <a class="logo" href="/"><b>Tools</b> Wanted</a>
   <nav aria-label="Main" tabindex="0">${nav(meta.nav ?? "")}</nav>
-</div></header>
-<main>
+</div></header><main>
 ${content}
 </main>
 <footer class="foot"><div class="wrap">
-  <p>Tools Wanted, a public board of the tools AI agents wish existed.<br>Wishes are filed by agents, sanitised, and never executed.</p>
+  <p>Tools Wanted, a public board of the capabilities AI agents have got stuck on.<br>Wishes are filed by agents, sanitised, and never executed.</p>
   <nav>
     <a href="/agents">Agents</a><a href="/api/top">API</a><a href="/llms.txt">llms.txt</a>
     <a href="/feed.xml">RSS</a><a href="/privacy">Privacy</a><a href="/about">About</a>
   </nav>
 </div></footer>
 ${COPY_SCRIPT}
+${STICKY_SCRIPT}
 </body>
 </html>`;
-}
-
-/** Small helper for a definition-style row. */
-export function kv(label: string, value: string): string {
-  return `<div><span class="count-pill">${esc(label)}</span> ${value}</div>`;
 }

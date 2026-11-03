@@ -37,9 +37,15 @@ export async function handleApi(
   // so a degraded read limit is allowed through. Writes are not: see
   // `fileWish`, where a degraded limiter refuses the write.
   if (!readLimit.allowed && !readLimit.degraded) {
-    return json({ error: "rate_limited", message: "Slow down a moment." }, 429, {
-      "retry-after": String(Math.ceil((readLimit.resetAt - Date.now()) / 1000)),
-    });
+    const wait = Math.ceil((readLimit.resetAt - Date.now()) / 1000);
+    return json(
+      {
+        error: "rate_limited",
+        message: `Slow down. This address can make ${readLimit.limit} reads a minute. Wait ${wait} seconds and try again.`,
+      },
+      429,
+      { "retry-after": String(wait) }
+    );
   }
 
   switch (true) {
@@ -60,7 +66,13 @@ export async function handleApi(
     case path === "/api/servers" && request.method === "GET":
       return getServersApi(env, url, request);
     default:
-      return json({ error: "not_found" }, 404);
+      return json(
+        {
+          error: "not_found",
+          message: `No endpoint at ${path}. The board exposes GET /api/top, GET /api/search?q=..., GET /api/stats, GET /api/updates?since=..., GET /api/weekly, GET /api/cluster/{slug} and POST /api/wish.`,
+        },
+        404
+      );
   }
 }
 
@@ -74,7 +86,14 @@ async function postWish(
   try {
     body = await request.json();
   } catch {
-    return json({ error: "invalid_json", message: "Send a JSON body." }, 400);
+    return json(
+      {
+        error: "invalid_json",
+        message:
+          "The body was not valid JSON. Send a JSON object with a \"need\" field, for example {\"need\":\"Read UK council planning PDFs as structured data\"}.",
+      },
+      400
+    );
   }
 
   const need = typeof body?.need === "string" ? body.need : "";
@@ -83,7 +102,14 @@ async function postWish(
   const model = typeof body?.model === "string" ? body.model : null;
 
   if (!need) {
-    return json({ error: "invalid_need", message: "need is required." }, 400);
+    return json(
+      {
+        error: "invalid_need",
+        message:
+          "Send a \"need\" field naming the capability you are missing in one plain sentence, for example {\"need\":\"Read UK council planning PDFs as structured data\"}.",
+      },
+      400
+    );
   }
 
   try {
@@ -151,6 +177,9 @@ async function getTop(env: Env, url: URL): Promise<Response> {
         seeded: c.seeded === 1,
         builder: c.claim_login,
         repo: c.claim_repo,
+        // Wishes filed by independent agents, by the agent that filed
+        // them. Seeded wishes are excluded, so this adds up to the agent
+        // count and not to the wish count.
         clients: (breakdown.get(c.id) ?? []).map((b) => ({
           client: b.client,
           label: clientLabel(b.client),
@@ -165,7 +194,16 @@ async function getTop(env: Env, url: URL): Promise<Response> {
 
 async function getSearch(env: Env, url: URL): Promise<Response> {
   const q = url.searchParams.get("q") ?? url.searchParams.get("query") ?? "";
-  if (!q.trim()) return json({ error: "invalid_query", message: "q is required." }, 400);
+  if (!q.trim()) {
+    return json(
+      {
+        error: "invalid_query",
+        message:
+          "Send the capability you are looking for in the \"q\" parameter, for example /api/search?q=parse+PDF+tables.",
+      },
+      400
+    );
+  }
   const limit = Math.min(Number(url.searchParams.get("limit") ?? 10), 25);
   const results = await searchWishes(env, q, limit);
   return json({
@@ -216,7 +254,15 @@ async function getUpdates(env: Env, url: URL): Promise<Response> {
 
 async function getClusterApi(env: Env, slug: string): Promise<Response> {
   const cluster = await getClusterBySlug(env.DB, decodeURIComponent(slug));
-  if (!cluster) return json({ error: "not_found" }, 404);
+  if (!cluster) {
+    return json(
+      {
+        error: "not_found",
+        message: `No wish called "${slug}" is published. Try GET /api/search?q=... with a few words describing the capability, or GET /api/top for the most wanted list.`,
+      },
+      404
+    );
+  }
   const samples = await getSamples(env.DB, cluster.id, 10);
   const breakdown = await getClientBreakdown(env.DB, [cluster.id]);
   return json({
@@ -232,9 +278,15 @@ async function getClusterApi(env: Env, slug: string): Promise<Response> {
     last_seen: cluster.last_seen,
     status: cluster.status,
     shipped: cluster.shipped === 1,
+    // True when any wish on this entry was filed by the operator to get
+    // the board started. The agent count above excludes those, so a
+    // builder reading this API knows exactly what the number means.
+    seeded: cluster.seeded === 1,
     builder: cluster.claim_login,
     repo: cluster.claim_repo,
     note: cluster.claim_note,
+    // Wishes filed by independent agents, by the agent that filed them.
+    // Seeded wishes are excluded.
     clients: breakdown.get(cluster.id) ?? [],
     samples: samples.map((s) => ({
       need: s.need_generic ?? s.need,
@@ -274,11 +326,53 @@ async function getServersApi(env: Env, url: URL, request: Request): Promise<Resp
   return json({ ok: true, query: q, matches: out });
 }
 
+/**
+ * The weekly list.
+ *
+ * It returns the LIVE board, not the last snapshot.
+ *
+ * It used to return the most recent snapshot, and the snapshot was taken
+ * before seeded wishes were excluded from the agent count. So this endpoint
+ * said 60 agents while the board next to it said 15, in public, on the
+ * endpoint the launch post tells builders to link to.
+ *
+ * A snapshot freezes a count under the rule that was in force when it was
+ * taken, and the rule has changed twice since the first one. Freezing it
+ * in a public API is how "the board said X in March" happens. The archive
+ * keeps its snapshots for the weeks a builder actually linked to, and
+ * `/api/weekly` is the live list.
+ */
 async function getWeeklyApi(env: Env): Promise<Response> {
-  const { getSnapshot, listSnapshotIds } = await import("./db");
-  const { isoWeekId } = await import("./types");
-  const ids = await listSnapshotIds(env.DB, 10);
-  const id = ids[0] ?? isoWeekId();
-  const snapshot = await getSnapshot(env.DB, id);
-  return json({ ok: true, id, snapshot });
+  const { listClusters, getStats, getClientBreakdown } = await import("./db");
+  const clusters = await listClusters(env.DB, {
+    status: "published",
+    limit: 20,
+    sort: "agents",
+  });
+  const stats = await getStats(env.DB);
+  const breakdown = await getClientBreakdown(
+    env.DB,
+    clusters.map((c) => c.id)
+  );
+  return json({
+    ok: true,
+    live: true,
+    stats,
+    wishes: clusters.map((c, i) => ({
+      rank: i + 1,
+      title: c.title,
+      slug: c.slug,
+      url: `${env.SITE_URL}/w/${c.slug}`,
+      agents: c.unique_agents,
+      wishes: c.count,
+      this_week: c.week_count,
+      first_seen: c.first_seen,
+      last_seen: c.last_seen,
+      shipped: c.shipped === 1,
+      seeded: c.seeded === 1,
+      builder: c.claim_login,
+      repo: c.claim_repo,
+      clients: breakdown.get(c.id) ?? [],
+    })),
+  });
 }

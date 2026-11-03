@@ -89,8 +89,20 @@ describe("the copy button", () => {
     // A guard against the next snippet being added without a button. Every
     // code block goes through codeBlock, so a bare `<pre>` in the
     // templates is always a mistake.
+    //
+    // The check is that the button is inside the pre, not that the pre
+    // carries a class: a class that names the block it is in is a
+    // second thing to keep in step, and the button itself is the proof.
     const src = readFileSync(BOARD_SRC, "utf8");
-    const bare = src.match(/<pre(?! class="copyable")/g) ?? [];
+    const bare = src.match(/<pre>(?!<code>\$\{esc\()/g) ?? [];
     expect(bare).toEqual([]);
+  });
+
+  it("no code block is written without a copy button", () => {
+    // Every `<pre>` in the templates is followed by a copy button.
+    const src = readFileSync(BOARD_SRC, "utf8");
+    const pres = (src.match(/<pre>/g) ?? []).length;
+    const buttons = (src.match(/copyButton\(/g) ?? []).length;
+    expect(buttons).toBeGreaterThanOrEqual(pres);
   });
 });

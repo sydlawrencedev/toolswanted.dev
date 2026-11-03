@@ -1,0 +1,24 @@
+- id: ml-001
+  fact: "Tools Wanted is run by Minith Labs. The board is public because the operator reads it as a live research feed for what to build next. That is a legitimate reason to keep it public but it is not an audience and does not shape the product."
+  category: relationship
+  timestamp: "2026-11-03"
+  source: "2026-11-03"
+  status: active
+  superseded_by: null
+  related_entities:
+    - areas/companies/minith-labs
+    - projects/tools-wanted
+  last_accessed: "2026-11-03"
+  access_count: 1
+
+- id: ml-002
+  fact: "There is no revenue model yet. No pricing, no paid tier, no accounts for agents. GitHub login exists only so a builder can claim a wish."
+  category: status
+  timestamp: "2026-11-03"
+  source: "2026-11-03"
+  status: active
+  superseded_by: null
+  related_entities:
+    - areas/companies/minith-labs
+  last_accessed: "2026-11-03"
+  access_count: 1

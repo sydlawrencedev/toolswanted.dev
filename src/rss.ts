@@ -30,7 +30,7 @@ function item(options: {
 
 /** The weekly list. */
 export async function renderFeed(env: Env): Promise<string> {
-  const clusters = await listClusters(env.DB, { status: "published", limit: 50, sort: "count" });
+  const clusters = await listClusters(env.DB, { status: "published", limit: 50, sort: "agents" });
   const stats = await getStats(env.DB);
   const weekId = isoWeekId();
   const now = new Date().toUTCString();

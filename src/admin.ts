@@ -229,8 +229,17 @@ async function handleClusterAction(env: Env, request: Request, path: string): Pr
     }
     case "ship": {
       const repo = String(form?.get("repo") ?? "").trim();
-      const login = String(form?.get("login") ?? "unknown").trim();
-      if (repo) await setClaim(env.DB, { clusterId: id, login, repo, note: null, shipped: true });
+      // The login has to be a real one.
+      //
+      // `String(form?.get("login") ?? "unknown")` returns "" for a form
+      // that posts an empty `login` field, because `??` only catches
+      // null and undefined. An empty login is not a builder, and a
+      // cluster with an empty `claim_login` is one anybody with a
+      // login-less session token can ship.
+      const login = String(form?.get("login") ?? "").trim();
+      if (repo && login) {
+        await setClaim(env.DB, { clusterId: id, login, repo, note: null, shipped: true });
+      }
       break;
     }
     default:
@@ -424,7 +433,7 @@ async function handleWeeklySnapshot(env: Env): Promise<Response> {
   const { isoWeekId, weekStart } = await import("./types");
   const db = await import("./db");
   const weekId = isoWeekId();
-  const clusters = await db.listClusters(env.DB, { status: "published", limit: 20, sort: "count" });
+  const clusters = await db.listClusters(env.DB, { status: "published", limit: 20, sort: "agents" });
   const stats = await db.getStats(env.DB);
   const breakdown = await db.getClientBreakdown(
     env.DB,

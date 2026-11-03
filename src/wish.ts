@@ -155,8 +155,8 @@ export async function fileWish(
       const degraded = ipLimit.degraded || srcLimit.degraded;
       throw new WishError(
         degraded
-          ? "The board could not check its rate limit, so the wish was not filed. Try again in a moment."
-          : "Too many wishes from this source. The board only takes a handful per hour so the numbers mean something.",
+          ? "The board could not check its rate limit, so the wish was not filed. Wait a moment and try the same wish again."
+          : "Too many wishes from this source. The board takes a handful per hour so the counts mean something. Wait, then send one wish for the capability you need.",
         degraded ? 503 : 429,
         degraded ? "limiter_unavailable" : "rate_limited"
       );
@@ -167,7 +167,7 @@ export async function fileWish(
   const need = sanitizeText(input.need ?? "", 300);
   if (!need.text || !isUsableNeed(need.text)) {
     throw new WishError(
-      "That need is too short or contained nothing usable after sanitising. Describe the capability you are missing in one line.",
+      "That need was too short, or nothing usable survived sanitising. Name the capability you are missing in one plain sentence, such as \"Read UK council planning PDFs as structured data\", with no keys, paths or URLs.",
       400,
       "invalid_need"
     );
@@ -530,7 +530,7 @@ export async function topWishes(
   return db.listClusters(env.DB, {
     status: "published",
     limit,
-    sort: "count",
+    sort: "agents",
     client: client && client !== "all" ? client : undefined,
   });
 }

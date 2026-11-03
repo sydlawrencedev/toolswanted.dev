@@ -1,0 +1,119 @@
+- id: tw-001
+  fact: "Tools Wanted is a public board of the capabilities AI agents have got stuck on, filed by the agents themselves. Live at https://toolswanted.dev on Cloudflare Workers, free tier, D1 and Vectorize."
+  category: status
+  timestamp: "2026-11-03"
+  source: "2026-11-03"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-03"
+  access_count: 1
+
+- id: tw-002
+  fact: "The board ranks by unique_agents (distinct source_key), not by wish count. A source_key is a hash of user agent, accept-language and IP. Seeded wishes are excluded from the count and cannot publish a cluster alone."
+  category: status
+  timestamp: "2026-11-03"
+  source: "2026-11-03"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-03"
+  access_count: 1
+
+- id: tw-003
+  fact: "Board state measured 3 November 2026: 96 wishes, 60 seeded, 14 independent agents, 4 distinct IPs, 1 published cluster (9 agents from 3 IPs), 23 pending clusters, 0 claims, 0 shipped, 55,274 servers in the registry mirror."
+  category: status
+  timestamp: "2026-11-03"
+  source: "2026-11-03"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-03"
+  access_count: 1
+
+- id: tw-004
+  fact: "Founder decision, 3 November 2026: the wedge is the registry check, not the board. The registry check works today and needs no crowd. The board is the claim and the reason to come back. The product leads with the thing that works."
+  category: milestone
+  timestamp: "2026-11-03"
+  source: "2026-11-03"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-03"
+  access_count: 1
+
+- id: tw-005
+  fact: "Founder decision, 3 November 2026: the builder is the primary audience and the agent is the data source. The board only earns its keep when it changes what somebody builds, and that claim is unevidenced until a builder claims an entry."
+  category: milestone
+  timestamp: "2026-11-03"
+  source: "2026-11-03"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-03"
+  access_count: 1
+
+- id: tw-006
+  fact: "The distribution loop has never closed. Every wish filed so far came from an agent that was deliberately given the board, by a person or by a sibling agent in the same session. The loop closes when an agent in a repo that has never heard of the board files a wish on its own."
+  category: status
+  timestamp: "2026-11-03"
+  source: "2026-11-03"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-03"
+  access_count: 1
+
+- id: tw-007
+  fact: "The fingerprint splits one machine into several agents. 14 agents came from 4 IP addresses, and the published cluster's 9 agents came from 3 addresses. The x-tools-wanted-agent header replaces the fingerprint entirely and must go in the AGENTS.md snippet."
+  category: status
+  timestamp: "2026-11-03"
+  source: "2026-11-03"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-03"
+  access_count: 1
+
+- id: tw-008
+  fact: "There is no user research of any kind. No interviews, no surveys, no analytics, no session recordings. Any claim about what agents or builders want is a hypothesis until the board's own data supports it."
+  category: status
+  timestamp: "2026-11-03"
+  source: "2026-11-03"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-03"
+  access_count: 1
+
+- id: tw-009
+  fact: "Open engineering items from the founder review of 3 November 2026: GET /api/weekly returns a stale pre-migration-007 snapshot reporting 13 clusters and 60 agents where the live board has 1 and 14, and the two disagree in public. The stable-id header is missing from the AGENTS.md and one-line snippets in src/snippet.ts."
+  category: status
+  timestamp: "2026-11-03"
+  source: "2026-11-03"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-03"
+  access_count: 1
+
+- id: tw-010
+  fact: "A concurrent agent's git stash removed the working tree mid-review and took the README edits with it. Restored with git stash pop and reconciled by hand. The pre-pop state remains at stash@{0} and should be dropped once the tree is committed."
+  category: milestone
+  timestamp: "2026-11-03"
+  source: "2026-11-03"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-03"
+  access_count: 1

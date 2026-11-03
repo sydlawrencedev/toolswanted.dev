@@ -142,6 +142,29 @@ export function plural(n: number, one: string, many: string): string {
   return n === 1 ? one : many;
 }
 
+/**
+ * A count with a noun and a verb that agree.
+ *
+ * "1 agent want this" is what the MCP responses said: the noun was
+ * pluralised by hand and the verb was left alone. The board's HTML had
+ * the same fault and it was fixed there; the MCP responses were not,
+ * and they are the half of the product an agent actually reads.
+ *
+ * Both halves come from one place now, so the two surfaces cannot
+ * drift apart again.
+ */
+export function countWithVerb(
+  n: number,
+  singularNoun: string,
+  pluralNoun: string,
+  singularVerb: string,
+  pluralVerb: string
+): string {
+  return n === 1
+    ? `${num(n)} ${singularNoun} ${singularVerb}`
+    : `${num(n)} ${pluralNoun} ${pluralVerb}`;
+}
+
 /** RFC3339 -> "3 days ago" style. */
 export function relativeTime(iso: string, now = Date.now()): string {
   const then = Date.parse(iso);

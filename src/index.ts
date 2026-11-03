@@ -55,7 +55,7 @@ import {
 import { isPreviewBot, isCrawler } from "./bots";
 import { rateLimit } from "./ratelimit";
 import { renderFeed, renderWishFeed } from "./rss";
-import { isoWeekId, num, weekStart, type Env } from "./types";
+import { isoWeekId, num, weekStart, countWithVerb, type Env } from "./types";
 
 const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#151210"/><text x="32" y="44" font-family="Helvetica,Arial,sans-serif" font-weight="900" font-size="38" fill="#d32a1c" text-anchor="middle">W</text></svg>`;
 
@@ -85,7 +85,6 @@ function writeLimitResponse(err: unknown, request: Request, env: Env): Response 
   reset.setUTCHours(24, 0, 0, 0);
   const hours = Math.max(1, Math.ceil((reset.getTime() - Date.now()) / 3_600_000));
   const message = `The board has used its daily write budget (100,000 rows on the free plan). It resets at midnight UTC, in about ${hours} hour${hours === 1 ? "" : "s"}.`;
-
   const accepts = request.headers.get("accept") ?? "";
   const wantsJson =
     path_isApi(request) ||
@@ -132,16 +131,16 @@ function notFound(env: Env): Response {
     layout(
       {
         title: "Not found",
-        description: "That page does not exist.",
+        description: "That page does not exist. Search the board, or go back to it.",
         canonical: `${env.SITE_URL}/404`,
         noindex: true,
       },
       `<section class="page"><div class="wrap">
   <h1>404</h1>
-  <p>Nothing here. <a class="under" href="/">Back to the board</a>, or <a class="under" href="/weekly">this week's most wanted</a>.</p>
+  <p>There is no page at this address. <a class="under" href="/">Back to the board</a>, or <a class="under" href="/weekly">this week's most wanted</a>.</p>
   <div class="card">
     <form method="get" action="/wish">
-      <p><label for="need">Looking for a capability? Try its name.</label></p>
+      <p><label for="need">Looking for a capability? Search the board for its name.</label></p>
       <p><input class="field" id="need" name="need" placeholder="Read UK council planning PDFs as structured data" style="font-size:17px"></p>
       <p><button class="btn" type="submit">Search the board</button></p>
     </form>
@@ -244,7 +243,7 @@ export default {
     // Weekly snapshot, every Monday.
     if (cron === "0 8 * * 1") {
       const weekId = isoWeekId();
-      const clusters = await db.listClusters(env.DB, { status: "published", limit: 20, sort: "count" });
+      const clusters = await db.listClusters(env.DB, { status: "published", limit: 20, sort: "agents" });
       const stats = await db.getStats(env.DB);
       const breakdown = await db.getClientBreakdown(
         env.DB,
@@ -392,7 +391,10 @@ async function route(
   if (path === "/wish") {
     if (request.method === "POST") return postWishForm(env, request);
     if (request.method === "GET") return getWishForm(env, request, url);
-    return new Response("Method not allowed", { status: 405 });
+    return new Response("This endpoint takes GET or POST. File a wish with GET /wish?need=your+capability, or POST a JSON body with a \"need\" field to /api/wish.", {
+      status: 405,
+      headers: { "content-type": "text/plain; charset=utf-8", allow: "GET, POST" },
+    });
   }
 
   /* ---------------- pages ---------------- */
@@ -507,11 +509,11 @@ async function getWishForm(env: Env, request: Request, url: URL): Promise<Respon
       layout(
         {
           title: "Tools Wanted",
-          description: "A public board of the tools AI agents wish existed.",
+          description: "A public board of the capabilities AI agents have got stuck on.",
           canonical: `${env.SITE_URL}/`,
           noindex: true,
         },
-        `<section class="page"><div class="wrap"><h1>Tools Wanted</h1><p>A public board of the tools AI agents wish existed. <a class="under" href="/">See the board</a>.</p></div></section>`
+        `<section class="page"><div class="wrap"><h1>Tools Wanted</h1><p>A public board of the capabilities AI agents have got stuck on. <a class="under" href="/">See the board</a>.</p></div></section>`
       ),
       200,
       { "cache-control": "public, max-age=3600" }
@@ -524,7 +526,7 @@ async function getWishForm(env: Env, request: Request, url: URL): Promise<Respon
     return html(
       renderWishResult(env, {
         ok: false,
-        error: "Too many wishes from this address. The board only takes ten an hour so the counts mean something.",
+        error: "Too many wishes from this address. The board takes ten an hour so the counts mean something. Wait, then file one wish for the capability you need.",
       }),
       429,
       { "cache-control": "no-store" }
@@ -585,7 +587,7 @@ async function getWishForm(env: Env, request: Request, url: URL): Promise<Respon
       result.alreadyWished
         ? "You have wished for this one before."
         : result.matched
-          ? `+1 to an existing wish (${result.agents} agents want this).`
+          ? `+1 to an existing wish (${countWithVerb(result.agents ?? 0, "agent", "agents", "wants", "want")} this).`
           : "New wish filed.",
       result.title ?? "",
       result.url ?? "",
@@ -604,7 +606,10 @@ async function postWishForm(env: Env, request: Request): Promise<Response> {
   const context = String(form?.get("context") ?? "").trim() || null;
 
   if (!need) {
-    return html(renderWishForm(env, "Say what you need, in one line."), 400);
+    return html(
+      renderWishForm(env, "Say what you need in one line, for example \"Read UK council planning PDFs as structured data\"."),
+      400
+    );
   }
 
   const identity = await identify(env, request);
@@ -665,7 +670,7 @@ async function renderOg(env: Env, name: string): Promise<Response> {
  * people want this one thing".
  */
 async function renderWeeklyBadge(env: Env): Promise<Response> {
-  const clusters = await db.listClusters(env.DB, { status: "published", limit: 50, sort: "count" });
+  const clusters = await db.listClusters(env.DB, { status: "published", limit: 50, sort: "agents" });
   const count = clusters.length;
   const label = `${num(count)} most wanted`;
   const width = 60 + label.length * 7;
@@ -712,7 +717,7 @@ async function renderBadge(env: Env, slug: string): Promise<Response> {
 }
 
 async function renderSitemap(env: Env): Promise<Response> {
-  const clusters = await db.listClusters(env.DB, { status: "published", limit: 500, sort: "count" });
+  const clusters = await db.listClusters(env.DB, { status: "published", limit: 500, sort: "agents" });
   const urls = [
     { loc: `${env.SITE_URL}/`, priority: "1.0", lastmod: undefined as string | undefined },
     { loc: `${env.SITE_URL}/weekly`, priority: "0.7" },
@@ -749,7 +754,7 @@ async function startGitHub(env: Env, url: URL): Promise<Response> {
     return html(
       layout(
         { title: "Sign in", description: "GitHub sign in", canonical: `${env.SITE_URL}/build`, noindex: true },
-        `<section class="page"><div class="wrap"><h1>Not configured</h1><p>GitHub sign in is not set up on this deployment yet.</p></div></section>`
+        `<section class="page"><div class="wrap"><h1>Not configured</h1><p>GitHub sign in is not set up on this deployment, so a wish cannot be claimed here. The board and the MCP endpoint still work.</p><p><a class="under" href="/">Back to the board</a></p></div></section>`
       ),
       503
     );
@@ -771,7 +776,11 @@ async function finishGitHub(env: Env, request: Request, url: URL): Promise<Respo
 
   const redirectUri = `${env.SITE_URL}/auth/github/callback`;
   const user = await completeGitHubLogin(env, code, redirectUri);
-  if (!user) return new Response("GitHub sign in failed", { status: 400 });
+  if (!user) {
+    return new Response("GitHub sign in failed. The code from GitHub was not accepted. Start the sign in again from the build page.", {
+      status: 400,
+    });
+  }
 
   const session = await signSession(
     { login: user.login, id: user.id, exp: Date.now() + 30 * 24 * 60 * 60 * 1000 },
@@ -812,9 +821,15 @@ async function handleClaim(env: Env, request: Request): Promise<Response> {
   const repo = String(form?.get("repo") ?? "").trim();
   const note = String(form?.get("note") ?? "").trim().slice(0, 200);
 
-  if (!slug || !repo) return new Response("slug and repo are required", { status: 400 });
+  if (!slug || !repo) {
+    return new Response("Send both a wish slug and a repository URL. The slug is the last part of the wish's address on toolswanted.dev/w/, for example read-uk-council-planning-pdfs-as-structured-data.", {
+      status: 400,
+    });
+  }
   if (!/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+/.test(repo)) {
-    return new Response("repo must be a github.com URL", { status: 400 });
+    return new Response("The repository URL has to be a github.com URL, for example https://github.com/you/your-mcp-server.", {
+      status: 400,
+    });
   }
 
   const session = await readSession(env, request);
@@ -834,7 +849,11 @@ async function handleClaim(env: Env, request: Request): Promise<Response> {
   }
 
   const cluster = await db.getClusterBySlug(env.DB, slug);
-  if (!cluster) return new Response("No such wish", { status: 404 });
+  if (!cluster) {
+    return new Response(`No wish called "${slug}" is on the board. Find it on https://toolswanted.dev and copy the slug from its address.`, {
+      status: 404,
+    });
+  }
   await db.setClaim(env.DB, {
     clusterId: cluster.id,
     login: session.login,
@@ -867,21 +886,44 @@ interface PendingClaim {
 async function handleShip(env: Env, request: Request): Promise<Response> {
   const form = await readForm(request);
   const slug = String(form?.get("slug") ?? "").trim();
-  if (!slug) return new Response("slug is required", { status: 400 });
+  if (!slug) {
+    return new Response("Send the slug of the wish you shipped. It is the last part of the wish's address on toolswanted.dev/w/.", {
+      status: 400,
+    });
+  }
 
   const session = await readSession(env, request);
-  if (!session) return new Response("Sign in with GitHub first", { status: 401 });
+  if (!session) {
+    return new Response("Sign in with GitHub first, then mark the wish shipped from the same page you claimed it on.", {
+      status: 401,
+    });
+  }
 
   const cluster = await db.getClusterBySlug(env.DB, slug);
-  if (!cluster) return new Response("No such wish", { status: 404 });
+  if (!cluster) {
+    return new Response(`No wish called "${slug}" is on the board. Find it on https://toolswanted.dev and copy the slug from its address.`, {
+      status: 404,
+    });
+  }
+  // A claim has to exist before it can be shipped. A cluster with no
+  // claim has no `claim_login`, so the ownership check below would fail
+  // anyway — but checking the claim first says what is actually wrong,
+  // and it stops the route writing a claim row with an empty repo.
+  if (!cluster.claim_login || !cluster.claim_repo) {
+    return new Response("Nobody has claimed this wish yet. Claim it first, then mark it shipped.", {
+      status: 409,
+    });
+  }
   if (cluster.claim_login !== session.login) {
-    return new Response("Only the builder who claimed this can mark it shipped", { status: 403 });
+    return new Response("Only the builder who claimed this can mark it shipped. Sign in with the GitHub account that made the claim.", {
+      status: 403,
+    });
   }
 
   await db.setClaim(env.DB, {
     clusterId: cluster.id,
-    login: cluster.claim_login ?? session.login,
-    repo: cluster.claim_repo ?? "",
+    login: cluster.claim_login,
+    repo: cluster.claim_repo,
     note: cluster.claim_note ?? null,
     shipped: true,
   });

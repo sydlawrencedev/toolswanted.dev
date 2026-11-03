@@ -76,11 +76,28 @@ export function clearCookie(): string {
   return "tw_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0";
 }
 
-/** Read the session cookie from a request. */
+/**
+ * Read the session cookie from a request.
+ *
+ * A session with no login is not a session.
+ *
+ * The pending-claim cookie the server hands to every anonymous visitor
+ * who starts a claim is signed in exactly this format, with exactly this
+ * secret, and carries `login: ""` because there is no builder yet. It is
+ * a different cookie name, so it is not read here — but a token is a
+ * token, and if a caller can put one in `tw_session` it must not become
+ * a signed-in builder. The routes that trust the login (claim, ship)
+ * would otherwise accept it.
+ *
+ * The admin session carries `login: "admin"`, so it still passes.
+ */
 export async function readSession(env: Env, request: Request): Promise<Session | null> {
   const cookie = request.headers.get("cookie") ?? "";
   const match = cookie.match(/(?:^|;\s*)tw_session=([^;]+)/);
-  return verifySession(match?.[1], sessionSecret(env));
+  const session = await verifySession(match?.[1], sessionSecret(env));
+  if (!session) return null;
+  if (!session.login) return null;
+  return session;
 }
 
 export async function getSessionCookieValue(request: Request): Promise<string | undefined> {

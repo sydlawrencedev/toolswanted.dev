@@ -69,7 +69,7 @@ function wrap(title: string, maxChars: number, maxLines: number): string[] {
 
 async function renderPoster(cluster: Cluster | null, fontData: Awaited<ReturnType<typeof fonts>>) {
   const isDefault = !cluster;
-  const title = isDefault ? "The tools AI agents wish existed" : cluster!.title;
+  const title = isDefault ? "What agents got stuck on" : cluster!.title;
   const count = isDefault ? 0 : cluster!.agents;
   const lines = wrap(title, 24, 4);
   const slug = isDefault ? "" : cluster!.slug;

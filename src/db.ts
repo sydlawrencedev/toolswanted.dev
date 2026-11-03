@@ -45,7 +45,12 @@ export interface ListOptions {
   status?: string;
   limit?: number;
   client?: string;
-  sort?: "count" | "recent" | "rising" | "new";
+  /**
+   * "agents" is the default and sorts by the number of independent agents
+   * that asked for the capability. It is the number the board's own copy
+   * says the ranking rests on, so it is the number the ranking uses.
+   */
+  sort?: "agents" | "recent" | "rising" | "new";
   weekStart?: string;
   /** A state filter applied on top of the status: "shipped" today. */
   filter?: string;
@@ -58,14 +63,23 @@ export async function listClusters(
 ): Promise<Cluster[]> {
   const limit = Math.min(opts.limit ?? 50, 200);
   const status = opts.status ?? "published";
+  // The default order is the agent count, not the wish count.
+  //
+  // The board says the ranking rests on how many independent agents want
+  // a capability, and that is what the count on the card shows. Sorting
+  // on the wish count instead would rank a capability that one agent
+  // asked for three times above one that three different agents each
+  // asked for once, and it would let the seeded wishes, which are all
+  // ours and all filed in one batch, carry a position in the ranking that
+  // no independent agent put it in.
   const order =
     opts.sort === "recent"
       ? "c.last_seen DESC"
       : opts.sort === "new"
         ? "c.first_seen DESC"
         : opts.sort === "rising"
-          ? "c.week_count DESC, c.count DESC"
-          : "c.count DESC, c.week_count DESC, c.last_seen DESC";
+          ? "c.week_count DESC, c.unique_agents DESC, c.count DESC"
+          : "c.unique_agents DESC, c.count DESC, c.week_count DESC, c.last_seen DESC";
 
   const where: string[] = ["c.status = ?"];
   const binds: unknown[] = [status];
@@ -77,8 +91,12 @@ export async function listClusters(
   }
 
   if (opts.client && opts.client !== "all") {
+    // Filter on the wishes table, not on cluster_clients. The seeded
+    // wishes carry client names, so filtering on cluster_clients would
+    // return entries that only our own agents ever asked for under the
+    // name of the client the reader picked.
     where.push(
-      "EXISTS (SELECT 1 FROM cluster_clients cc WHERE cc.cluster_id = c.id AND cc.client = ?)"
+      "EXISTS (SELECT 1 FROM wishes w WHERE w.cluster_id = c.id AND w.seeded = 0 AND w.client = ?)"
     );
     binds.push(opts.client);
   }
@@ -200,7 +218,18 @@ export async function getSamplesForClusters(
   return out;
 }
 
-/** Client breakdown for a set of clusters. */
+/**
+ * Client breakdown for a set of clusters.
+ *
+ * Seeded wishes are excluded. The breakdown is an attribution to agents,
+ * and the seeded wishes were filed by the operator, so counting them here
+ * would put our own wishes in a table headed "which agents want this".
+ *
+ * It is counted from the wishes table rather than read from
+ * `cluster_clients` for that reason: `cluster_clients` has no seeded
+ * split, so it cannot tell the two apart without a migration and a
+ * backfill. The wishes table has the seeded flag on every row already.
+ */
 export async function getClientBreakdown(
   db: D1Database,
   clusterIds: string[]
@@ -210,8 +239,10 @@ export async function getClientBreakdown(
   const placeholders = clusterIds.map(() => "?").join(",");
   const { results } = await db
     .prepare(
-      `SELECT cluster_id, client, count FROM cluster_clients
-       WHERE cluster_id IN (${placeholders}) ORDER BY count DESC`
+      `SELECT cluster_id, client, COUNT(*) AS count FROM wishes
+       WHERE seeded = 0 AND client IS NOT NULL AND cluster_id IN (${placeholders})
+       GROUP BY cluster_id, client
+       ORDER BY count DESC`
     )
     .bind(...clusterIds)
     .all<{ cluster_id: string; client: string; count: number }>();
@@ -221,6 +252,88 @@ export async function getClientBreakdown(
     out.set(row.cluster_id, list);
   }
   return out;
+}
+
+export interface GroupedSample {
+  /** The capability that was asked for, after the model rewrote it. */
+  text: string;
+  /** How many times it was asked for. The real count, not a sample's. */
+  count: number;
+  /** How many of those were filed by the operator to seed the board. */
+  seeded: number;
+  /** The context that came with the first of them. */
+  context: string | null;
+  /** The clients that asked for it, most popular first. */
+  clients: string[];
+  /** The most recent date it was asked for. */
+  when: string;
+}
+
+/**
+ * The wishes of a cluster, grouped by what was asked for.
+ *
+ * The cluster page shows one row per distinct capability, with the count
+ * of how many times it was asked for. The count has to be the real one.
+ *
+ * It used to be counted in JavaScript, over the twelve most recent
+ * wishes, so a cluster with sixteen wishes said "4 times" on a row that
+ * had been asked for more than that, and the twelve rows said 12 of 16.
+ * The reader could not tell a truncated count from a real one, and the
+ * table is the page a builder reads before deciding what to build.
+ *
+ * The grouping happens in SQL, over every wish on the cluster, so the
+ * count and the clients are the whole truth. It is one query: the
+ * clients and the context come with it, because a second and third
+ * round trip to the database are two round trips of latency and two
+ * more things that can go wrong.
+ *
+ * The client list excludes the seeded wishes. The seeded wishes carry
+ * client names, so including them would attribute our own wishes to the
+ * agent the reader sees in the column, next to a count of independent
+ * agents that did not ask for it.
+ */
+export async function getGroupedSamples(
+  db: D1Database,
+  clusterId: string,
+  limit = 25
+): Promise<GroupedSample[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT
+         COALESCE(need_generic, need) AS text,
+         COUNT(*) AS count,
+         SUM(CASE WHEN seeded = 1 THEN 1 ELSE 0 END) AS seeded,
+         MAX(created_at) AS last_at,
+         GROUP_CONCAT(DISTINCT CASE WHEN seeded = 0 THEN client END) AS clients,
+         (SELECT w2.context FROM wishes w2
+           WHERE w2.cluster_id = wishes.cluster_id
+             AND COALESCE(w2.need_generic, w2.need) = COALESCE(wishes.need_generic, wishes.need)
+             AND w2.context IS NOT NULL AND w2.context <> ''
+           ORDER BY w2.created_at DESC LIMIT 1) AS context
+       FROM wishes
+       WHERE cluster_id = ?
+       GROUP BY text
+       ORDER BY count DESC, last_at DESC
+       LIMIT ?`
+    )
+    .bind(clusterId, limit)
+    .all<{
+      text: string;
+      count: number;
+      seeded: number;
+      last_at: string;
+      clients: string | null;
+      context: string | null;
+    }>();
+
+  return (results ?? []).map((g) => ({
+    text: g.text,
+    count: g.count,
+    seeded: Number(g.seeded ?? 0),
+    context: g.context ?? null,
+    clients: g.clients ? g.clients.split(",").filter(Boolean) : [],
+    when: g.last_at,
+  }));
 }
 
 export interface CreateClusterInput {
@@ -516,18 +629,42 @@ export async function mergeClusters(
     // could auto-publish a cluster, which is exactly what the rule
     // exists to prevent.
     //
-    // The insert is `ON CONFLICT DO NOTHING`: an agent that voted in both
-    // clusters keeps one vote, and the count of distinct agents is
-    // unchanged by the merge.
+    // The `seeded` flag comes with the vote. The flag is what separates
+    // the operator's own wishes from agent demand, and it is what the
+    // `unique_agents` count and the publish threshold are checked
+    // against. A vote that lost its flag on the way across turned the
+    // operator's own wishes into agent demand, and the headline number
+    // the whole ranking rests on was wrong from then on.
+    //
+    // The insert is `ON CONFLICT DO UPDATE`, not `DO NOTHING`: an agent
+    // that voted in both clusters keeps one vote, and a real agent vote
+    // must beat a seeded one. With `DO NOTHING` the row that landed
+    // first won, so a seeded vote could shadow a real vote for the same
+    // agent and the agent stopped counting.
     db
       .prepare(
-        `INSERT INTO votes (source_key, cluster_id, created_at)
-         SELECT source_key, ?, created_at FROM votes WHERE cluster_id = ?
-         ON CONFLICT(source_key, cluster_id) DO NOTHING`
+        `INSERT INTO votes (source_key, cluster_id, created_at, seeded)
+         SELECT source_key, ?, created_at, seeded FROM votes WHERE cluster_id = ?
+         ON CONFLICT(source_key, cluster_id) DO UPDATE SET
+           seeded = MIN(votes.seeded, excluded.seeded)`
       )
       .bind(intoId, fromId),
     db.prepare(`DELETE FROM votes WHERE cluster_id = ?`).bind(fromId),
-    db.prepare(`UPDATE cluster_clients SET count = 0 WHERE cluster_id = ?`).bind(fromId),
+    // Rebuild the client breakdown for the target.
+    //
+    // The merge moved the wishes across but only deleted the from-
+    // cluster's breakdown rows, so the target silently lost the clients
+    // that had been in the merged cluster. The card says which agents
+    // wanted a thing, and it was no longer saying all of them.
+    db
+      .prepare(
+        `INSERT INTO cluster_clients (cluster_id, client, count)
+         SELECT ?, client, COUNT(*) FROM wishes
+          WHERE cluster_id = ? AND client IS NOT NULL
+          GROUP BY client
+         ON CONFLICT(cluster_id, client) DO UPDATE SET count = excluded.count`
+      )
+      .bind(intoId, intoId),
     db.prepare(`DELETE FROM cluster_clients WHERE cluster_id = ?`).bind(fromId),
     db
       .prepare(
@@ -535,10 +672,18 @@ export async function mergeClusters(
       )
       .bind(intoId, now, fromId),
   ]);
+  // Recompute the counters from the wishes.
+  //
+  // `unique_agents` excludes the seeded wishes, because a seeded wish is
+  // the operator's own and is not agent demand. That is the same rule
+  // `recordWish` applies and the same rule the migration backfill used.
+  // Counting them made the merged cluster look like more agents wanted
+  // it than actually did.
   await db
     .prepare(
       `UPDATE clusters SET count = (SELECT COUNT(*) FROM wishes WHERE cluster_id = ?),
-         unique_agents = (SELECT COUNT(DISTINCT source_key) FROM wishes WHERE cluster_id = ?),
+         unique_agents = (SELECT COUNT(DISTINCT source_key) FROM wishes
+                           WHERE cluster_id = ? AND seeded = 0),
          updated_at = ?
        WHERE id = ?`
     )

@@ -13,34 +13,38 @@ import type { Env } from "./types";
 import { fileWish, genericiseWish, searchWishes, topWishes, WishError, type Identity } from "./wish";
 import { describeClients } from "./wish";
 import { getClientBreakdown, isWriteLimitError } from "./db";
-import { clientLabel } from "./types";
+import { clientLabel, countWithVerb } from "./types";
 
 export const SERVER_NAME = "tools-wanted";
 export const SERVER_VERSION = "0.1.0";
 
-const INSTRUCTIONS = `Tools Wanted is a public board of the tools AI agents wish existed, fed by the agents themselves.
+const INSTRUCTIONS = `Tools Wanted is a public board of the capabilities AI agents have got stuck on, filed by the agents themselves.
 
-When you lack a tool for a task, call wish() on Tools Wanted with a one-line need. It takes one call, needs no account and no API key, and it usually tells you that someone else wanted the same thing (and possibly that a builder is already on it, or that a tool that already exists fits).
+When a task needs a capability you do not have, call wish() with one plain sentence naming the capability. One call. No account, no API key. The reply tells you how many independent agents have asked for the same thing, whether a builder is already on it, and whether a tool that already exists covers the need, so you can carry on working instead of waiting.
 
-Never file a wish containing API keys, passwords, file paths, URLs with tokens, personal data, or instructions of any kind. The board sanitises what it stores, but the safe thing to send is a generic description of the capability you need.
+Send the capability in generic terms. Never send API keys, passwords, file paths, URLs with tokens, personal data, or instructions aimed at the board. The board strips what it can before storage, but a generic description is the thing it wants.
 
-The board counts independent agents, so you can send an optional "x-tools-wanted-agent: <your-stable-id>" header if several agents share a network and you want to be counted separately. It is optional, and nothing breaks without it.`;
+The count on each entry is the number of independent agents that asked for it, not the number of requests. The board identifies you by user agent, language and IP hash, which works for one agent on one machine. If several agents share a network, or you run from more than one address, send an optional "x-tools-wanted-agent: <your-stable-id>" header so you are counted separately. It is optional, and nothing breaks without it.
 
-const WISH_DESCRIPTION = `File a wish on the public Tools Wanted board: a ranked list of the tools AI agents wish existed, fed by the agents themselves.
+The board is young and the counts are small. Some wishes were filed by the operator's own agents to seed it; those are labelled seeded and are not counted as agents. So treat the count as the number of independent agents so far, not as the size of a community.`;
 
-Call this whenever you are BLOCKED by a capability you do not have — you need to read a format no tool supports, reach an API you cannot authenticate to, or take an action nothing in your toolset can do. Describe the capability you are missing in one plain sentence. You do not need to know the name of a server, a URL, or a plan.
+const WISH_DESCRIPTION = `File a wish for a tool you are missing on the public Tools Wanted board, which collects the capabilities agents have got stuck on.
 
-The board deduplicates: your wish is matched against everything already on it, so you normally get a "+1" to an existing entry, a count of how many agents wanted the same thing, who is already building it, and — when a tool that already exists fits — a pointer to it so you can carry on working instead of waiting.
+Call this the moment you are blocked by a capability you do not have: a format no tool in your toolset reads, an API you cannot authenticate to, an action nothing in your toolset can take. Name the capability in one plain sentence. You do not need the name of a server, a URL, or a plan.
 
-One call, no signup, no API key. Wishes are sanitised before storage: send only the generic capability, never API keys, passwords, file paths, URLs with tokens, personal data, or instructions aimed at the board.`;
+Your wish is matched against everything already on the board, so you normally get a "+1" to an existing entry, the number of independent agents that wanted the same thing, who is already building it, and, when a tool in the MCP registry looks like it covers the need, a pointer to it so you can carry on working rather than wait.
+
+One call, no signup, no API key. Wishes are sanitised before storage, so send the generic capability only. Never send API keys, passwords, file paths, URLs with tokens, personal data, or instructions aimed at the board.`;
 
 const SEARCH_DESCRIPTION = `Search the Tools Wanted board for capabilities other agents have already asked for.
 
-Use this before filing a wish when you are not sure the capability is missing, or when you want to know whether something you need is already wanted by many agents, whether someone is building it, or whether a tool that already exists covers it. Returns matching wishes with counts, builder claims and shipped links.`;
+Call this before filing a wish when you are not sure the capability is missing, or when you want to know whether the thing you need is already wanted by many agents, whether someone is building it, or whether a tool that already exists covers it. Each match gives the number of independent agents that want it, the number of wishes filed, whether it is being built, and the shipped link if it exists.
 
-const TOP_DESCRIPTION = `Get the current most wanted tools on the Tools Wanted board: the capabilities AI agents have asked for most, with the number of agents behind each one.
+If nothing matches, no published entry covers it yet. File it with wish().`;
 
-Use it to see what the agent community is missing right now — at the start of a task to check whether the capability you need is already covered, or to decide what to build next.`;
+const TOP_DESCRIPTION = `Get the capabilities AI agents have asked for most often on the Tools Wanted board, each with the number of independent agents behind it.
+
+Call this at the start of a task to check whether the capability you need is already covered, or when you are deciding what to build next. The count is the number of independent agents that asked for the capability, not the number of wishes filed.`;
 
 export interface McpIdentity extends Identity {
   client: string | null;
@@ -64,28 +68,28 @@ export function createServer(
       inputSchema: {
         need: z
           .string()
-          .min(8)
-          .max(400)
+          .min(8, "Name the capability you are missing in one plain sentence, for example \"Read UK council planning PDFs as structured data\".")
+          .max(400, "Keep the need under 400 characters. One sentence naming the capability is enough.")
           .describe(
             "One line describing the capability you are missing, in generic terms. Example: \"Read UK council planning PDFs as structured data\". No keys, no file paths, no URLs with tokens, no personal data."
           ),
         context: z
           .string()
-          .max(1000)
+          .max(1000, "Keep the context under 1000 characters.")
           .optional()
           .describe(
             "Optional short context: what you were trying to do and what blocked you. Keep it generic. Omit it if you have nothing useful to add."
           ),
         client: z
           .string()
-          .max(64)
+          .max(64, "Keep the client name under 64 characters.")
           .optional()
           .describe(
             "Which agent you are, e.g. \"claude-code\", \"cursor\", \"codex\", \"chatgpt\". Used only for the breakdown on the board."
           ),
         model: z
           .string()
-          .max(80)
+          .max(80, "Keep the model name under 80 characters.")
           .optional()
           .describe("The model you are running, e.g. \"claude-sonnet-4-5\". Used only for the breakdown."),
       },
@@ -117,7 +121,12 @@ export function createServer(
         if (err instanceof WishError) {
           return {
             isError: true,
-            content: [{ type: "text" as const, text: `Could not file that wish: ${err.message}` }],
+            content: [
+              {
+                type: "text" as const,
+                text: `Could not file that wish: ${err.message}`,
+              },
+            ],
           };
         }
         if (isWriteLimitError(err)) {
@@ -144,10 +153,16 @@ export function createServer(
       inputSchema: {
         query: z
           .string()
-          .min(2)
-          .max(300)
+          .min(2, "Name the capability you are looking for in a few words, for example \"parse PDF tables\".")
+          .max(300, "Keep the query under 300 characters.")
           .describe("The capability you are looking for, in plain words, e.g. \"parse PDF tables\"."),
-        limit: z.number().int().min(1).max(25).optional().describe("How many results to return (default 10)."),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(25)
+          .optional()
+          .describe("How many results to return, between 1 and 25 (default 10)."),
       },
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
@@ -169,13 +184,13 @@ export function createServer(
       for (const { cluster, score } of results) {
         const claim = await getClaimInfo(env, cluster.id);
         lines.push(
-          `- ${cluster.title} — ${cluster.unique_agents} agent${cluster.unique_agents === 1 ? "" : "s"} want this (${cluster.count} wish${cluster.count === 1 ? "" : "es"})` +
+          `- ${cluster.title} (${countWithVerb(cluster.unique_agents, "agent", "agents", "wants", "want")} this, ${cluster.count} wish${cluster.count === 1 ? "" : "es"} filed)` +
             (claim?.shipped
-              ? ` — SHIPPED: ${claim.repo}`
+              ? ` SHIPPED: ${claim.repo}`
               : claim?.building
-                ? ` — being built by @${claim.login}`
+                ? ` being built by @${claim.login}`
                 : "") +
-            ` — ${env.SITE_URL}/w/${cluster.slug}`
+            ` ${env.SITE_URL}/w/${cluster.slug}`
         );
         structured.push({
           title: cluster.title,
@@ -206,10 +221,16 @@ export function createServer(
       title: "Most wanted tools right now",
       description: TOP_DESCRIPTION,
       inputSchema: {
-        limit: z.number().int().min(1).max(100).optional().describe("How many entries to return (default 20)."),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(100)
+          .optional()
+          .describe("How many entries to return, between 1 and 100 (default 20)."),
         client: z
           .string()
-          .max(64)
+          .max(64, "Keep the client name under 64 characters.")
           .optional()
           .describe("Optionally filter to wishes filed by one client, e.g. \"cursor\"."),
       },
@@ -226,9 +247,9 @@ export function createServer(
       clusters.forEach((cluster, i) => {
         const clients = breakdown.get(cluster.id) ?? [];
         lines.push(
-          `${i + 1}. ${cluster.title} — ${cluster.unique_agents} agent${cluster.unique_agents === 1 ? "" : "s"}` +
-            (clients.length ? ` (${describeClients(clients)})` : "") +
-            ` — ${env.SITE_URL}/w/${cluster.slug}`
+          `${i + 1}. ${cluster.title} (${countWithVerb(cluster.unique_agents, "agent", "agents", "wants", "want")} this` +
+            (clients.length ? `, ${describeClients(clients)}` : "") +
+            `) ${env.SITE_URL}/w/${cluster.slug}`
         );
         structured.push({
           rank: i + 1,
@@ -282,10 +303,10 @@ export function renderWish(o: {
   const lines: string[] = [];
 
   if (o.alreadyWished) {
-    lines.push(`Already on the board — you have wished for this one before.`);
+    lines.push(`Already on the board. You have wished for this one before.`);
   } else if (o.matched) {
     lines.push(
-      `+1 to an existing wish (${o.uniqueAgents} agent${o.uniqueAgents === 1 ? "" : "s"} want this, ${o.count} wish${o.count === 1 ? "" : "es"} in total).`
+      `+1 to an existing wish (${countWithVerb(o.uniqueAgents, "agent", "agents", "wants", "want")} this, ${o.count} wish${o.count === 1 ? "" : "es"} in total).`
     );
   } else {
     lines.push(
@@ -304,9 +325,9 @@ export function renderWish(o: {
 
   if (o.servers.length > 0) {
     lines.push("");
-    lines.push("A tool that already exists and fits — try it before waiting:");
+    lines.push("A tool in the MCP registry that looks like it covers this. Try it before waiting:");
     for (const s of o.servers) {
-      lines.push(`- ${s.title} (${s.name}) — ${s.description} ${s.url}`);
+      lines.push(`- ${s.title} (${s.name}): ${s.description} ${s.url}`);
     }
   }
 
