@@ -90,6 +90,10 @@ a{color:inherit}
 .logo{
   font-family:var(--font-display); font-weight:400; letter-spacing:-.03em;
   font-size:19px; text-transform:uppercase; text-decoration:none; white-space:nowrap;
+  /* A 44px touch target without turning the link into a flex container:
+     as a flex box the space between "Tools" and "Wanted" collapsed and
+     the wordmark ran together. */
+  display:block;line-height:44px;
 }
 .logo b{color:var(--red)}
 .top nav{margin-left:auto;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
@@ -101,18 +105,43 @@ a{color:inherit}
 .top nav a[aria-current="page"]{background:var(--ink);color:var(--paper)}
 .tally{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);white-space:nowrap}
 @media (max-width:760px){
-  :root{--topbar-h:84px}
+  /* The top bar is the logo row plus two rows of 44px nav links. The
+     filter bar sticks below it, so the two heights have to agree or the
+     filter slides underneath the header.
+     Measured: the bar is 159px tall at 390px and under 380px it is
+     207px. The token is the larger of the two in each band. */
+  :root{--topbar-h:160px}
   .clientpick{margin-left:0}
   .tally{display:none}
   .top .wrap{min-height:0;padding-top:8px;padding-bottom:8px;row-gap:4px}
-  .logo{order:1;font-size:17px}
-  .top nav{order:2;margin-left:0;width:100%;overflow-x:auto;flex-wrap:nowrap;gap:4px;scrollbar-width:none}
-  .top nav::-webkit-scrollbar{display:none}
+  /* The logo stays at 19px on a phone. It was 17px, and at 17px the red
+     is 4.4:1 against the paper, which is under the 4.5:1 body text
+     threshold. The wordmark fits at 19px in 288px, so there is no reason
+     to shrink it. */
+  .logo{order:1;font-size:19px}
+  .top nav{
+    order:2;margin-left:0;width:100%;
+    /* Six links do not fit on one row at 320px, and the old horizontal
+       scroll clipped "File a wish" and "About" off the right edge with
+       nothing but a fade to say so. A grid wraps them instead: every
+       destination is visible without a gesture. */
+    display:grid;grid-template-columns:repeat(3,1fr);gap:4px;
+    flex-wrap:nowrap;overflow:visible;
+  }
   .top nav:focus-visible{outline:3px solid var(--red);outline-offset:2px}
-  .top nav a{padding:8px; font-size:12px;white-space:nowrap}
-  /* A scroll affordance: the nav is cut off mid-word at a narrow width and
-     there is no other hint that there is more of it. */
-  .top nav{-webkit-mask-image:linear-gradient(to right,#000 88%,transparent);mask-image:linear-gradient(to right,#000 88%,transparent)}
+  .top nav a{
+    padding:12px 4px;font-size:12px;white-space:nowrap;
+    text-align:center;letter-spacing:.02em;
+    display:flex;align-items:center;justify-content:center;
+    /* 44px touch target on the phone. */
+    min-height:44px;
+  }
+}
+@media (max-width:380px){
+  /* Two columns means three rows of links, so the bar is taller again.
+     Measured: 207px. */
+  .top nav{grid-template-columns:repeat(2,1fr)}
+  :root{--topbar-h:208px}
 }
 
 /* ---------- hero ---------- */
@@ -128,11 +157,14 @@ a{color:inherit}
   display:inline-block;background:var(--ink);color:var(--paper);text-decoration:none;
   font-weight:700;font-size:14px;padding:12px 16px;border-radius:var(--radius);
   text-transform:none;letter-spacing:0;border:1px solid var(--line);
+  /* 44px minimum touch target. The button was 42px, which is a miss on a
+     phone. The line box is set so the padding does not have to grow. */
+  min-height:44px;display:inline-flex;align-items:center;
 }
 .btn:hover{background:var(--red);color:#fff;border-color:var(--red)}
 .btn.ghost{background:transparent;color:var(--ink)}
 .btn.ghost:hover{background:var(--ink);color:var(--paper)}
-.btn.sm{padding:8px 12px;font-size:13px}
+.btn.sm{padding:8px 12px;font-size:13px;min-height:44px}
 
 /* ---------- filters ---------- */
 .filters{
@@ -141,20 +173,23 @@ a{color:inherit}
 }
 .filters .label{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);font-weight:800}
 .chip{
-  display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:99px;
+  display:inline-block;padding:8px 12px;border:1px solid var(--line);border-radius:99px;
   text-decoration:none;font-weight:400;font-size:13px;background:var(--paper-2);
+  /* 44px touch target on a phone. The chip was 34px tall. */
+  min-height:44px;display:inline-flex;align-items:center;
 }
 .chip:hover{background:var(--chip)}
 .chip[aria-current="true"],.chip.on{background:var(--ink);color:var(--paper)}
 .count-pill{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
-.chip .x{margin-left:6px;opacity:.7}
+.chip .x{margin-left:8px;opacity:.7}
 /* One control instead of eight boxes. Eight client chips wrapped to two
    rows and read as a table of contents for a filter. */
 .clientpick{margin-left:auto}
 .clientpick select{
   font-family:inherit;font-size:13px;color:var(--ink);
-  padding:6px 8px;border:1px solid var(--line);border-radius:99px;
+  padding:8px 8px;border:1px solid var(--line);border-radius:99px;
   background:var(--paper-2);cursor:pointer;
+  min-height:44px;
 }
 .clientpick select:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 
@@ -164,24 +199,35 @@ a{color:inherit}
   border:2px solid var(--line);background:var(--paper-2);border-radius:var(--radius);
   margin:0 0 16px;box-shadow:var(--shadow);position:relative;overflow:hidden;
 }
-.cluster .topline{display:flex;align-items:flex-start;gap:16px;padding:16px 16px 4px}
+.cluster .topline{display:flex;align-items:stretch;gap:16px;padding:16px 16px 4px}
 .rank{
   font-family:var(--font-display);font-weight:400;font-size:13px;color:var(--paper);
   background:var(--ink);width:28px;height:28px;flex:0 0 28px;display:grid;place-items:center;
   border-radius:99px;letter-spacing:-.02em;
 }
 .cluster h2{
-  font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;line-height:1.1;
-  margin:0;font-size:clamp(18px,2.2vw,22px);font-weight:600;letter-spacing:-.012em;flex:1;min-width:0;color:var(--ink);
+  font-family:var(--font-display);font-weight:600;letter-spacing:-.012em;line-height:1.1;
+  margin:0;font-size:clamp(18px,2.2vw,22px);flex:1;min-width:0;color:var(--ink);
+  align-self:center;
 }
 .cluster h2 a{text-decoration:none}
 .cluster h2 a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+/* The tally is a stamp, not a number floating in a gutter.
+   It used to be a bare figure set to the right of the title, which left a
+   wide hole between a short title and the far edge of the card, and read
+   as two competing headlines. As a block of ink it fills that space with
+   a shape the register already uses, and the count becomes the thing the
+   eye lands on second rather than a stray number. */
 .tallybig{
-  font-family:var(--font-display);font-weight:400;font-size:clamp(32px,8vw,48px);
-  line-height:.85;letter-spacing:-.04em;font-variant-numeric:tabular-nums;text-align:right;
+  font-family:var(--font-display);font-weight:400;font-size:clamp(28px,4.4vw,40px);
+  line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums;text-align:center;
   flex:0 0 auto;
+  background:var(--ink);color:var(--paper);
+  padding:8px 16px 12px;margin:-4px -8px -4px 0;
+  border-radius:var(--radius);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
 }
-.tallybig small{display:block;font-size:12px;letter-spacing:.12em;font-weight:800;color:var(--ink-soft);text-transform:uppercase;margin-top:8px}
+.tallybig small{display:block;font-size:12px;letter-spacing:.12em;font-weight:800;color:var(--paper);text-transform:uppercase;margin-top:4px;opacity:.72}
 .meta{display:flex;flex-wrap:wrap;gap:4px 12px;padding:4px 16px 16px;font-size:13px;color:var(--ink-soft)}
 .meta b{color:var(--ink);font-variant-numeric:tabular-nums}
 .meta .clients{color:var(--ink-soft)}
@@ -192,13 +238,13 @@ a{color:inherit}
   display:inline-block;border:0;padding:0;background:none;
   color:var(--red-ink);font-weight:700;font-size:12px;
   letter-spacing:.1em;text-transform:uppercase;
-  border-bottom:1px solid var(--red);padding-bottom:1px;
+  border-bottom:1px solid var(--red);padding-bottom:4px;
 }
 .samples{border-top:1px solid var(--line);padding:12px 16px;background:var(--chip)}
 .samples p{margin:0;font-size:14px;color:var(--ink-soft)}
 .samples .q{color:var(--ink)}
 .tag{
-  display:inline-block;font-size:12px;padding:2px 8px;
+  display:inline-block;font-size:12px;padding:4px 8px;
   border:1px solid var(--line);border-radius:var(--radius);background:var(--paper-2);margin:0 4px 4px 0;
 }
 .stamp{
@@ -215,6 +261,25 @@ a{color:inherit}
   .samples{padding:16px 24px}
   .builders{padding:0 24px 16px}
 }
+/* On a narrow screen the title wraps to three lines and the tally beside
+   it left a column of wrapped words against a block of numbers, with
+   neither of them readable. Below the title the count becomes a full
+   width stamp and the title gets the whole measure. */
+@media (max-width:560px){
+  .cluster .topline{flex-wrap:wrap;gap:12px}
+  .cluster h2{flex:1 1 100%;order:2;align-self:auto}
+  .rank{order:1}
+  .tallybig{
+    order:3;flex:1 1 100%;margin:0;
+    flex-direction:row;gap:8px;align-items:baseline;justify-content:flex-start;
+    padding:8px 12px;
+  }
+  /* On the strip the label is the same size as the number's own
+     optical weight, so the pair reads as one figure and not as a
+     number with a caption stuck to it. */
+  .tallybig small{margin-top:0;font-size:16px;letter-spacing:.08em}
+  .cluster .meta{padding-top:8px}
+}
 
 /* ---------- generic page ---------- */
 .page{padding:32px 0 72px;max-width:760px;margin-left:auto;margin-right:auto}
@@ -227,8 +292,11 @@ a{color:inherit}
 .page p,.page li{color:var(--ink-soft)}
 .page p strong,.page li strong{color:var(--ink)}
 .page code{
-  font-family:var(--font-mono);font-size:.92em;background:var(--chip);
-  padding:2px 4px;border-radius:var(--radius);color:var(--ink);overflow-wrap:anywhere;
+  /* The floor is 12px. A pre block is 13px and this used to be .92em of
+     it, which is 11.96px: a rounding accident, and a violation of the
+     recorded minimum type size. 12px exactly keeps the floor. */
+  font-family:var(--font-mono);font-size:12px;background:var(--chip);
+  padding:4px;border-radius:var(--radius);color:var(--ink);overflow-wrap:anywhere;
 }
 pre{
   background:var(--ink);color:var(--paper);padding:12px 16px;border-radius:var(--radius);
@@ -255,6 +323,11 @@ pre code,
 table{border-collapse:collapse;width:100%;font-size:14px;margin:12px 0}
 th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
 th{background:var(--chip);font-family:var(--font-display);text-transform:uppercase;font-size:12px;letter-spacing:.06em}
+/* A count and a date are single values and must not break across lines.
+   "4 times" was wrapping to two lines in a 75px column and
+   "2026-11-03" to two lines in a 98px one, which made every row twice
+   as tall as the text in it and broke the scan. */
+.nowrap{white-space:nowrap}
 @media (max-width:760px){
   th,td{white-space:nowrap}
   th:first-child,td:first-child{position:sticky;left:0;background:var(--paper)}
@@ -262,6 +335,30 @@ th{background:var(--chip);font-family:var(--font-display);text-transform:upperca
 }
 ul,ol{padding-left:24px}
 a.under{text-decoration:underline;text-underline-offset:4px}
+/* A standalone underlined link is a control, not a word in a sentence.
+   In the hero's action row the links were 26px tall, which is a tap
+   target you have to aim at. */
+.split a.under{
+  display:inline-flex;align-items:center;min-height:44px;
+}
+/* The back link at the top of a cluster page is standalone too. */
+.backlink{
+  display:inline-flex;align-items:center;min-height:44px;
+  font-size:14px;
+}
+/* A text field is a control too. The claim form inputs were 42px. */
+.field{
+  /* The inputs sit after a <br>, so they are inline by default and
+     width:100% does nothing to them: they came out at the browser's
+     default 20 characters, narrower than the card around them. */
+  display:block;width:100%;
+  padding:12px;font-size:16px;
+  background:var(--paper-2);color:var(--ink);
+  border:2px solid var(--line);border-radius:var(--radius);
+  min-height:44px;
+}
+.field::placeholder{color:var(--ink-soft);opacity:1}
+.field:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 ul.archive{list-style:none;padding-left:0}
 ul.archive li{margin:0 0 4px}
 ul.archive li::before{content:"— ";color:var(--ink-soft)}
@@ -291,7 +388,7 @@ ul.archive li::before{content:"— ";color:var(--ink-soft)}
 .foot .wrap{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 .foot p{color:var(--ink-soft);font-size:14px;margin:0}
 .foot nav{margin-left:auto;display:flex;gap:12px;flex-wrap:wrap}
-.foot nav a{font-size:13px;font-weight:700;text-decoration:none;color:var(--ink-soft)}
+.foot nav a{font-size:13px;font-weight:700;text-decoration:none;color:var(--ink-soft);padding:12px 0;display:inline-block;min-height:44px}
 .foot nav a:hover{color:var(--ink);text-decoration:underline}
 
 /* ---------- misc ---------- */
@@ -302,28 +399,52 @@ ul.archive li::before{content:"— ";color:var(--ink-soft)}
 /* ---------- copy button ----------
    The snippet exists to be pasted somewhere, so getting it out of the page
    is part of the snippet rather than a nicety next to it. The code stays
-   selectable by hand, so the button is a shortcut and not a requirement. */
-.copyrow{position:relative}
-.copyrow pre{padding-right:96px}
+   selectable by hand, so the button is a shortcut and not a requirement.
+
+   The button sits inside the code block, on the dark, so the block reads
+   as one shape. It used to float over the top right corner of the block
+   and the code ran underneath it: the reserved space was a hard-coded
+   96px and the button on the weekly page is 105px wide, so the tail of
+   the badge URL was hidden behind the label.
+
+   The block is a grid. The code takes the first column and the button
+   takes the second, so the code gets out of the way by itself and a
+   longer button label widens the column rather than overlapping the
+   code. A hard-coded reservation cannot do that: it is wrong the moment
+   a label is longer than the value it was written for. */
+.copyrow pre{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  align-items:start;column-gap:12px;
+}
+.copyrow pre code{
+  grid-column:1;grid-row:1;
+  /* The code is a grid item of the pre, so it has to be a block. */
+  display:block;
+  /* A long snippet needs to wrap rather than run under the button. The
+     markdown badge snippet is 130 characters and was disappearing
+     behind the copy control. */
+  white-space:pre-wrap;word-break:break-all;
+}
 .copybtn{
-  position:absolute;top:8px;right:8px;
+  grid-column:2;grid-row:1;
   font-family:var(--font-mono);font-size:12px;line-height:1;
   padding:8px 12px;border:1px solid var(--line);border-radius:var(--radius);
   background:var(--paper-2);color:var(--ink);cursor:pointer;
   font-weight:700;text-transform:uppercase;letter-spacing:.06em;
-  z-index:1;
+  white-space:nowrap;
+  /* 44px is the touch target minimum. The button was 30px tall, which
+     is a tap target you have to aim at on a phone. */
+  min-height:44px;display:flex;align-items:center;justify-content:center;
 }
-/* A long snippet needs to wrap rather than run under the button. The
-   markdown badge snippet is 130 characters and was disappearing behind
-   the copy control. */
-.copyrow pre code{white-space:pre-wrap;word-break:break-all}
 .copybtn:hover{background:var(--chip)}
 .copybtn:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .copybtn.done{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-/* On a narrow screen the button would sit on top of the code, so the code
-   gets its own row above it. */
+/* On a narrow screen the button would squeeze the code into a column too
+   narrow to read, so it takes a row of its own above the code. */
 @media (max-width:520px){
-  .copyrow pre{padding-right:16px;padding-top:52px}
+  .copyrow pre{grid-template-columns:minmax(0,1fr)}
+  .copyrow pre code{grid-column:1;grid-row:2}
+  .copybtn{grid-column:1;grid-row:1;justify-self:start;margin-bottom:8px}
 }
 .snippet pre{margin:0 0 12px}
 .notice{border:2px solid var(--line);border-left:6px solid var(--red);padding:12px 16px;margin:0 0 16px;background:var(--paper-2);font-size:14px}
@@ -334,6 +455,12 @@ ul.archive li::before{content:"— ";color:var(--ink-soft)}
 .shipform .btn{margin-top:8px}
 .empty{border:3px dashed var(--line);padding:40px 20px;text-align:center;color:var(--ink-soft);border-radius:var(--radius)}
 .split{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+/* On a phone the three hero actions stack. The row gap is tighter than
+   the column gap so the group reads as one block of links rather than
+   three separate paragraphs. */
+@media (max-width:560px){
+  .split{gap:4px 16px}
+}
 .ticker{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
 .ticker b{color:var(--red-ink)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -411,7 +538,7 @@ ${meta.extraHead ?? ""}
 ${content}
 </main>
 <footer class="foot"><div class="wrap">
-  <p>Tools Wanted — a public board of the tools AI agents wish existed.<br>Wishes are filed by agents, sanitised, and never executed.</p>
+  <p>Tools Wanted, a public board of the tools AI agents wish existed.<br>Wishes are filed by agents, sanitised, and never executed.</p>
   <nav>
     <a href="/agents">Agents</a><a href="/api/top">API</a><a href="/llms.txt">llms.txt</a>
     <a href="/feed.xml">RSS</a><a href="/privacy">Privacy</a><a href="/about">About</a>

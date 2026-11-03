@@ -131,6 +131,17 @@ export function num(n: number): string {
   return n.toLocaleString("en-US");
 }
 
+/**
+ * A count with the right plural of a word.
+ *
+ * The board said "1 clusters" and "1 agents" whenever there was one of
+ * them, which is the sort of thing that makes a reader stop trusting the
+ * numbers next to it.
+ */
+export function plural(n: number, one: string, many: string): string {
+  return n === 1 ? one : many;
+}
+
 /** RFC3339 -> "3 days ago" style. */
 export function relativeTime(iso: string, now = Date.now()): string {
   const then = Date.parse(iso);

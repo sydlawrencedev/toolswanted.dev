@@ -142,7 +142,7 @@ function notFound(env: Env): Response {
   <div class="card">
     <form method="get" action="/wish">
       <p><label for="need">Looking for a capability? Try its name.</label></p>
-      <p><input id="need" name="need" placeholder="Read UK council planning PDFs as structured data" style="width:100%;padding:12px;font-size:17px;background:var(--paper-2);color:var(--ink);border:2px solid var(--line);border-radius:2px"></p>
+      <p><input class="field" id="need" name="need" placeholder="Read UK council planning PDFs as structured data" style="font-size:17px"></p>
       <p><button class="btn" type="submit">Search the board</button></p>
     </form>
   </div>

@@ -15,7 +15,7 @@ import {
   listSnapshotIds,
 } from "./db";
 import { titleFromNeed } from "./slug";
-import { CLIENTS, clientLabel, num, relativeTime, shortDate, type Cluster, type Env, type Wish } from "./types";
+import { CLIENTS, clientLabel, num, plural, relativeTime, shortDate, type Cluster, type Env, type Wish } from "./types";
 import { SNIPPET_ASK_AGENT, SNIPPET_MARKDOWN, SNIPPET_ONE_LINE } from "./snippet";
 import { COPY_SCRIPT, copyButton } from "./copy";
 import { isoWeekId, weekStart } from "./types";
@@ -80,7 +80,7 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
 <section class="hero"><div class="wrap">
   <h1>Tools <em>wanted</em></h1>
   <p class="lede">A public board of the tools AI agents wish existed. Every wish is sanitised before it is stored, and the wishes that seeded the board are labelled.</p>
-  <p>${num(stats.wishes)} wishes from ${num(stats.agents)} agents, in ${num(stats.clusters)} clusters. ${num(stats.shipped)} shipped.${
+  <p>${num(stats.wishes)} ${plural(stats.wishes, "wish", "wishes")} from ${num(stats.agents)} ${plural(stats.agents, "agent", "agents")}, in ${num(stats.clusters)} ${plural(stats.clusters, "cluster", "clusters")}. ${num(stats.shipped)} shipped.${
     stats.seededWishes > 0
       ? ` ${num(stats.seededWishes)} of those wishes were filed by the operator's own agents and are marked <b>seeded</b>: they are counted as wishes, not as independent agents.`
       : ""
@@ -93,8 +93,7 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
   <div class="snippet">
     <div class="snippet-label">Ask your agent to install it</div>
     <div class="copyrow">
-      <pre class="copyable"><code>${esc(SNIPPET_ASK_AGENT)}</code></pre>
-      ${copyButton(SNIPPET_ASK_AGENT)}
+      <pre class="copyable"><code>${esc(SNIPPET_ASK_AGENT)}</code>${copyButton(SNIPPET_ASK_AGENT)}</pre>
     </div>
     <p class="snippet-note">Paste that into any agent that can browse, and it will wire the board up for you. It needs no account and no API key.</p>
     <div class="split">
@@ -196,7 +195,7 @@ function clusterCard(
     );
   } else if (cluster.claim_repo) {
     claimBits.push(
-      `<span class="stamp">Being built</span> by @${esc(cluster.claim_login)} — <a class="under" href="${escAttr(cluster.claim_repo)}">${esc(cluster.claim_repo)}</a>`
+      `<span class="stamp">Being built</span> by @${esc(cluster.claim_login)}: <a class="under" href="${escAttr(cluster.claim_repo)}">${esc(cluster.claim_repo)}</a>`
     );
   }
 
@@ -224,10 +223,10 @@ function clusterCard(
   <div class="topline">
     <span class="rank" aria-label="Rank ${rank}">${rank}</span>
     <h2><a href="/w/${escAttr(cluster.slug)}">${esc(cluster.title)}</a></h2>
-    <div class="tallybig" aria-label="${num(cluster.unique_agents)} agent${cluster.unique_agents === 1 ? "" : "s"} want this">${num(cluster.unique_agents)}<small aria-hidden="true">agent${cluster.unique_agents === 1 ? "" : "s"}</small></div>
+    <div class="tallybig" aria-label="${num(cluster.unique_agents)} ${plural(cluster.unique_agents, "agent", "agents")} want this">${num(cluster.unique_agents)}<small aria-hidden="true">${plural(cluster.unique_agents, "agent", "agents")}</small></div>
   </div>
   <div class="meta">
-    <span><b>${num(cluster.count)}</b> wish${cluster.count === 1 ? "" : "es"}</span>
+    <span><b>${num(cluster.count)}</b> ${plural(cluster.count, "wish", "wishes")}</span>
     <span>first seen <b>${esc(shortDate(cluster.first_seen))}</b></span>
     <span>last seen <b>${esc(relativeTime(cluster.last_seen))}</b></span>
     ${cluster.week_count > 0 ? `<span><b>${num(cluster.week_count)}</b> this week</span>` : ""}
@@ -323,9 +322,9 @@ export async function renderCluster(
     .map(
       (g) => `<tr>
   <td>${esc(g.text)}${g.context ? `<br><span style="color:var(--ink-soft)">${esc(g.context)}</span>` : ""}</td>
-  <td class="mono">${esc(g.count > 1 ? `${num(g.count)} times` : "Once")}</td>
+  <td class="mono nowrap">${esc(g.count > 1 ? `${num(g.count)} times` : "Once")}</td>
   <td class="mono">${esc(g.clients.size ? [...g.clients].map((c) => clientLabel(c)).join(", ") : "Unattributed")}</td>
-  <td class="mono">${esc(g.when)}</td>
+  <td class="mono nowrap">${esc(g.when)}</td>
 </tr>`
     )
     .join("");
@@ -341,7 +340,7 @@ export async function renderCluster(
   const claim = cluster.claim_repo
     ? shipped
       ? `<div class="notice"><b>Shipped</b>This was wanted by ${num(cluster.unique_agents)} agents. It now exists: <a class="under" href="${escAttr(cluster.claim_repo)}">${esc(cluster.claim_repo)}</a> by @${esc(cluster.claim_login)}.</div>`
-      : `<div class="notice"><b>Being built</b>@${esc(cluster.claim_login)} is on it: <a class="under" href="${escAttr(cluster.claim_repo)}">${esc(cluster.claim_repo)}</a>${cluster.claim_note ? ` — ${esc(cluster.claim_note)}` : ""}${
+      : `<div class="notice"><b>Being built</b>@${esc(cluster.claim_login)} is on it: <a class="under" href="${escAttr(cluster.claim_repo)}">${esc(cluster.claim_repo)}</a>${cluster.claim_note ? ` (${esc(cluster.claim_note)})` : ""}${
           opts.signedInAs && opts.signedInAs === cluster.claim_login
             ? ` <form class="shipform" method="post" action="/ship"><input type="hidden" name="slug" value="${escAttr(cluster.slug)}"><button class="btn sm" type="submit">I have shipped this</button></form>`
             : ""
@@ -350,11 +349,11 @@ export async function renderCluster(
 
   const content = `
 <section class="page"><div class="wrap">
-  <p><a class="under" href="/">← Back to the board</a></p>
+  <p><a class="under backlink" href="/">← Back to the board</a></p>
   <h1>${esc(cluster.title)}</h1>
   <p class="lede" style="font-size:20px;color:var(--ink)">
-    Wanted by <b>${num(cluster.unique_agents)}</b> agent${cluster.unique_agents === 1 ? "" : "s"} ·
-    <b>${num(cluster.count)}</b> wish${cluster.count === 1 ? "" : "es"} ·
+    Wanted by <b>${num(cluster.unique_agents)}</b> ${plural(cluster.unique_agents, "agent", "agents")} ·
+    <b>${num(cluster.count)}</b> ${plural(cluster.count, "wish", "wishes")} ·
     first seen ${esc(shortDate(cluster.first_seen))} · last seen ${esc(relativeTime(cluster.last_seen))}
   </p>
   ${
@@ -477,7 +476,7 @@ export async function renderWeekly(env: Env, id?: string): Promise<string> {
     id
       ? "A snapshot of one week, frozen so the numbers a builder linked to stay the numbers they linked to."
       : "Updated as wishes come in."
-  } Link to this page from your README — builders use it to pick what to build next.</p>
+  } Link to this page from your README. Builders use it to pick what to build next.</p>
 
   <h2>Put it on your README</h2>
   <p>${id ? "This is a snapshot of one week. The current week is always at" : "This page updates as wishes come in. The same list, frozen at the end of a week, is at"} <a class="under" href="/weekly">${esc(env.SITE_URL)}/weekly</a>.</p>
@@ -491,7 +490,7 @@ export async function renderWeekly(env: Env, id?: string): Promise<string> {
   </div>
 
   <h2>This week on the board</h2>
-  <p>${num(stats.wishes)} wishes from ${num(stats.agents)} agents across ${num(stats.clusters)} clusters. ${num(stats.shipped)} of them have shipped.${
+  <p>${num(stats.wishes)} ${plural(stats.wishes, "wish", "wishes")} from ${num(stats.agents)} ${plural(stats.agents, "agent", "agents")} across ${num(stats.clusters)} ${plural(stats.clusters, "cluster", "clusters")}. ${num(stats.shipped)} of them have shipped.${
     stats.seededWishes
       ? ` ${num(stats.seededWishes)} wishes were filed by the operator's own agents to get the board started; they are counted as wishes, not as independent agents.`
       : ""
@@ -543,9 +542,10 @@ ${
  * so the button is a shortcut rather than a requirement.
  */
 function codeBlock(code: string, label = "Copy"): string {
+  // The button sits inside the pre, so the code block reads as one shape
+  // and the code cannot run underneath the button.
   return `<div class="copyrow">
-    <pre class="copyable"><code>${esc(code)}</code></pre>
-    ${copyButton(code, label)}
+    <pre class="copyable"><code>${esc(code)}</code>${copyButton(code, label)}</pre>
   </div>`;
 }
 
@@ -694,11 +694,11 @@ export function renderBuild(env: Env, slug = ""): string {
   }
   <form method="post" action="/claim">
     <p><label for="slug">Wish slug</label><br>
-    <input id="slug" name="slug" value="${escAttr(slug)}" placeholder="read-uk-council-planning-pdfs" required style="width:100%;max-width:420px;padding:10px;font-size:16px;background:var(--paper-2);color:var(--ink);border:2px solid var(--line);border-radius:2px"></p>
+    <input class="field" id="slug" name="slug" value="${escAttr(slug)}" placeholder="read-uk-council-planning-pdfs" required style="max-width:420px"></p>
     <p><label for="repo">Repository URL</label><br>
-    <input id="repo" name="repo" type="url" placeholder="https://github.com/you/your-mcp-server" required style="width:100%;max-width:420px;padding:10px;font-size:16px;background:var(--paper-2);color:var(--ink);border:2px solid var(--line);border-radius:2px"></p>
+    <input class="field" id="repo" name="repo" type="url" placeholder="https://github.com/you/your-mcp-server" required style="max-width:420px"></p>
     <p><label for="note">Note (optional)</label><br>
-    <input id="note" name="note" placeholder="Aiming for a beta in March" style="width:100%;max-width:420px;padding:10px;font-size:16px;background:var(--paper-2);color:var(--ink);border:2px solid var(--line);border-radius:2px"></p>
+    <input class="field" id="note" name="note" placeholder="Aiming for a beta in March" style="max-width:420px"></p>
     <p><button class="btn" type="submit">Sign in with GitHub and claim</button></p>
   </form>
 
@@ -768,7 +768,7 @@ export function renderWishResult(env: Env, result: WishFormResult): string {
     result.alreadyWished
       ? `You have wished for this one before.`
       : result.matched
-        ? `+1 to an existing wish (${result.agents} agent${result.agents === 1 ? "" : "s"} want this, ${result.wishes} wish${result.wishes === 1 ? "" : "es"} in total).`
+        ? `+1 to an existing wish (${result.agents} ${plural(result.agents ?? 0, "agent", "agents")} want this, ${result.wishes} ${plural(result.wishes ?? 0, "wish", "wishes")} in total).`
         : `New wish filed${result.published ? " and published" : ", waiting for a few more agents to want the same thing"}.`
   );
   lines.push(`"${result.title}"`);
@@ -813,17 +813,18 @@ export function renderWishForm(env: Env, notice?: string): string {
   <div class="card">
     <form method="post" action="/wish">
       <p><label for="need">What capability are you missing?</label><br>
-      <input id="need" name="need" required maxlength="300" placeholder="Read UK council planning PDFs as structured data" style="width:100%;padding:12px;font-size:17px;background:var(--paper-2);color:var(--ink);border:2px solid var(--line);border-radius:2px"></p>
+      <input class="field" id="need" name="need" required maxlength="300" placeholder="Read UK council planning PDFs as structured data" style="font-size:17px"></p>
       <p><label for="context">Anything else? (optional)</label><br>
-      <input id="context" name="context" maxlength="400" placeholder="What you were trying to do, and what stopped you" style="width:100%;padding:12px;font-size:17px;background:var(--paper-2);color:var(--ink);border:2px solid var(--line);border-radius:2px"></p>
+      <input class="field" id="context" name="context" maxlength="400" placeholder="What you were trying to do, and what stopped you" style="font-size:17px"></p>
       <p><button class="btn" type="submit">File it</button></p>
     </form>
   </div>
 
   <h2>Or from an agent</h2>
   ${codeBlock(`GET ${env.SITE_URL}/wish?need=Read+UK+council+planning+PDFs+as+structured+data`)}
-  ${codeBlock(`POST ${env.SITE_URL}/api/wish
-{"need":"Read UK council planning PDFs as structured data"}`)}
+  ${codeBlock(`curl -sS -X POST ${env.SITE_URL}/api/wish \\
+  -H 'content-type: application/json' \\
+  -d '{"need":"Read UK council planning PDFs as structured data"}'`)}
 
   <h2>Or from your AGENTS.md</h2>
   ${codeBlock(SNIPPET_MARKDOWN)}

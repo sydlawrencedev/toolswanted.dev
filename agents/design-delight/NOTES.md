@@ -80,6 +80,46 @@ to be on the parent.
 The dense surfaces are the two tables. They get their own scroll container
 rather than a grid, so the page itself never overflows.
 
+## The top bar on a phone
+
+Below 760px the nav is a three-column grid, two rows, and at 380px and under
+it is two columns, three rows. Every destination is on screen.
+
+It was a horizontal scroller. The six links came to 505px in a 288px space
+at 320px, so "File a wish" and "About" ran off the right edge with nothing
+but a mask gradient to say so. A fade is not an affordance: it says "there is
+something here" without saying what, and it leaves a keyboard user with no
+way to know the nav scrolls at all.
+
+The nav height is a token, `--topbar-h`, because the filter bar sticks below
+it and the two have to agree. The value changes at each breakpoint, so the
+token changes with it: 146px at 760px and under, 190px at 380px and under.
+
+## The tally on the board card
+
+The count of agents is a block of ink with the number set into it, the same
+shape the rank badge uses. It sits to the right of the title on a wide
+screen and becomes a full-width strip below the title under 560px.
+
+It was a bare figure set to the right of the title. A short title left a wide
+hole between it and the far edge of the card, and the number read as a second
+headline competing with the title rather than as the count it was. As a block
+it fills that space with a shape the register already uses.
+
+## The copy button
+
+The button sits inside the code block, on the dark, in its own grid column.
+The code takes the first column and the button the second.
+
+It floated over the top right corner of the block, and the space reserved for
+it was a hard-coded 96px. The button on the weekly page is 105px wide, so the
+tail of the badge URL ran underneath it and was hidden behind the label. A
+reserved width cannot fix this: it is wrong the moment a label is longer than
+the value it was written for. A grid column cannot be wrong that way.
+
+On a screen under 520px the button takes a row of its own above the code,
+right aligned, because a button in a column would squeeze the code too far.
+
 ## The baseline
 
 Every spacing value is a multiple of 4px. The exceptions are border widths
@@ -88,19 +128,31 @@ Every spacing value is a multiple of 4px. The exceptions are border widths
 The radius is 2px. The hard-edged character comes from the 1px and 2px
 borders and the 3px offset shadow, not from the radius.
 
+## Touch targets
+
+Every standalone control is at least 44px tall: the nav links, the buttons,
+the filter chips, the copy button, the client select, the footer links and
+the form fields. A link inside a sentence is a word in a sentence, and is
+left at its natural size.
+
 ## Accessibility standard
 
 WCAG 2.2 AA, measured against the real foreground/background pairs rather
 than the tokens in isolation.
 
 - **Minimum type size: 12px.** Nothing is set below it. 11px was the old floor
-  and it carried the board's key labels.
+  and it carried the board's key labels. Inline code was a rounding accident:
+  a code block is 13px and the inline rule was .92em of it, which is 11.96px.
+  It is 12px exactly now.
 - **Contrast: 4.5:1** for body text, **3:1** for large text and UI component
   boundaries. Every pair on every page passes in both themes. The dark-mode
   border colour is `#726859` specifically because it clears 3:1 against both
   dark surfaces.
 - **Every page has exactly one h1**, and heading levels do not skip.
 - **Tables scroll**, they do not overflow the document.
+- **A count and a date never break across lines.** They are single values,
+  and a table where every row is twice as tall as the text in it stops
+  being scannable.
 - The code block has its own colours in dark mode. It does not follow the
   ink/paper swap, which would turn it into a bright slab on a dark page.
   Inline code inside a code block inherits the block's colours; the
