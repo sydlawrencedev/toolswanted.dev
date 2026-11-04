@@ -443,12 +443,29 @@ It was a hand-measured number, and it was one pixel short at every width,
 because the header's 3px bottom border sits outside its content box. The
 filter bar stuck at the token's offset, which was inside the header, so the top
 of it, the "Show" label and the top of the chips, was cut off by the header
-above it. Measured with `getBoundingClientRect`, which includes the border, the
-token and the bar agree at every width.
+above it. The token has to be the border-box height, so it includes that
+border.
+
+It was measured with `getBoundingClientRect`, which is in **device pixels**.
+A custom property is in **CSS pixels**, so at 200% zoom the token was twice
+the real height: 454px for a bar that is 227px, and 318px for a bar that is
+159px. The filter bar stuck at an offset twice as far down as the header
+actually is, and it sat underneath the header. `offsetHeight` is the
+border-box height in CSS pixels, it includes the 3px border, and it does not
+change with the reader's zoom.
+
+The script only writes when the stylesheet's value is wrong. The stylesheet
+carries the bar's height for every width, so at the reader's default font size
+it is already right, and writing it anyway put `--topbar-h` into the `html`
+element's inline style on every page. That changed the document for no
+reason, and it made the html look as though it were being rewritten. The
+script's job is the case the stylesheet cannot know: a reader whose font size
+is not the default, or who has zoomed in.
 
 The fallbacks are the measured heights: 63px, 159px below 806px and 207px
 below 385px. Every one of them matches the bar's real height at every width,
-which is checked in `scripts/audit-browser.mjs`.
+which is checked in `scripts/audit-browser.mjs`, along with the token itself:
+`--topbar-h` must be the bar's height in CSS pixels.
 
 The bar's own height is not driven by the token. It used to be, through a
 `min-height` on the wrap inside the header, and that is circular: the bar's
