@@ -259,6 +259,21 @@ function auditPage() {
           detail: `bar is ${Math.round(actual)}px but its rows need ${Math.round(expected)}px`,
         });
       }
+
+      // The token the filter bar sticks at must be the bar's height, in
+      // CSS pixels. A rect is in device pixels, so a script that wrote
+      // the rect's height into the token doubled it at 200% zoom, and
+      // the filter bar stuck at twice the offset the header is at.
+      const token = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue("--topbar-h"),
+      );
+      const barCss = top.offsetHeight;
+      if (Number.isFinite(token) && Math.abs(token - barCss) > 1) {
+        findings.push({
+          kind: "token-mismatch",
+          detail: `--topbar-h is ${token}px but the bar is ${barCss}px`,
+        });
+      }
     }
   }
 

@@ -38,6 +38,29 @@ describe("the sticky filter bar", () => {
     expect(src).toMatch(/ResizeObserver|setProperty\(["']--topbar-h/);
   });
 
+  it("measures in CSS pixels, not device pixels", () => {
+    // A rect is in device pixels and a custom property is in CSS pixels,
+    // so at 200% zoom a rect was twice the real height. The token was
+    // written at 454px for a bar that is 227px, and the filter bar
+    // stuck at an offset twice as far down as the header actually is.
+    //
+    // offsetHeight is the border-box height in CSS pixels. It includes
+    // the 3px border the filter bar has to clear, and it does not
+    // change with the reader's zoom.
+    const src = readFileSync(join(ROOT, "src", "html.ts"), "utf8");
+    expect(src).toMatch(/offsetHeight/);
+    expect(src).not.toMatch(/setProperty\(\s*["']--topbar-h["']\s*,\s*[^)]*getBoundingClientRect/);
+  });
+
+  it("does not rewrite the document when the stylesheet is already right", () => {
+    // The stylesheet carries the bar's height for every width, so at the
+    // reader's default font size it is already correct. Writing it
+    // anyway put --topbar-h into the html element's inline style on
+    // every page, which changed the document for no reason.
+    const src = readFileSync(join(ROOT, "src", "html.ts"), "utf8");
+    expect(src).toMatch(/getComputedStyle\(document\.documentElement\)/);
+  });
+
   it("does not rely on a hand-measured pixel value for the offset", () => {
     // The measured values are a fallback for the first paint, not the
     // source of truth. They must not be the only thing holding the two

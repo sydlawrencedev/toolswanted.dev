@@ -682,6 +682,15 @@ ul.archive li::before{content:"· ";color:var(--ink-soft)}
  *
  * The number in the stylesheet stays as the value for the first paint,
  * before the script has run. It is the fallback, not the truth.
+ *
+ * The height is measured with offsetHeight, not getBoundingClientRect.
+ * A rect is in device pixels and a custom property is in CSS pixels, so
+ * at 200% zoom the rect was twice the real height and the token was
+ * written at 454px for a bar that is 227px. The filter bar then stuck at
+ * an offset twice as far down as the header actually is, and it sat
+ * underneath the header. offsetHeight is the border-box height in CSS
+ * pixels, it includes the 3px border the filter bar has to clear, and
+ * it does not change with the reader's zoom.
  */
 export const STICKY_SCRIPT = `<script>
 (function(){
@@ -689,16 +698,26 @@ export const STICKY_SCRIPT = `<script>
   function measure(){
     var top = document.querySelector('.top');
     if(!top) return;
-    // getBoundingClientRect includes the border, which is what the
-    // filter bar has to clear: the header's bottom edge is its content
-    // box plus its 3px border.
-    var h = Math.round(top.getBoundingClientRect().height);
-    // Only write when it changed. A ResizeObserver that fires on its
-    // own write is a loop.
-    if(h > 0 && h !== last){
-      last = h;
-      document.documentElement.style.setProperty('--topbar-h', h + 'px');
-    }
+    // offsetHeight is the border-box height in CSS pixels: it includes
+    // the 3px bottom border, which is what the filter bar has to clear,
+    // and it is the same number whatever the reader's zoom.
+    var h = top.offsetHeight;
+    if(!(h > 0) || h === last) return;
+    last = h;
+    // Only write when the stylesheet's value is wrong.
+    //
+    // The stylesheet carries the bar's height for every width, so at
+    // the reader's default font size it is already right and there is
+    // nothing to correct. Writing it anyway put --topbar-h into the
+    // html element's inline style on every page, which changed the
+    // document for no reason and made the html look as though it was
+    // being rewritten.
+    //
+    // The script's job is the case the stylesheet cannot know: a
+    // reader whose font size is not the default, or who has zoomed in.
+    var current = getComputedStyle(document.documentElement).getPropertyValue('--topbar-h');
+    if(current && parseFloat(current) === h) return;
+    document.documentElement.style.setProperty('--topbar-h', h + 'px');
   }
   measure();
   // The bar changes height when the window changes, when the font
