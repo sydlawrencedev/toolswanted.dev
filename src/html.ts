@@ -747,6 +747,21 @@ export interface PageMeta {
   noindex?: boolean;
   extraHead?: string;
   nav?: string;
+  /**
+   * The version of the deploy, used to bust the browser's cache on the
+   * static assets.
+   *
+   * The stylesheet was served with a 24 hour max-age and no filename
+   * that changed, so a change to the CSS was invisible to a returning
+   * visitor for a whole day. A shift-reload was the only way to see it,
+   * and a page whose script and stylesheet disagree behaves as though
+   * the fix did not land.
+   *
+   * The version goes in the query string of the asset's URL, so a deploy
+   * changes the URL, the browser asks for the new one, and the old URL
+   * can stay cached for as long as it likes.
+   */
+  assetVersion?: string;
 }
 
 const NAV = [
@@ -770,6 +785,12 @@ export function layout(meta: PageMeta, content: string): string {
   const site = "Tools Wanted";
   const fullTitle = meta.title === site ? meta.title : `${meta.title} · ${site}`;
   const ogImage = meta.ogImage ?? "/og/default.png";
+  // The static assets carry the deploy's version, so a deploy changes
+  // their URL and the browser asks for the new ones. Without it the
+  // stylesheet stayed in the browser's cache for a day.
+  const v = meta.assetVersion ? `?v=${encodeURIComponent(meta.assetVersion)}` : "";
+  const styleHref = `/style.css${v}`;
+  const fontHref = `/font.css${v}`;
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -793,9 +814,9 @@ ${meta.noindex ? '<meta name="robots" content="noindex,nofollow">' : '<meta name
 <meta name="theme-color" content="#100e0d" media="(prefers-color-scheme: dark)">
 <link rel="alternate" type="application/rss+xml" title="Tools Wanted: most wanted" href="/feed.xml">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/style.css">
-<link rel="stylesheet" href="/font.css">
-<link rel="preload" href="/font.css" as="style">
+<link rel="stylesheet" href="${escAttr(styleHref)}">
+<link rel="stylesheet" href="${escAttr(fontHref)}">
+<link rel="preload" href="${escAttr(fontHref)}" as="style">
 <script>try{var t=localStorage.getItem('tw-theme');if(t)document.documentElement.setAttribute('data-theme',t);var b=document.getElementById('themebtn');if(b)b.onclick=function(){var c=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',c);localStorage.setItem('tw-theme',c);};}catch(e){}</script>
 ${meta.extraHead ?? ""}
 </head>

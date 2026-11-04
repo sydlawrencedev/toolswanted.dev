@@ -358,10 +358,19 @@ async function route(
 
   /* ---------------- static bits ---------------- */
   if (path === "/style.css") {
+    // The URL carries the deploy's version, so a deploy changes it and
+    // the browser asks for the new stylesheet. That is why the max-age
+    // can be a year: the URL is new, so a cached copy of the old one is
+    // never wanted again.
+    //
+    // It was max-age=86400 with a URL that never changed, so a change
+    // to the CSS was invisible to a returning visitor for a day. A
+    // page whose script and stylesheet disagree behaves as though the
+    // fix did not land.
     return new Response(CSS, {
       headers: {
         "content-type": "text/css; charset=utf-8",
-        "cache-control": "public, max-age=86400",
+        "cache-control": "public, max-age=31536000, immutable",
       },
     });
   }

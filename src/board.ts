@@ -37,6 +37,9 @@ function pageMeta(env: Env, partial: Partial<PageMeta> & { title: string; descri
     noindex: partial.noindex ?? false,
     extraHead: partial.extraHead,
     nav: partial.nav,
+    // The version of the deploy, so the static assets' URLs change with
+    // it and the browser does not serve a day's stale stylesheet.
+    assetVersion: env.VERSION_METADATA?.id,
   };
 }
 
