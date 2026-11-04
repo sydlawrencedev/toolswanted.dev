@@ -203,13 +203,6 @@ a{color:inherit}
   .filters{position:static}
 }
 .filters .label{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);font-weight:800}
-/* The ranking note. It is a sentence, not a label, so it is not uppercased
-   and it takes a whole line on a narrow screen rather than crowding the
-   chips. */
-.filters .rank-note{
-  flex-basis:100%;font-size:13px;color:var(--ink-soft);line-height:1.5;
-  padding:4px 0 0;
-}
 .chip{
   display:inline-block;padding:8px 12px;border:1px solid var(--line);border-radius:99px;
   text-decoration:none;font-weight:400;font-size:13px;background:var(--paper-2);

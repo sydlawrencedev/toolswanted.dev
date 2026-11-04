@@ -5,14 +5,19 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
-    "dev": "wrangler dev",
+    "dev": "node scripts/serve.mjs",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "seed": "node scripts/seed.ts",
     "og:sync": "node scripts/render-og.ts",
     "build": "npm run typecheck && npm run test",
     "tune": "node scripts/tune-threshold.ts",
-    "crawl": "node scripts/crawl-registry.ts"
+    "crawl": "node scripts/crawl-registry.ts",
+    "dev:remote": "wrangler dev --remote",
+    "dev:local": "wrangler dev --local",
+    "count:words": "node scripts/count-words.mjs",
+    "check:pages": "node scripts/check-pages.mjs",
+    "shoot": "node scripts/shoot.mjs"
   },
   "keywords": [],
   "author": "",

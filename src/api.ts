@@ -106,7 +106,7 @@ async function postWish(
       {
         error: "invalid_need",
         message:
-          "Send a \"need\" field naming the capability you are missing in one plain sentence, for example {\"need\":\"Read UK council planning PDFs as structured data\"}.",
+          "Send a \"need\" field naming the capability you are missing in one plain sentence.",
       },
       400
     );

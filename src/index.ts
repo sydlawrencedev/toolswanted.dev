@@ -161,9 +161,27 @@ async function cached(
   request: Request,
   _ttlSeconds: number,
   produce: () => Promise<Response>,
-  version?: string
+  version?: string,
+  local = false
 ): Promise<Response> {
   if (request.method !== "GET") return produce();
+
+  // A local request is never served from a cache, and never stored in one.
+  //
+  // `wrangler dev --remote` runs on Cloudflare's network, so a local
+  // request can be answered from the edge cache, and a plain `curl` to the
+  // dev server returns the DEPLOYED page rather than the code being
+  // edited. The page looks unchanged, the change looks like it did not
+  // apply, and restarting the server does not help because the edge is
+  // answering.
+  if (local || isLocalRequest(request)) {
+    const res = await produce();
+    const headers = new Headers(res.headers);
+    headers.set("cache-control", "no-store");
+    headers.set("x-cache", "BYPASS");
+    return new Response(res.body, { status: res.status, headers });
+  }
+
   const cache = caches.default;
   const url = new URL(request.url);
   if (version) url.searchParams.set("__v", version);
@@ -183,8 +201,34 @@ async function cached(
   return res;
 }
 
+/**
+ * Is this a local development request?
+ *
+ * `wrangler dev --remote` runs the Worker on Cloudflare's network, behind
+ * the same edge as the deployed site. So a local request can be answered
+ * from the edge cache, and a plain `curl` to the dev server returns the
+ * DEPLOYED page rather than the code you are editing.
+ *
+ * That is a trap: the page looks unchanged, the change looks like it did
+ * not apply, and the obvious next step is to restart the server, which
+ * does not help because the edge is answering.
+ *
+ * So a local request is never served from a cache. The response is marked
+ * no-store so nothing else holds it either.
+ */
+function isLocalRequest(request: Request): boolean {
+  const host = new URL(request.url).hostname;
+  return host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    // The deployed Worker always has VERSION_METADATA. `wrangler dev` does
+    // not, and that is how a local run knows it is local: it must never
+    // serve a cached page, because the cache it would read is the
+    // production one and the page it would return is the deployed page
+    // rather than the code being edited.
+    const local = !env.VERSION_METADATA?.id;
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, "") || "/";
 
@@ -211,7 +255,7 @@ export default {
       if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
       let response: Response;
       try {
-        response = await route(request, env, ctx, url, path);
+        response = await route(request, env, ctx, url, path, local);
       } catch (err) {
         response = writeLimitResponse(err, request, env);
       }
@@ -221,7 +265,7 @@ export default {
     }
 
     try {
-      return await route(request, env, ctx, url, path);
+      return await route(request, env, ctx, url, path, local);
     } catch (err) {
       return writeLimitResponse(err, request, env);
     }
@@ -277,7 +321,8 @@ async function route(
   env: Env,
   ctx: ExecutionContext,
   url: URL,
-  path: string
+  path: string,
+  local = false
 ): Promise<Response> {
   const method = request.method;
 
@@ -408,7 +453,8 @@ async function route(
         const body = await renderBoard(env, { filter, client });
         return html(body, 200, { "cache-control": "public, max-age=30, s-maxage=60" });
       },
-      env.VERSION_METADATA?.id
+      env.VERSION_METADATA?.id,
+      local
     );
   }
 
@@ -429,7 +475,8 @@ async function route(
         if (!body) return notFound(env);
         return html(body, 200, { "cache-control": "public, max-age=120, s-maxage=300" });
       },
-      env.VERSION_METADATA?.id
+      env.VERSION_METADATA?.id,
+      local
     );
   }
 
@@ -440,7 +487,8 @@ async function route(
       600,
       async () =>
         html(await renderWeekly(env, undefined, claimingEnabled), 200, { "cache-control": "public, max-age=300, s-maxage=600" }),
-      env.VERSION_METADATA?.id
+      env.VERSION_METADATA?.id,
+      local
     );
   }
   if (path.startsWith("/weekly/")) {
@@ -455,7 +503,8 @@ async function route(
       request,
       3600,
       async () => html(renderAgents(env), 200, { "cache-control": "public, max-age=3600" }),
-      env.VERSION_METADATA?.id
+      env.VERSION_METADATA?.id,
+      local
     );
   }
   if (path === "/build") {
@@ -471,7 +520,8 @@ async function route(
       request,
       600,
       async () => html(renderBuild(env, slug, claimingEnabled), 200, { "cache-control": "public, max-age=600" }),
-      env.VERSION_METADATA?.id
+      env.VERSION_METADATA?.id,
+      local
     );
   }
   if (path === "/about") {
@@ -479,7 +529,8 @@ async function route(
       request,
       3600,
       async () => html(renderAbout(env), 200, { "cache-control": "public, max-age=3600" }),
-      env.VERSION_METADATA?.id
+      env.VERSION_METADATA?.id,
+      local
     );
   }
   if (path === "/privacy") {
@@ -487,7 +538,8 @@ async function route(
       request,
       3600,
       async () => html(renderPrivacy(env), 200, { "cache-control": "public, max-age=3600" }),
-      env.VERSION_METADATA?.id
+      env.VERSION_METADATA?.id,
+      local
     );
   }
 
