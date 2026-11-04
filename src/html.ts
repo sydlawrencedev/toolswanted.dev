@@ -140,21 +140,32 @@ a{color:inherit}
     /* Six links do not fit on one row at 320px, and the old horizontal
        scroll clipped "File a wish" and "About" off the right edge with
        nothing but a fade to say so. A grid wraps them instead: every
-       destination is visible without a gesture. */
-    display:grid;grid-template-columns:repeat(3,1fr);gap:4px;
+       destination is visible without a gesture.
+
+       The columns are content sized, not a fraction each. With a fraction
+       each link claimed a third of the bar, so at 760px "BOARD" sat in
+       a 480px black box with 400px of nothing beside it, and the links
+       spread further apart as the window narrowed. It looked like a
+       broken menu, and it read as the navbar growing. Content sizing
+       puts the links next to each other and leaves the slack at the end. */
+    display:grid;grid-template-columns:repeat(3,auto);gap:4px 16px;
+    justify-content:start;
     flex-wrap:nowrap;overflow:visible;
   }
   .top nav:focus-visible{outline:3px solid var(--red);outline-offset:2px}
   .top nav a{
     padding:12px 4px;font-size:12px;white-space:nowrap;
-    text-align:center;letter-spacing:.02em;
-    display:flex;align-items:center;justify-content:center;
+    text-align:left;letter-spacing:.02em;
+    display:flex;align-items:center;justify-content:flex-start;
   }
+  /* The current page is a filled block. It only reads as a block if it is
+     sized to its label rather than to a grid column. */
+  .top nav a[aria-current="page"]{padding-left:12px;padding-right:12px}
 }
 @media (max-width:380px){
   /* Two columns means three rows of links, so the bar is taller again.
      Measured: 207px, plus the 3px border. */
-  .top nav{grid-template-columns:repeat(2,1fr)}
+  .top nav{grid-template-columns:repeat(2,auto)}
   :root{--topbar-h:210px}
 }
 
