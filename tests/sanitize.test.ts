@@ -36,7 +36,7 @@ const SECRETS: Array<[string, string]> = [
 const BEARER_VALUE = "abcdefghijklmnopqrstuvwxyz012345";
 
 const ASSIGNED_SECRETS: Array<[string, string]> = [
-  ["api key assignment", "api_key=["sk_live_", "51H8xYzAbCdEfGhIjKlMnOp"].join("")"],
+  ["api key assignment", "api_key=" + ["sk_live_", "51H8xYzAbCdEfGhIjKlMnOp"].join("")],
   ["password assignment", "password: hunter2Correct-Horse"],
   ["secret assignment", "client_secret: 'abcd1234efgh5678ijkl'"],
   ["token assignment", "auth_token = 9f8a7b6c5d4e3f2a1b0c"],
@@ -205,7 +205,7 @@ describe("sanitizeText - general properties", () => {
   });
 
   it("is idempotent", () => {
-    const raw = "need api_key=["sk_live_", "51H8xYzAbCdEfGhIjKlMnOp"].join("") and /etc/passwd";
+    const raw = "need api_key=" + ["sk_live_", "51H8xYzAbCdEfGhIjKlMnOp"].join("") + " and /etc/passwd";
     const once = sanitizeText(raw).text;
     const twice = sanitizeText(once).text;
     expect(twice).toBe(once);
