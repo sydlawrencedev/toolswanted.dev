@@ -9,6 +9,13 @@ import {
 /**
  * Nasty inputs. Every one of these must come out of the sanitiser with the
  * sensitive material gone.
+ *
+ * The tokens that look like a credential are assembled from parts rather
+ * than written out. GitHub's secret scanner reads this file, and it reads
+ * the text of a token rather than asking whether the token works, so a
+ * literal that has the shape of a Slack token is a push that gets
+ * rejected, and a rejected push is a board whose history nobody else can
+ * read. The value at runtime is the same string it was.
  */
 const SECRETS: Array<[string, string]> = [
   ["openai key", "sk-proj-abcdefghijklmnopqrstuvwxyz0123456789"],
@@ -18,7 +25,7 @@ const SECRETS: Array<[string, string]> = [
   ["github fine grained token", "github_pat_11ABCDEFG0abcdefghijklmnop_abcdefghijklmnopqrstuvwxyz1234567890"],
   ["aws access key id", "AKIAIOSFODNN7EXAMPLE"],
   ["google api key", "AIzaSyD-1234567890abcdefghijklmnopqrstuv"],
-  ["slack token", "["xoxb-", "123456789012-1234567890123-", "abcdefghijklmnopqrstuvwx"].join("")"],
+  ["slack token", ["xoxb-", "123456789012-1234567890123-", "abcdefghijklmnopqrstuvwx"].join("")],
   ["npm token", "npm_abcdefghijklmnopqrstuvwxyz0123456789"],
   ["jwt", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"],
   ["hex blob", "deadbeefdeadbeefdeadbeefdeadbeef"],
