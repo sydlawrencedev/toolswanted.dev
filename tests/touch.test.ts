@@ -119,10 +119,14 @@ describe("the nav links", () => {
   });
 
   it("keep the desktop nav a single row", () => {
-    // The 44px height must not come from wrapping the nav into a grid
-    // on a wide screen. The grid is for the phone.
+    // The 44px height must not come from the nav wrapping into more than
+    // one row on a wide screen.
+    //
+    // The nav is a grid at every width now, so this is not about the
+    // grid: it is about the number of rows the links are in. Six columns
+    // of content sized tracks is one row.
     const rules = rulesFor(".top nav", 1280);
-    expect(rules).not.toMatch(/grid-template-columns/);
+    expect(rules).toContain("grid-template-columns:repeat(6,max-content)");
   });
 });
 

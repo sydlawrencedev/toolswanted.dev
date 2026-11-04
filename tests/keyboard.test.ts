@@ -115,11 +115,11 @@ describe("the nav as a scroll region", () => {
   it("does not scroll sideways, so it needs no focusable scroll region", () => {
     // The reason the tabindex was there. If the nav ever goes back to
     // scrolling, this fails and the tabindex has to come back with it.
-    // The rule is that the nav wraps: it is a flex row that wraps, and
-    // at the narrow breakpoint a grid whose columns are content sized.
+    // The rule is that the nav wraps: it is a grid at every width, and
+    // its tracks cannot be narrower than the space there is.
     const navRule = CSS.match(/\.top nav\{[^}]*\}/);
     expect(navRule).toBeTruthy();
-    expect(navRule![0]).toContain("flex-wrap:wrap");
+    expect(navRule![0]).toContain("grid-template-columns:");
 
     // Nothing gives the nav an overflow, so it cannot be a scroll region.
     expect(navRule![0]).not.toMatch(/overflow/);

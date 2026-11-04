@@ -106,7 +106,14 @@ describe("the stylesheet", () => {
 
   it("keeps every spacing value on the 4px baseline", () => {
     // Borders and the visually-hidden utility are not spacing.
-    const values = [...CSS.matchAll(/(?:margin|padding|gap)[a-z-]*:\s*([^;{}]+)/g)]
+    //
+    // The comments are stripped first. The rule below looks for a
+    // spacing declaration and then reads forward for a value, and a
+    // comment that mentions one, margin-left:auto, is not a
+    // declaration: the words after it are prose, and a number in the
+    // prose was read as a spacing value.
+    const declarations = CSS.replace(/\/\*[\s\S]*?\*\//g, "");
+    const values = [...declarations.matchAll(/(?:margin|padding|gap)[a-z-]*:\s*([^;{}]+)/g)]
       .flatMap((m) => m[1]!.split(/[\s/]+/))
       .map((v) => v.trim())
       .filter((v) => /^-?\d+(\.\d+)?px$/.test(v))

@@ -41,10 +41,15 @@ export const CSS = `
      This is the value for the first paint. The script in STICKY_SCRIPT
      measures the real height and writes it back, because the bar's
      height depends on the font, the wrapping and the reader's own font
-     size. The number here is a fallback, not the truth: it was one
-     pixel short at every width, because the header's 3px border sits
-     outside its content box. */
-  --topbar-h:66px;
+     size. The number here is a fallback, not the truth.
+
+     63px is the bar with the nav on the same row as the wordmark, which
+     is the case from 810px up. Below that the nav takes its own row and
+     the bar is 159px, and below 385px it is 207px. The breakpoints are
+     viewport widths here because this is the first-paint value, and the
+     real break point is a container width that moves with the reader's
+     zoom; the script corrects it either way. */
+  --topbar-h:63px;
   /* Archivo Black is a single weight, so there is no faux bold. The
      fallback is Arial Black, which is a real display face on every
      Windows and macOS machine, so the first frame is not a downgrade. */
@@ -94,17 +99,79 @@ a{color:inherit}
    The bar's height comes from its own contents: a 44px nav link, the
    padding above and below it, and the 3px border. The script measures
    the result and writes it down. */
-.top .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:8px 16px}
+/* The wrap is a grid, not a wrapping flex row.
+
+   It was display:flex with flex-wrap:wrap, so the logo and the nav were
+   two items on a breakable flex line. When they could not both fit on one
+   line, the nav was pushed to a second line and the header grew by a
+   whole row. The nav was right-aligned by margin-left:auto, so the
+   dropped nav sat at the right edge and left a hole under the logo.
+
+   That hole was the "the navbar keeps growing" report, and it was
+   invisible at 100% zoom: the nav needs 684px and the bar's content box
+   is 1008px, so the line never broke. At 1024px and 150% zoom the
+   header went from 63px to 184px, and at 200% to 342px.
+
+   A grid line cannot break. The logo is one column, the nav is another,
+   and the nav's column is minmax(0,1fr), so it can shrink to nothing.
+   The nav is moved to its own row on purpose, by the container query
+   below, rather than by accident.
+
+   The wrap is also a container, so the nav can ask how much room the
+   logo left it. A media query cannot see that: the logo takes 162px of
+   the bar whatever the window is, and the width the nav has left is not
+   the width of the window.
+
+   The row gap is 4px, which is the same everywhere. It only shows when
+   the nav is on its own row, and it has to be the same in that row as
+   it is on a phone, or the bar jumps 4px as it crosses the 760px
+   breakpoint. It cannot be set from inside the container query: a
+   container cannot be styled by a query about its own size. */
+.top .wrap{
+  display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);
+  align-items:center;gap:4px 16px;padding:8px 16px;
+  container-type:inline-size;
+}
 .logo{
   font-family:var(--font-display); font-weight:400; letter-spacing:-.03em;
-  font-size:19px; text-transform:uppercase; text-decoration:none; white-space:nowrap;
+  font-size:19px; text-transform:uppercase; text-decoration:none;
   /* A 44px touch target without turning the link into a flex container:
      as a flex box the space between "Tools" and "Wanted" collapsed and
      the wordmark ran together. */
   display:block;line-height:44px;
+  /* The wordmark is 162px at 19px, so it fits a 320px phone to 1.78x
+     zoom. Past that it is wider than the screen.
+
+     It breaks rather than truncates. A wordmark that ends in an
+     ellipsis is not the name of the thing, and "TOOLS WA..." is not a
+     wordmark. The bar grows a line to hold the two halves instead,
+     which is the right trade: a taller bar is a bar, a sideways
+     scrolling page is a broken one. */
+  min-width:0;white-space:normal;overflow-wrap:normal;
 }
 .logo b{color:var(--red)}
-.top nav{margin-left:auto;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+/* The nav is a grid of content sized columns, not a flex row.
+
+   A flex row with margin-left:auto hung the links off the right edge of
+   the bar and left the current page's filled block as a black rectangle
+   floating in the space between the logo and the rest of the links. As a
+   grid the six links sit on six columns, each sized to its own label,
+   and the slack is at the end of the row.
+
+   The nav itself is pushed to the right of the bar by its own column
+   being 1fr and the grid's justify-content, not by margin-left:auto.
+   The auto margin was what let the nav break onto a second line and
+   leave a hole under the logo.
+
+   max-content, not auto: auto floors at the track's minimum content
+   contribution, which for a nowrap link is its own width, and a track
+   can end up narrower than the thing in it. That is what made the page
+   scroll sideways at 200% zoom on a phone. */
+.top nav{
+  display:grid;grid-template-columns:repeat(6,max-content);
+  gap:4px 16px;justify-content:end;align-items:center;align-content:center;
+  min-width:0;
+}
 .top nav a{
   text-decoration:none;font-weight:700;font-size:12px;text-transform:uppercase;
   letter-spacing:.06em;padding:8px;border-radius:var(--radius);
@@ -118,18 +185,77 @@ a{color:inherit}
 }
 .top nav a:hover{background:var(--chip)}
 .top nav a[aria-current="page"]{background:var(--ink);color:var(--paper)}
+/* When the nav cannot sit beside the logo, it takes its own row.
+
+   The nav needs 776px of the bar to sit beside the wordmark: 162px for
+   the logo, a 16px gap, the six links at 565px and the bar's own 32px of
+   padding. Below that the nav drops to a second row, where it lays out
+   as three columns of two.
+
+   The threshold is in em, and it is measured against the container's
+   font-size, which is the body's 17px: 776 / 17 is 45.6em. It has to
+   be in em because the requirement is zoom-invariant. The nav needs
+   56.97em of link-font at every zoom level, so the break point moves
+   with the reader's zoom rather than with the window: a 1024px window
+   at 150% zoom has a container of 683px, which is 40em, and the nav
+   goes to its own row there, correctly.
+
+   A viewport media query cannot do this. The logo takes 162px of the
+   bar whatever the window is, so the width the nav has left is not the
+   width of the window. */
+@container (max-width:45.5em){
+  /* The nav takes its own row, so the bar is one column deep: the
+     wordmark in the first row, the nav in the second, each the full
+     width of the bar.
+
+     It was two columns with the nav spanning both. A spanning item
+     does not contribute to the column widths, so the second column
+     collapsed to nothing and the nav was laid out in the width the
+     wordmark's column left over. At 200% zoom on a phone that was
+     130px for six links, and they spilled out of the bar and the page
+     scrolled sideways. */
+  .top .wrap{grid-template-columns:minmax(0,1fr)}
+  .top nav{
+    /* Three columns of two, at the left edge. The row is the full
+       width of the bar and the links start under the wordmark. Right
+       aligning it would move the hole from under the logo to the other
+       side of the bar.
+
+       The columns are three on a wide bar, the same as on a phone. The
+       browser's to choose was worse: auto-fit made the number of
+       columns change with every pixel, so the bar grew a row and
+       shrank another as the window moved.
+
+       minmax(0,1fr): a share of the bar's width, and no wider than the
+       space there is. */
+    grid-column:1;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    justify-content:start;
+  }
+  /* A label that cannot fit its track breaks rather than spilling out
+     of the bar. The link is a block so its label can wrap: as a flex
+     box the label is an anonymous flex item, which does not wrap. */
+  .top nav a{
+    white-space:normal;overflow-wrap:anywhere;min-width:0;
+    display:block;
+  }
+}
+@media (max-width:805px){
+  /* Below 806px the nav takes its own row under the wordmark, and the
+     bar is 159px tall: the logo's row, the nav's two rows of 44px
+     links, a 4px row gap, 16px of padding and the 3px border.
+
+     These are the first-paint values; the script in STICKY_SCRIPT
+     measures the real height and writes it back, because a number
+     measured by hand goes stale the moment the bar's contents change,
+     and because the real break point moves with the reader's zoom. */
+  :root{--topbar-h:159px}
+}
 @media (max-width:760px){
-  /* The top bar is the logo row plus two rows of 44px nav links. The
-     filter bar sticks below it, so the two heights have to agree or the
-     filter slides underneath the header.
-     Measured: the bar is 159px tall at 390px and under 380px it is
-     207px, plus the 3px border. These are the first-paint values; the
-     script in STICKY_SCRIPT measures the real height and writes it
-     back, because a number measured by hand goes stale the moment the
-     bar's contents change. */
-  :root{--topbar-h:162px}
   .clientpick{margin-left:0}
-  .top .wrap{row-gap:4px}
+  /* The nav is on its own row on a phone, so the bar is one column
+     deep: the wordmark, then the nav, each the full width. */
+  .top .wrap{grid-template-columns:minmax(0,1fr)}
   /* The logo stays at 19px on a phone. It was 17px, and at 17px the red
      is 4.4:1 against the paper, which is under the 4.5:1 body text
      threshold. The wordmark fits at 19px in 288px, so there is no reason
@@ -142,37 +268,60 @@ a{color:inherit}
        nothing but a fade to say so. A grid wraps them instead: every
        destination is visible without a gesture.
 
-       The columns are content sized, not a fraction each. With a fraction
-       each link claimed a third of the bar, so at 760px "BOARD" sat in
-       a 480px black box with 400px of nothing beside it, and the links
-       spread further apart as the window narrowed. It looked like a
-       broken menu, and it read as the navbar growing. Content sizing
-       puts the links next to each other and leaves the slack at the end. */
-    display:grid;grid-template-columns:repeat(3,auto);gap:4px 16px;
+       The columns are three on a phone. They were the browser's to
+       choose, and that was worse: auto-fit made the number of columns
+       change with every pixel, so the bar was 111px tall at 760px and
+       223px at 765px and 63px at 810px, and it grew a row and shrank
+       another as the window moved. The number of rows is now a
+       function of the width range, not of the exact width.
+
+       The tracks are minmax(0,1fr): a share of the bar's width, and no
+       wider than the space there is. A content sized track is as wide as
+       its label, so three of them need 293px, which a 390px phone at
+       200% zoom does not have, and the links spilled out of the bar and
+       the page scrolled sideways.
+
+       The links fill their tracks and their labels wrap inside them. A
+       link narrower than its track leaves the current page's filled
+       block floating in the space, which is the "BOARD in a 480px box"
+       that read as the navbar growing. */
+    grid-column:1;
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 16px;
     justify-content:start;
-    flex-wrap:nowrap;overflow:visible;
+    overflow:visible;
   }
   .top nav a{
-    padding:12px 4px;font-size:12px;white-space:nowrap;
+    padding:12px 4px;font-size:12px;
+    /* A label that cannot fit its track breaks rather than spilling out
+       of the bar. It is one line at every ordinary size.
+
+       The link is a block, not a flex box. As a flex box its label is
+       an anonymous flex item, which does not wrap: the item's minimum
+       width is its content, so the label stayed on one line and ran out
+       of the track and out of the bar. */
+    white-space:normal;overflow-wrap:anywhere;min-width:0;
     text-align:left;letter-spacing:.02em;
-    display:flex;align-items:center;justify-content:flex-start;
+    display:block;
   }
   /* The current page is a filled block. It only reads as a block if it is
      sized to its label rather than to a grid column. */
   .top nav a[aria-current="page"]{padding-left:12px;padding-right:12px}
 }
-@media (max-width:380px){
+@media (max-width:384px){
   /* Two columns means three rows of links, so the bar is taller again.
      Measured: 207px, plus the 3px border. */
-  .top nav{grid-template-columns:repeat(2,auto)}
-  :root{--topbar-h:210px}
+  .top nav{grid-template-columns:repeat(2,minmax(0,1fr))}
+  :root{--topbar-h:207px}
 }
-
 /* ---------- hero ---------- */
 .hero{padding:40px 0 8px;border-bottom:3px solid var(--line)}
 .hero h1{
   font-family:var(--font-display); font-weight:400; letter-spacing:-.04em;
   font-size:clamp(36px,7.2vw,72px); line-height:.94; margin:0 0 16px; text-transform:uppercase;
+  /* The heading is one long word per line at the top of its clamp, so it
+     has to be allowed to break. "WANTED" at 72px is 331px, which is wider
+     than a 320px phone at 200% zoom, and the page scrolled sideways. */
+  overflow-wrap:break-word;
 }
 .hero h1 em{font-style:normal;color:var(--red)}
 .hero p{max-width:60ch;color:var(--ink-soft);margin:0 0 16px;font-size:17px}
@@ -267,6 +416,8 @@ a{color:inherit}
   padding:8px 16px 12px;margin:-4px -8px -4px 0;
   border-radius:var(--radius);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
+  /* A long count has to be able to break rather than widen the card. */
+  min-width:0;overflow-wrap:break-word;
 }
 .tallybig small{display:block;font-size:12px;letter-spacing:.12em;font-weight:800;color:var(--paper);text-transform:uppercase;margin-top:4px;opacity:.72}
 .meta{display:flex;flex-wrap:wrap;gap:4px 12px;padding:4px 16px 16px;font-size:13px;color:var(--ink-soft)}
@@ -314,6 +465,10 @@ a{color:inherit}
     order:3;flex:1 1 100%;margin:0;
     flex-direction:row;gap:8px;align-items:baseline;justify-content:flex-start;
     padding:8px 12px;
+    /* The number and its label are a pair that can be too wide for a
+       narrow screen at a large font size: 297px at 200% zoom, against a
+       320px phone. The pair wraps instead of taking the page sideways. */
+    flex-wrap:wrap;min-width:0;
   }
   /* On the strip the label is the same size as the number's own
      optical weight, so the pair reads as one figure and not as a

@@ -369,14 +369,66 @@ rather than a grid, so the page itself never overflows.
 
 ## The top bar on a phone
 
-Below 760px the nav is a three-column grid, two rows, and at 380px and under
-it is two columns, three rows. Every destination is on screen.
+Below 806px the nav is on its own row under the wordmark, in three columns of
+two, and at 385px and under it is two columns of three. Every destination is on
+screen.
 
 It was a horizontal scroller. The six links came to 505px in a 288px space
 at 320px, so "File a wish" and "About" ran off the right edge with nothing
 but a mask gradient to say so. A fade is not an affordance: it says "there is
 something here" without saying what, and it leaves a keyboard user with no
 way to know the nav scrolls at all.
+
+## The top bar does not break its line
+
+The wrap inside the bar was `display:flex` with `flex-wrap:wrap`, so the
+wordmark and the nav were two items on a breakable flex line. When they could
+not both fit, the nav was pushed to a second line and the bar grew by a whole
+row. The nav was right-aligned by `margin-left:auto`, so the dropped nav sat
+at the right edge and left a hole under the wordmark.
+
+That hole was the "the navbar keeps growing" report, and it was invisible at
+100% zoom: the nav needs 684px and the bar's content box is 1008px, so the
+line never broke. At 1024px and 150% zoom the bar went from 63px to 184px, and
+at 200% to 342px. A reader who has zoomed in, or who has set a larger default
+font size, saw the bar grow a row and then grow again.
+
+A grid line cannot break. The wrap is a grid now: the wordmark is one column
+and the nav is another, and the nav's column is `minmax(0,1fr)`, so it can
+shrink to nothing. The nav is moved to its own row on purpose, by a container
+query, rather than by accident.
+
+**The switch is a container query, not a media query.** The wordmark takes
+162px of the bar whatever the window is, so the width the nav has left is not
+the width of the window. A media query cannot see that. The threshold is in
+`em` because the requirement is zoom-invariant: the nav needs 56.97em of link
+font at every zoom level, so the break moves with the reader's zoom rather
+than with the window.
+
+When the nav is on its own row, the bar is one column deep. It was two columns
+with the nav spanning both, and a spanning item does not contribute to the
+column widths, so the second column collapsed to nothing and the nav was laid
+out in the width the wordmark's column left over. At 200% zoom on a phone
+that was 130px for six links, and they spilled out of the bar.
+
+The bar's heights are 63px, 159px and 207px, and the number of rows is a
+function of the width range rather than of the exact width. The columns were
+the browser's to choose, with `auto-fit`, and that was worse: the count
+changed with every pixel, so the bar was 111px tall at 760px and 223px at
+765px and 63px at 810px, and it grew a row and shrank another as the window
+moved.
+
+The nav's tracks are `minmax(0,1fr)` on a phone: a share of the bar's width,
+and no wider than the space there is. A content-sized track is as wide as its
+label, so three of them need 293px, which a 390px phone at 200% zoom does not
+have, and the links spilled out of the bar and the page scrolled sideways.
+
+The links are blocks, not flex boxes, so their labels can wrap. As a flex box
+a link's label is an anonymous flex item, which does not wrap: the item's
+minimum width is its content, so the label stayed on one line and ran out of
+the bar.
+
+## The nav height is a token
 
 The nav height is a token, `--topbar-h`, because the filter bar sticks below it
 and the two have to agree.
@@ -393,6 +445,10 @@ filter bar stuck at the token's offset, which was inside the header, so the top
 of it, the "Show" label and the top of the chips, was cut off by the header
 above it. Measured with `getBoundingClientRect`, which includes the border, the
 token and the bar agree at every width.
+
+The fallbacks are the measured heights: 63px, 159px below 806px and 207px
+below 385px. Every one of them matches the bar's real height at every width,
+which is checked in `scripts/audit-browser.mjs`.
 
 The bar's own height is not driven by the token. It used to be, through a
 `min-height` on the wrap inside the header, and that is circular: the bar's
