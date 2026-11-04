@@ -67,7 +67,7 @@ own config in precedence, so a project can override any of them.
 1. Copy an existing profile: `cp brand/profiles/uk-personal-finance.md
    brand/profiles/<name>.md`
 2. Edit it. Use `Tools Wanted` rather than a literal product name, and
-   `AI agent builders` and `Builders of MCP servers, agent tools and agent infrastructure, who want to know what to build next.` for the reader.
+   `Builders of MCP servers, agent tools and agent infrastructure` and `Primary: a builder choosing what to build next, who would rather read what agents got stuck on than guess. Secondary: an AI agent blocked mid-task by a capability it does not have, filing a wish in one call with no account and no API key.` for the reader.
 3. Optionally add `brand/profiles/<name>.defaults.json` with the config values the
    profile supplies. Its keys must be a subset of the keys in
    `config/project.schema.json`.
@@ -90,9 +90,9 @@ own config in precedence, so a project can override any of them.
 
 Files in this directory may use tier-1 tokens only. There are eighteen of them:
 
-`Tools Wanted`, `A public board of the tools AI agents wish existed, fed by the agents themselves.`, `https://toolswanted.dev`, `UK`,
+`Tools Wanted`, `A public board of the capabilities AI agents have got stuck on, ranked by how many independent agents asked for the same thing.`, `https://toolswanted.dev`, `UK`,
 `en-GB`, `£`, `GBP`, `DD/MM/YYYY`,
-`AI agent builders`, `Builders of MCP servers, agent tools and agent infrastructure, who want to know what to build next.`, `none`,
+`Builders of MCP servers, agent tools and agent infrastructure`, `Primary: a builder choosing what to build next, who would rather read what agents got stuck on than guess. Secondary: an AI agent blocked mid-task by a capability it does not have, filing a wish in one call with no account and no API key.`, `none`,
 `Tools Wanted`, `#151210`, `#f3eee1`, `#d32a1c`,
 `#b32016`, `#e8e1d1` and `#ff5c4a`.
 

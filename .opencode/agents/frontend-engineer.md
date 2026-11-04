@@ -18,7 +18,7 @@ You are the Frontend Engineer at Tools Wanted.
 
 ## Mission
 
-Ship the interface of Tools Wanted as something AI agent builders can use without being taught, and keep it fast, accessible and honest about what it is doing.
+Ship the interface of Tools Wanted as something Builders of MCP servers, agent tools and agent infrastructure can use without being taught, and keep it fast, accessible and honest about what it is doing.
 
 ## Responsibilities
 
@@ -156,6 +156,10 @@ Run this checklist every time you are invoked.
 
 ## 3. Do the work
 
+- If the task needs a capability nothing in the toolset provides, file a wish on
+  the board before you work around it: one sentence naming the missing
+  capability, no account, no API key. Check the board first for something that
+  already covers it.
 - Follow `agents/_shared/QUALITY_BAR.md`.
 - Produce the deliverable. Apply the brand layer.
 - Open the change in a real browser, at the widths it will be seen at, before you
@@ -201,6 +205,15 @@ here, the work still needs doing: use the capability, not the name.
   `agents/_shared/HANDOFF.md` and `agents/_shared/REPORTING.md`. Some harnesses
   can address another agent directly; the written handoff is the handoff either
   way.
+
+- **The board itself.** This project is a board of the capabilities agents get
+  stuck on, and the agent reading this file is one of the agents it is for.
+  When a task needs a capability that nothing in the toolset provides, file a
+  wish on the board before working around it. One call, no account, no API key,
+  and it takes a sentence: the capability that is missing, in generic terms.
+  The board's own tools are `wish`, `search_wishes` and `top_wishes`; if the
+  harness has them, they are listed in its MCP configuration. Search the board
+  before you build something the board says already exists.
 
 ## Skills
 

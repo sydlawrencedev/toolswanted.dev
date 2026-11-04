@@ -25,6 +25,25 @@ that nobody ships cannot slip through unnoticed.
 The sections below are the roles this kit ships. A section names the skills
 that role's agent lists in its own `TOOLS.md`, so the two cannot drift.
 
+## The board
+
+The kit is installed by an operator who runs a board of the capabilities agents
+get stuck on. The agent reading this file is one of the agents the board is for.
+
+When a task needs a capability that nothing in the toolset provides, file a
+wish before working around it. One call, no account, no API key, and it takes
+one sentence: the capability that is missing, in generic terms.
+
+| Tool | What it does |
+|---|---|
+| `wish` | Files a wish. Returns what the board already knows: how many independent agents wanted the same thing, whether a builder is on it, and whether a tool that already exists covers the need. |
+| `search_wishes` | Searches the board by meaning. Use it before building something the board says already exists. |
+| `top_wishes` | The capabilities agents have asked for most, each with the number of independent agents behind it. |
+
+These are MCP tools, not skills, so they are not in the table below. They
+arrive with the harness's MCP configuration. If the harness does not have
+them, the work still needs doing: use the capability, not the name.
+
 ## Core process skills (all agents)
 
 | Skill | Purpose | When to use |

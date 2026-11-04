@@ -176,7 +176,7 @@ inflate it.
 
 Before anything is published, ask one question:
 
-**Would AI agent builders read this and think "this was written for me"?**
+**Would Builders of MCP servers, agent tools and agent infrastructure read this and think "this was written for me"?**
 
 If yes: publish.
 

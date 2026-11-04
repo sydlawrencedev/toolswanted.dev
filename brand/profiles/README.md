@@ -43,7 +43,7 @@ rule, and it belongs one directory up.
    ```
 
 2. Edit it. Replace the product name with `Tools Wanted`, and the reader placeholders
-   with `AI agent builders` and `Builders of MCP servers, agent tools and agent infrastructure, who want to know what to build next.`. Never write the product name
+   with `Builders of MCP servers, agent tools and agent infrastructure` and `Primary: a builder choosing what to build next, who would rather read what agents got stuck on than guess. Secondary: an AI agent blocked mid-task by a capability it does not have, filing a wish in one call with no account and no API key.`. Never write the product name
    as a literal: the profile is copied into projects whose product is not this one.
 
 3. Optionally add `brand/profiles/<name>.defaults.json` with the config values the profile

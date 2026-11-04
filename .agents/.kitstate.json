@@ -1,7 +1,7 @@
 {
   "version": 1,
   "kit_version": "1.0.0",
-  "generated_at": "2026-11-03T19:42:55.262Z",
+  "generated_at": "2026-11-04T10:10:53.821Z",
   "agents": [
     "ceo",
     "content-brand",
@@ -12,7 +12,7 @@
   ],
   "files": {
     "agents/ceo/AGENTS.md": {
-      "sha256": "02ebf9016cb69f53d19988531683ffa4f0c875bf6f544de9b9f33a398d77946d",
+      "sha256": "e9346812168734a90de679fc522c50ba8e8e3c88b87a097f097bb2912c55709b",
       "ownership": "managed",
       "sources": [
         "agents/ceo/AGENTS.md"
@@ -26,14 +26,14 @@
       ]
     },
     "agents/ceo/HEARTBEAT.md": {
-      "sha256": "e8ddc380713b74de2696125fb4848336a38ca938b9c1954a2bf5ae35d9c03f93",
+      "sha256": "2badc88b22fbb55de6392eac882acd50c96e72409ccaf81dc305bce9c7587b0b",
       "ownership": "managed",
       "sources": [
         "agents/ceo/HEARTBEAT.md"
       ]
     },
     "agents/ceo/TOOLS.md": {
-      "sha256": "24d7cf0812279082a29fcdc759a8c74c459f4e4d909762af98439b689605e5d3",
+      "sha256": "5c0a6dc7736cf7aa0c1f2c294589a4bce70b7de01ba194fac117d3fd0670d069",
       "ownership": "managed",
       "sources": [
         "agents/ceo/TOOLS.md"
@@ -83,7 +83,7 @@
       "sources": []
     },
     ".opencode/agents/ceo.md": {
-      "sha256": "b39fe40aa707d5cae1279ff8d68e5c8c00881b382fcba4656bf8a3e27f07457b",
+      "sha256": "d8ce946ad19738f6ddda031c98774df558b78c0bf3a6fed41f1204a0e2710808",
       "ownership": "managed",
       "sources": [
         "agents/ceo/AGENTS.md",
@@ -94,7 +94,7 @@
       ]
     },
     ".claude/agents/ceo.md": {
-      "sha256": "f4c33148bb45b4b36f9c02b471691d8ab1326689154eb97b1faad07fdc9fe25b",
+      "sha256": "70b19436ffe6cd129657b6c62841043b6b5a892b4fc00a3847250602b36def93",
       "ownership": "managed",
       "sources": [
         "agents/ceo/AGENTS.md",
@@ -105,7 +105,7 @@
       ]
     },
     "agents/content-brand/AGENTS.md": {
-      "sha256": "cabb028373862168cb60fe7516bf5c8842549f22ef80ab064653c9d441b2a2c1",
+      "sha256": "05a6a672e4e5b382d81e05a680da6dcab5356583e0263e4fb370b5c562ee761e",
       "ownership": "managed",
       "sources": [
         "agents/content-brand/AGENTS.md"
@@ -119,14 +119,14 @@
       ]
     },
     "agents/content-brand/HEARTBEAT.md": {
-      "sha256": "e901fe657a3dcbbf3431c93c1f22606d769a9c709dc29add4d421b1cb8cd7787",
+      "sha256": "0c8c65624cd9667b99a40e6f7bd624a1d0584b90112d07174ed912c1987847a1",
       "ownership": "managed",
       "sources": [
         "agents/content-brand/HEARTBEAT.md"
       ]
     },
     "agents/content-brand/TOOLS.md": {
-      "sha256": "57e7bcbe9d783db6865216c6972471b0f48286e42a2d80a728d6c99032bc6cc8",
+      "sha256": "67c64f16546897a0607355aa0e7791604c253e2c7639c8808259d4b5037da9e3",
       "ownership": "managed",
       "sources": [
         "agents/content-brand/TOOLS.md"
@@ -176,7 +176,7 @@
       "sources": []
     },
     ".opencode/agents/content-brand.md": {
-      "sha256": "ae04df7c2f613765646e023e4d58869c71fa61a279efaa9fab049e1c4a0ebdd9",
+      "sha256": "037fc08bc3093aee02783998a721aa636e920761d8edb01e5148fc9714b0dc2c",
       "ownership": "managed",
       "sources": [
         "agents/content-brand/AGENTS.md",
@@ -187,7 +187,7 @@
       ]
     },
     ".claude/agents/content-brand.md": {
-      "sha256": "0402cd9e8541f35812ecb75bb6f5b4d8777b7d2080b09aed56ce118c5782e009",
+      "sha256": "8c88224d4153b7b993d1f91366e160070c68ca6100e88371e99424909c65a0f3",
       "ownership": "managed",
       "sources": [
         "agents/content-brand/AGENTS.md",
@@ -212,14 +212,14 @@
       ]
     },
     "agents/design-delight/HEARTBEAT.md": {
-      "sha256": "c3e07e30f34a8145a1579d99e27e0273ec07d058fcda79868aa7a2ac733632e6",
+      "sha256": "9fafa3bb911ef0de5fa7b1a89b5b1560e6c6cb602f343800805d6e89763fbb78",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/HEARTBEAT.md"
       ]
     },
     "agents/design-delight/TOOLS.md": {
-      "sha256": "c39bee2c4bedeac44629a0dfc98fce08ec8883f8c3ecb8508b41d7dfaa09a0cb",
+      "sha256": "2943f2abf4f140d91ab9cf8a6e67f7711d018485a4d56f2600320126bf0f7b71",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/TOOLS.md"
@@ -269,7 +269,7 @@
       "sources": []
     },
     ".opencode/agents/design-delight.md": {
-      "sha256": "0cd597db16c0c069fa4054084a62fd01bf688251deb01240e0128c7472b0516a",
+      "sha256": "5dc737bf645582cb6a8f09c0834d6a0009b9812161079b31a259082114ece347",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/AGENTS.md",
@@ -280,7 +280,7 @@
       ]
     },
     ".claude/agents/design-delight.md": {
-      "sha256": "75fc850f9b59a3b1838cc1472bf470ecf6e852bbe6bf5a5465137bc55f14bf4e",
+      "sha256": "88fa7d88327977b2a59e57334ed878cccde97f73f06052d6091f6d4fb871f618",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/AGENTS.md",
@@ -291,7 +291,7 @@
       ]
     },
     "agents/frontend-engineer/AGENTS.md": {
-      "sha256": "21f2d6e09836bcdb68e1842a3e38b60e1858f9cfbcbad60ffbd404369f98cf81",
+      "sha256": "3a5ccfacde60daee0cab07509e81d25b621e0aaf8e02ac12545343ace9ea19df",
       "ownership": "managed",
       "sources": [
         "agents/frontend-engineer/AGENTS.md"
@@ -305,14 +305,14 @@
       ]
     },
     "agents/frontend-engineer/HEARTBEAT.md": {
-      "sha256": "4d5c6a6367f2bb959ffcdb9fcfbbdc845d69b3c9201cf9f2f4fa1e67ac9fef56",
+      "sha256": "28957607b52e188cc5d4726d8b241609af1426dcd8f56704fbc18ea1bf53221d",
       "ownership": "managed",
       "sources": [
         "agents/frontend-engineer/HEARTBEAT.md"
       ]
     },
     "agents/frontend-engineer/TOOLS.md": {
-      "sha256": "62fb562bfeb93ef670272315ce9a0e0ea8b8d47c230fcc17588f6d644da290a8",
+      "sha256": "7d60cbf4a799408d39307334163517ee3022cb9978e3d44ad2d2415f72a37816",
       "ownership": "managed",
       "sources": [
         "agents/frontend-engineer/TOOLS.md"
@@ -362,7 +362,7 @@
       "sources": []
     },
     ".opencode/agents/frontend-engineer.md": {
-      "sha256": "a9ac9f19e30425bd4101749f2ca0d4ccbc7ba403b6da0361e7affb76e5a66ffa",
+      "sha256": "79a5eddbc8c9dc4d4265e6dc3f6b5220e0b7ebe9da6eeea2b23430fdc30a6ad9",
       "ownership": "managed",
       "sources": [
         "agents/frontend-engineer/AGENTS.md",
@@ -373,7 +373,7 @@
       ]
     },
     ".claude/agents/frontend-engineer.md": {
-      "sha256": "212f7d4a86c153cd9c4eac36efaa569be6f4c915cedc89c765f765ce35f7bc80",
+      "sha256": "cf65702ad59f02a029fc4747139d5451f6214aa2335d135de3660b3e8493b321",
       "ownership": "managed",
       "sources": [
         "agents/frontend-engineer/AGENTS.md",
@@ -391,21 +391,21 @@
       ]
     },
     "agents/icp/SOUL.md": {
-      "sha256": "b255cef0ce329d5942df1d0ace6eff39a13a9a915e8ee7ee3fa4c8ef8dc1f10b",
+      "sha256": "c8dd272ff9cedc698675af8fff2872c7b96e3cdd105dc2e6c513f4c87c46ab74",
       "ownership": "managed",
       "sources": [
         "agents/icp/SOUL.md"
       ]
     },
     "agents/icp/HEARTBEAT.md": {
-      "sha256": "8b8c0a72e6e6030923d785e0e3b48640c98ee5832694251642b37451a703ecaa",
+      "sha256": "7793b613246e953e0d7a53418628bc61d24157b924cce2b5da4c158e5fccb07d",
       "ownership": "managed",
       "sources": [
         "agents/icp/HEARTBEAT.md"
       ]
     },
     "agents/icp/TOOLS.md": {
-      "sha256": "e29b221e650c0c40bec79e24eb8366607849f68640924aac866d91b908dded5f",
+      "sha256": "b0608ffb3ca05ad9f6f26b60e0bbaf1ff334b570b1ee6f22a0ea7fb001fb2ad8",
       "ownership": "managed",
       "sources": [
         "agents/icp/TOOLS.md"
@@ -455,7 +455,7 @@
       "sources": []
     },
     ".opencode/agents/icp.md": {
-      "sha256": "4db06ba52c43c9b5028bf5d44058072af6b232b07dc9aa0734de9a2a6cbacbf7",
+      "sha256": "29b720716508b732b110b9ec9cfdeaf5d5ab253da2e688f6ef41f768a7591b33",
       "ownership": "managed",
       "sources": [
         "agents/icp/AGENTS.md",
@@ -466,7 +466,7 @@
       ]
     },
     ".claude/agents/icp.md": {
-      "sha256": "30362f256212095a881f157e86a4d51104d40b8baea2cb2fde629aaebcdd13f0",
+      "sha256": "088d8d96fea0f0ef5568f67b93bede8f4e619ca66f9cb116bfdf89820d4b9514",
       "ownership": "managed",
       "sources": [
         "agents/icp/AGENTS.md",
@@ -491,14 +491,14 @@
       ]
     },
     "agents/test-manager/HEARTBEAT.md": {
-      "sha256": "23b88e7a7cce6bb68d1bb0d3918a749df4fb9bd2e7d1fbdf3c81224bbc9b92f3",
+      "sha256": "7c196ba8e903bca01c5fd34da783382568f06ca17c6b007cba4e669491235660",
       "ownership": "managed",
       "sources": [
         "agents/test-manager/HEARTBEAT.md"
       ]
     },
     "agents/test-manager/TOOLS.md": {
-      "sha256": "b40a0a8441395375de9c30095f44ea32779abb66e785c61dfb8526b502b6fc17",
+      "sha256": "1fbe6d3fe44809f84e21911da848561497fcec621483e4d95f7137de51949d8f",
       "ownership": "managed",
       "sources": [
         "agents/test-manager/TOOLS.md"
@@ -548,7 +548,7 @@
       "sources": []
     },
     ".opencode/agents/test-manager.md": {
-      "sha256": "40e4f3b5ae6a588ad178361094aba1e88f61a9d8a814690c8c5192465dd9f728",
+      "sha256": "13f859b777dcf301e9be5a7cb2e920cca34ce1b1a2bef80c72f75e2d94f3951a",
       "ownership": "managed",
       "sources": [
         "agents/test-manager/AGENTS.md",
@@ -559,7 +559,7 @@
       ]
     },
     ".claude/agents/test-manager.md": {
-      "sha256": "e6d99e6618e54161e789aae0c238520c5080a98ccc0792bf2754e76d33d64b3e",
+      "sha256": "34010df98a613211536ace4c95f3c0357f3cf407d5715c6c1d51e394e5fd90be",
       "ownership": "managed",
       "sources": [
         "agents/test-manager/AGENTS.md",
@@ -591,7 +591,7 @@
       ]
     },
     "agents/_shared/SKILLS.md": {
-      "sha256": "0603167d7c97a60888eaebcbf1ee91d1827593bd781b81930a6a6e5ea5f1d0fd",
+      "sha256": "de73ec08f046ea74a5da8adeca5c5830a0804e824a8ca367292eb00fb39345f1",
       "ownership": "managed",
       "sources": [
         "agents/_shared/SKILLS.md"
@@ -605,7 +605,7 @@
       ]
     },
     "brand/VOICE.md": {
-      "sha256": "e76174170fbacb62d3c694df7985481605dc572fc3fc1ffcac9e966c612b3550",
+      "sha256": "9edaef163c90aabe1ff7e7a410fe92a7a3f61030d94e5f43662aabafb0bf9f82",
       "ownership": "managed",
       "sources": [
         "brand/VOICE.md"
@@ -626,14 +626,14 @@
       ]
     },
     "brand/README.md": {
-      "sha256": "89b021ca1d351e4698f56bdf1eb4ecd797c5fa7a07f347632c9b1ed579e1f168",
+      "sha256": "a09ff0393e6ccfc97dcfb2d8f9789cdf1848b4ac4ba9bc693c979dc278f1f3f8",
       "ownership": "managed",
       "sources": [
         "brand/README.md"
       ]
     },
     "brand/profiles/README.md": {
-      "sha256": "24dd87a00bd04201bf95b75f0d7689912a6707f0390b40b826d665075a72511c",
+      "sha256": "f9ac3c860a91be14408fbd2a4b1e324acda02ae9bf4290a3a3847768e30da123",
       "ownership": "managed",
       "sources": [
         "brand/profiles/README.md"
