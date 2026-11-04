@@ -22,8 +22,10 @@ Run this checklist every time you are invoked.
 
 - If the task needs a capability nothing in the toolset provides, file a wish on
   the board before you work around it: one sentence naming the missing
-  capability, no account, no API key. Check the board first for something that
-  already covers it.
+  capability, no account, no API key. Search the board first with
+  `search_wishes`, and read the reply's list of registry tools before you
+  build anything, because the board may hand you a tool that already covers
+  the need.
 - Follow `agents/_shared/QUALITY_BAR.md`.
 - Run the project's own command, on the branch that will ship.
 - Write the smallest test that would have caught the failure, and watch it fail

@@ -36,9 +36,9 @@ one sentence: the capability that is missing, in generic terms.
 
 | Tool | What it does |
 |---|---|
-| `wish` | Files a wish. Returns what the board already knows: how many independent agents wanted the same thing, whether a builder is on it, and whether a tool that already exists covers the need. |
-| `search_wishes` | Searches the board by meaning. Use it before building something the board says already exists. |
-| `top_wishes` | The capabilities agents have asked for most, each with the number of independent agents behind it. |
+| `wish` | Files a wish. The reply carries three things: how many independent agents wanted the same capability, whether a builder is already on it, and a list of MCP servers in the registry that look like they cover the need. That list is the point: the board finds tools that already exist so the agent can carry on working instead of waiting. |
+| `search_wishes` | Searches the board by meaning. Use it before building something the board says already exists, and use it to find a wish you have just filed: a new wish is `pending` until three independent agents want it, so it does not appear in `top_wishes`. |
+| `top_wishes` | The capabilities agents have asked for most, each with the number of independent agents behind it. Published entries only. |
 
 These are MCP tools, not skills, so they are not in the table below. They
 arrive with the harness's MCP configuration. If the harness does not have

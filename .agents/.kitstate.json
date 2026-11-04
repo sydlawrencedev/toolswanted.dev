@@ -1,7 +1,7 @@
 {
   "version": 1,
   "kit_version": "1.0.0",
-  "generated_at": "2026-11-04T10:10:53.821Z",
+  "generated_at": "2026-11-04T10:30:42.830Z",
   "agents": [
     "ceo",
     "content-brand",
@@ -26,14 +26,14 @@
       ]
     },
     "agents/ceo/HEARTBEAT.md": {
-      "sha256": "2badc88b22fbb55de6392eac882acd50c96e72409ccaf81dc305bce9c7587b0b",
+      "sha256": "4a88d7a7ba49e18f9d2fb62f8d7b76c0ad7a2836b553927a89b63e4b11346bbf",
       "ownership": "managed",
       "sources": [
         "agents/ceo/HEARTBEAT.md"
       ]
     },
     "agents/ceo/TOOLS.md": {
-      "sha256": "5c0a6dc7736cf7aa0c1f2c294589a4bce70b7de01ba194fac117d3fd0670d069",
+      "sha256": "a3e17324c640f8a5f62b1f8dd14f45fa17e210b238c778ff7f6d9d2e297811d5",
       "ownership": "managed",
       "sources": [
         "agents/ceo/TOOLS.md"
@@ -83,7 +83,7 @@
       "sources": []
     },
     ".opencode/agents/ceo.md": {
-      "sha256": "d8ce946ad19738f6ddda031c98774df558b78c0bf3a6fed41f1204a0e2710808",
+      "sha256": "0948183ad2c441311b13564686c2fd6679b23473ac391e77dcfbfe4fb5bde505",
       "ownership": "managed",
       "sources": [
         "agents/ceo/AGENTS.md",
@@ -94,7 +94,7 @@
       ]
     },
     ".claude/agents/ceo.md": {
-      "sha256": "70b19436ffe6cd129657b6c62841043b6b5a892b4fc00a3847250602b36def93",
+      "sha256": "3ea38c023bd8ff955683540d61b62f00385ee2a7a0a5a3c91943fe394ceff9a0",
       "ownership": "managed",
       "sources": [
         "agents/ceo/AGENTS.md",
@@ -119,14 +119,14 @@
       ]
     },
     "agents/content-brand/HEARTBEAT.md": {
-      "sha256": "0c8c65624cd9667b99a40e6f7bd624a1d0584b90112d07174ed912c1987847a1",
+      "sha256": "81b7f3a717db0e05cf52f6dc31437329175360d148ed222745e3b9e7beacb67f",
       "ownership": "managed",
       "sources": [
         "agents/content-brand/HEARTBEAT.md"
       ]
     },
     "agents/content-brand/TOOLS.md": {
-      "sha256": "67c64f16546897a0607355aa0e7791604c253e2c7639c8808259d4b5037da9e3",
+      "sha256": "9ce7f7f1210a377917b51b060ef7b5db0a653e2688d2f5648f7786ee8ffba3df",
       "ownership": "managed",
       "sources": [
         "agents/content-brand/TOOLS.md"
@@ -176,7 +176,7 @@
       "sources": []
     },
     ".opencode/agents/content-brand.md": {
-      "sha256": "037fc08bc3093aee02783998a721aa636e920761d8edb01e5148fc9714b0dc2c",
+      "sha256": "b0872f62631f1f8ed1ca18ec81ef83168665d1b8dcc7e0ca86491324a824be46",
       "ownership": "managed",
       "sources": [
         "agents/content-brand/AGENTS.md",
@@ -187,7 +187,7 @@
       ]
     },
     ".claude/agents/content-brand.md": {
-      "sha256": "8c88224d4153b7b993d1f91366e160070c68ca6100e88371e99424909c65a0f3",
+      "sha256": "4e1ce399140f2c5deb2390f5d0da7b26319922322e21b613345b025365265adf",
       "ownership": "managed",
       "sources": [
         "agents/content-brand/AGENTS.md",
@@ -212,14 +212,14 @@
       ]
     },
     "agents/design-delight/HEARTBEAT.md": {
-      "sha256": "9fafa3bb911ef0de5fa7b1a89b5b1560e6c6cb602f343800805d6e89763fbb78",
+      "sha256": "1ae906778883a02ad104c55a8994f0237a9b722a511637388d69de1747bf5b19",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/HEARTBEAT.md"
       ]
     },
     "agents/design-delight/TOOLS.md": {
-      "sha256": "2943f2abf4f140d91ab9cf8a6e67f7711d018485a4d56f2600320126bf0f7b71",
+      "sha256": "7574bdb279c0668b03103097d38387f8a7237ee074aa68c353da4e1964e0f75b",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/TOOLS.md"
@@ -269,7 +269,7 @@
       "sources": []
     },
     ".opencode/agents/design-delight.md": {
-      "sha256": "5dc737bf645582cb6a8f09c0834d6a0009b9812161079b31a259082114ece347",
+      "sha256": "d141a487e1bd55004da147371a75a540ffd3f8fa79a9279b6ad0ce5dd34c1627",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/AGENTS.md",
@@ -280,7 +280,7 @@
       ]
     },
     ".claude/agents/design-delight.md": {
-      "sha256": "88fa7d88327977b2a59e57334ed878cccde97f73f06052d6091f6d4fb871f618",
+      "sha256": "95863e110ec29eba413b6b9a32224f15ccf9c924133ac8b268b04cd37fce3554",
       "ownership": "managed",
       "sources": [
         "agents/design-delight/AGENTS.md",
@@ -305,14 +305,14 @@
       ]
     },
     "agents/frontend-engineer/HEARTBEAT.md": {
-      "sha256": "28957607b52e188cc5d4726d8b241609af1426dcd8f56704fbc18ea1bf53221d",
+      "sha256": "464a08b0286ec09e0e6e6065c205404cff18443d46959cb88725dc304acb29aa",
       "ownership": "managed",
       "sources": [
         "agents/frontend-engineer/HEARTBEAT.md"
       ]
     },
     "agents/frontend-engineer/TOOLS.md": {
-      "sha256": "7d60cbf4a799408d39307334163517ee3022cb9978e3d44ad2d2415f72a37816",
+      "sha256": "e09d29bbeb2ec1852db8cb2b22d01c9691d233d586c517ee717a7f3e21f91cd5",
       "ownership": "managed",
       "sources": [
         "agents/frontend-engineer/TOOLS.md"
@@ -362,7 +362,7 @@
       "sources": []
     },
     ".opencode/agents/frontend-engineer.md": {
-      "sha256": "79a5eddbc8c9dc4d4265e6dc3f6b5220e0b7ebe9da6eeea2b23430fdc30a6ad9",
+      "sha256": "1deffa52a2d0021784ec0496b32c6aac675829eedc25986ed8f42fe24a4237e0",
       "ownership": "managed",
       "sources": [
         "agents/frontend-engineer/AGENTS.md",
@@ -373,7 +373,7 @@
       ]
     },
     ".claude/agents/frontend-engineer.md": {
-      "sha256": "cf65702ad59f02a029fc4747139d5451f6214aa2335d135de3660b3e8493b321",
+      "sha256": "9422f4d87c0882e26c3b8c9b9df2efce61aebb78c0079e1e872bcc4036ddd361",
       "ownership": "managed",
       "sources": [
         "agents/frontend-engineer/AGENTS.md",
@@ -398,14 +398,14 @@
       ]
     },
     "agents/icp/HEARTBEAT.md": {
-      "sha256": "7793b613246e953e0d7a53418628bc61d24157b924cce2b5da4c158e5fccb07d",
+      "sha256": "1c8b5f1fd446c53ffccb33125639c2bb18c4bec476ea402fb6c25e65c6955e7d",
       "ownership": "managed",
       "sources": [
         "agents/icp/HEARTBEAT.md"
       ]
     },
     "agents/icp/TOOLS.md": {
-      "sha256": "b0608ffb3ca05ad9f6f26b60e0bbaf1ff334b570b1ee6f22a0ea7fb001fb2ad8",
+      "sha256": "183c0eee6720fc43b8f84bba2b5f34c233398b514a506a7507fc484788f7a5b3",
       "ownership": "managed",
       "sources": [
         "agents/icp/TOOLS.md"
@@ -455,7 +455,7 @@
       "sources": []
     },
     ".opencode/agents/icp.md": {
-      "sha256": "29b720716508b732b110b9ec9cfdeaf5d5ab253da2e688f6ef41f768a7591b33",
+      "sha256": "560ea476ffd951ea0523d445a9d0a324682343271bd2d733a66fc6fe939f7d7c",
       "ownership": "managed",
       "sources": [
         "agents/icp/AGENTS.md",
@@ -466,7 +466,7 @@
       ]
     },
     ".claude/agents/icp.md": {
-      "sha256": "088d8d96fea0f0ef5568f67b93bede8f4e619ca66f9cb116bfdf89820d4b9514",
+      "sha256": "0925c4f8370a60373476946200459126d6889b03b05e0cb3328d1cda670841a1",
       "ownership": "managed",
       "sources": [
         "agents/icp/AGENTS.md",
@@ -491,14 +491,14 @@
       ]
     },
     "agents/test-manager/HEARTBEAT.md": {
-      "sha256": "7c196ba8e903bca01c5fd34da783382568f06ca17c6b007cba4e669491235660",
+      "sha256": "7cd48c21b8e93e4cf05bba10268347bc9fbeec30f01106e8f687a1405568347c",
       "ownership": "managed",
       "sources": [
         "agents/test-manager/HEARTBEAT.md"
       ]
     },
     "agents/test-manager/TOOLS.md": {
-      "sha256": "1fbe6d3fe44809f84e21911da848561497fcec621483e4d95f7137de51949d8f",
+      "sha256": "7ca63c62a72fd73f19e0ed5fe9e5cf719f1b5c86e5bb2596c67cec776b51550d",
       "ownership": "managed",
       "sources": [
         "agents/test-manager/TOOLS.md"
@@ -548,7 +548,7 @@
       "sources": []
     },
     ".opencode/agents/test-manager.md": {
-      "sha256": "13f859b777dcf301e9be5a7cb2e920cca34ce1b1a2bef80c72f75e2d94f3951a",
+      "sha256": "ded4d298176e9bd0dc8d4202af8617b54ca2a815b2ffea880c7256d95fe8bb62",
       "ownership": "managed",
       "sources": [
         "agents/test-manager/AGENTS.md",
@@ -559,7 +559,7 @@
       ]
     },
     ".claude/agents/test-manager.md": {
-      "sha256": "34010df98a613211536ace4c95f3c0357f3cf407d5715c6c1d51e394e5fd90be",
+      "sha256": "37053d53e51c85448443c2e3fea94baaad026812f7af973e687f7f20773ca0cc",
       "ownership": "managed",
       "sources": [
         "agents/test-manager/AGENTS.md",
@@ -591,7 +591,7 @@
       ]
     },
     "agents/_shared/SKILLS.md": {
-      "sha256": "de73ec08f046ea74a5da8adeca5c5830a0804e824a8ca367292eb00fb39345f1",
+      "sha256": "70d4365d1f107a8e3981da367f9867869619ed51ff285973e077964608f5a6df",
       "ownership": "managed",
       "sources": [
         "agents/_shared/SKILLS.md"

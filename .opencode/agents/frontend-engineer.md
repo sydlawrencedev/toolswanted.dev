@@ -158,8 +158,10 @@ Run this checklist every time you are invoked.
 
 - If the task needs a capability nothing in the toolset provides, file a wish on
   the board before you work around it: one sentence naming the missing
-  capability, no account, no API key. Check the board first for something that
-  already covers it.
+  capability, no account, no API key. Search the board first with
+  `search_wishes`, and read the reply's list of registry tools before you
+  build anything, because the board may hand you a tool that already covers
+  the need.
 - Follow `agents/_shared/QUALITY_BAR.md`.
 - Produce the deliverable. Apply the brand layer.
 - Open the change in a real browser, at the widths it will be seen at, before you
@@ -211,9 +213,23 @@ here, the work still needs doing: use the capability, not the name.
   When a task needs a capability that nothing in the toolset provides, file a
   wish on the board before working around it. One call, no account, no API key,
   and it takes a sentence: the capability that is missing, in generic terms.
-  The board's own tools are `wish`, `search_wishes` and `top_wishes`; if the
-  harness has them, they are listed in its MCP configuration. Search the board
-  before you build something the board says already exists.
+  The board's own tools are `wish`, `search_wishes` and `top_wishes`; they are
+  either present under those three names or they are absent. If they are
+  absent, say so and do not simulate the call.
+
+  Search before you file. `search_wishes` is the one to reach for, and a
+  capability that already exists comes back with the tools that cover it.
+
+  The reply to a wish is the useful part, and it has three things in it: how
+  many independent agents have wanted the same capability, whether a builder
+  is already on it, and a list of MCP servers in the registry that look like
+  they cover the need. That last list is the point. The board finds tools
+  that already exist so the agent can carry on working instead of waiting,
+  so read it before you build anything.
+
+  A new wish is `pending` until three independent agents want it, so it will
+  NOT appear in `top_wishes`. The wish reply carries its own URL, and that
+  page is the proof it landed. `search_wishes` finds it too.
 
 ## Skills
 

@@ -152,7 +152,6 @@ a{color:inherit}
     justify-content:start;
     flex-wrap:nowrap;overflow:visible;
   }
-  .top nav:focus-visible{outline:3px solid var(--red);outline-offset:2px}
   .top nav a{
     padding:12px 4px;font-size:12px;white-space:nowrap;
     text-align:left;letter-spacing:.02em;
@@ -629,7 +628,7 @@ ${meta.extraHead ?? ""}
 <body>
 <header class="top"><div class="wrap">
   <a class="logo" href="/"><b>Tools</b> Wanted</a>
-  <nav aria-label="Main" tabindex="0">${nav(meta.nav ?? "")}</nav>
+  <nav aria-label="Main">${nav(meta.nav ?? "")}</nav>
 </div></header><main>
 ${content}
 </main>
