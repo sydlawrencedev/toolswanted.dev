@@ -551,6 +551,9 @@ a{color:inherit}
 .page h1{
   font-family:var(--font-display);font-weight:400;letter-spacing:-.035em;text-transform:uppercase;
   font-size:clamp(30px,5.2vw,44px);line-height:.98;margin:0 0 12px;
+  /* The display face at 30px is wider than a 320px phone at 200% zoom,
+     and the h1 is the one heading that cannot be shortened. */
+  overflow-wrap:break-word;
 }
 .page h2{font-weight:700;font-size:20px;letter-spacing:-.01em;margin:32px 0 8px}
 .page h3{font-weight:700;font-size:17px;margin:24px 0 8px}
@@ -644,6 +647,31 @@ a.under{text-decoration:underline;text-underline-offset:4px}
 ul.archive{list-style:none;padding-left:0}
 ul.archive li{margin:0 0 4px}
 ul.archive li::before{content:"· ";color:var(--ink-soft)}
+
+/* The tools on the /agents page.
+   It was a two-column table, and the description column was 329px of a
+   358px container at 390px. The whole of the only column that carries
+   meaning was off-screen on arrival, behind a horizontal scroll with no
+   affordance, on the page somebody reads to decide what to install.
+
+   So the description is under the signature, not beside it. The
+   signature is the least useful half and the description is the answer
+   to "what do I want this for", so the answer is what a reader meets
+   first.
+
+   A table would be the wrong shape for a 358px screen anyway: one row
+   per tool, two columns, no column relationships worth aligning. */
+.tools{margin:12px 0 0}
+.tools dt{
+  font-size:15px;color:var(--ink);
+  padding:12px 0 4px;border-top:1px solid var(--line);
+  /* A function signature is a long unbreakable token in a monospace
+     face. At 320px with the reader at 200% zoom the column is 128px and
+     the longest signature is 181px, so it took the page sideways. */
+  overflow-wrap:anywhere;word-break:normal;
+}
+.tools dt:first-child{border-top:0;padding-top:0}
+.tools dd{margin:0 0 4px;color:var(--ink-soft);font-size:15px}
 
 /* ---------- cards / lists ---------- */
 .card{border:2px solid var(--line);background:var(--paper-2);border-radius:var(--radius);padding:20px;margin:0 0 20px}
@@ -938,31 +966,72 @@ ${meta.noindex ? '<meta name="robots" content="noindex,nofollow">' : '<meta name
 <meta name="theme-color" content="#100e0d" media="(prefers-color-scheme: dark)">
 <link rel="alternate" type="application/rss+xml" title="Tools Wanted: most wanted" href="/feed.xml">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.svg?scheme=dark" type="image/svg+xml" media="(prefers-color-scheme: dark)">
 <link rel="stylesheet" href="${escAttr(styleHref)}">
 <link rel="stylesheet" href="${escAttr(fontHref)}">
 <link rel="preload" href="${escAttr(fontHref)}" as="style">
-<script>try{
-  var t=localStorage.getItem('tw-theme');
-  if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);
-  var b=document.getElementById('themebtn');
-  if(b){
-    var dark=document.documentElement.getAttribute('data-theme')==='dark';
-    b.textContent=dark?'Light mode':'Dark mode';
-    b.onclick=function(){
-      var now=document.documentElement.getAttribute('data-theme');
-      var next=now==='dark'?'light':'dark';
-      document.documentElement.setAttribute('data-theme',next);
-      localStorage.setItem('tw-theme',next);
-      b.textContent=next==='dark'?'Light mode':'Dark mode';
-    };
-  }
-  var d=document.getElementById('themeclear');
-  if(d)d.onclick=function(){
-    document.documentElement.removeAttribute('data-theme');
-    localStorage.removeItem('tw-theme');
-    if(b)b.textContent='Dark mode';
-  };
-}catch(e){}</script>
+<script>
+/* The theme control.
+   It used to be a script looking for a button that did not exist, and a
+   localStorage read that applied a preference the reader could not see,
+   could not change and could not clear. A reader with a stale value was
+   pinned to a theme that ignored their system preference with no way
+   back except devtools.
+
+   The script is in the head and the button is in the footer, so the
+   button is not in the document when this runs. The wiring waits for
+   the DOM, and the theme attribute is applied at once, before the
+   first paint, so the page never flashes the wrong theme.
+
+   The button's label has to name the theme the reader would get, not
+   the one they would get if they had an override set. The data-theme
+   attribute is only set by this script, so a reader whose operating
+   system is dark and who has never touched the toggle sees a page that
+   is already dark, and a button that says "Dark mode". The system
+   preference is what decides when there is no override. */
+(function(){
+  try{
+    var stored=localStorage.getItem('tw-theme');
+    if(stored==='light'||stored==='dark')document.documentElement.setAttribute('data-theme',stored);
+    function effectiveDark(){
+      var forced=document.documentElement.getAttribute('data-theme');
+      if(forced==='dark')return true;
+      if(forced==='light')return false;
+      return !!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
+    }
+    function label(){return effectiveDark()?'Light mode':'Dark mode';}
+    function wire(){
+      var b=document.getElementById('themebtn');
+      if(b){
+        b.textContent=label();
+        b.onclick=function(){
+          var next=effectiveDark()?'light':'dark';
+          document.documentElement.setAttribute('data-theme',next);
+          localStorage.setItem('tw-theme',next);
+          b.textContent=label();
+        };
+      }
+      var d=document.getElementById('themeclear');
+      if(d)d.onclick=function(){
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.removeItem('tw-theme');
+        if(b)b.textContent=label();
+      };
+    }
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire);
+    else wire();
+    // A reader whose system changes their theme while the page is open
+    // should see the button follow it.
+    if(window.matchMedia){
+      var mq=window.matchMedia('(prefers-color-scheme: dark)');
+      if(mq.addEventListener)mq.addEventListener('change',function(){
+        var b=document.getElementById('themebtn');
+        if(b)b.textContent=label();
+      });
+    }
+  }catch(e){}
+})();
+</script>
 ${meta.extraHead ?? ""}
 </head>
 <body>

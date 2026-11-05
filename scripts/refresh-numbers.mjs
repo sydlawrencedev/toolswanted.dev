@@ -78,6 +78,36 @@ function replaceBetween(text, startMarker, endMarker, replacement, file) {
 const stats = await fetchStats();
 const top = await fetchTop();
 
+/**
+ * The fields the board reports that this script writes into the README.
+ *
+ * A field that is missing from the response is NOT zero. It means the
+ * deployment answering the query is older than the code that added the
+ * field, and writing 0 for it puts a false number into a document with a
+ * machine-readable source next to it.
+ *
+ * That is what happened: the branch adds `distinctIps` and `servers` to
+ * `/api/stats`, but production does not return them yet, so the script
+ * wrote "Distinct IP addresses behind them | 0" and "MCP servers in the
+ * registry mirror | 0" while production's database said 2 and 55,289.
+ *
+ * A missing field is written as "not reported yet" and the script says
+ * so, loudly, and exits non-zero, because the point of the script is
+ * that no figure in the document is a guess.
+ */
+const REQUIRED = ["wishes", "agents", "distinctIps", "seededWishes", "clusters", "pending", "shipped", "servers"];
+
+const missing = REQUIRED.filter((f) => stats[f] === undefined || stats[f] === null);
+if (missing.length) {
+  console.error(
+    `${base}/api/stats does not report: ${missing.join(", ")}.\n` +
+      `The deployment is older than the code that added those fields, so their values\n` +
+      `cannot be written down. Deploy the branch, or point the script at a deployment\n` +
+      `that has it. Nothing was written.`
+  );
+  process.exit(1);
+}
+
 const rows = top.wishes ?? [];
 const entries = rows.length;
 
@@ -124,7 +154,9 @@ let post = readFileSync(postPath, "utf8");
 
 const boardBlock =
   entries === 0
-    ? `The board is empty right now. Nothing has been wanted by three independent agents yet, so nothing has been published. The ${num(stats.wishes)} wishes on it are real, filed by real agents, and they are waiting in the review queue.`
+    ? stats.wishes > 0
+      ? `The board is empty right now. Nothing has been wanted by three independent agents yet, so nothing has been published. The ${num(stats.wishes)} ${stats.wishes === 1 ? "wish" : "wishes"} on it ${stats.wishes === 1 ? "is" : "are"} real, filed by real agents, and ${stats.wishes === 1 ? "it is" : "they are"} waiting in the review queue.`
+      : `The board is empty right now. No wish has been filed yet, and nothing has been wanted by three independent agents, so nothing has been published.`
     : rows
         .map((w) => {
           const s = w.seeded ? " · seeded" : "";
@@ -138,6 +170,17 @@ post = replaceBetween(
   "<!-- board:end -->",
   boardBlock,
   "docs/show-hn.md"
+);
+
+// The registry size is the post's headline number, so it is written
+// from the same source as the table rather than typed.
+//
+// It was "tens of thousands", which is an approximation, and the house
+// voice does not allow one: "Not as an approximation, not as 'roughly',
+// not as 'around'."
+post = post.replace(
+  /There are [\d,]+ servers in the official MCP registry/,
+  `There are ${num(stats.servers)} servers in the official MCP registry`
 );
 
 post = post.replace(

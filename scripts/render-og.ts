@@ -103,8 +103,12 @@ async function renderPoster(cluster: Cluster | null, fontData: Awaited<ReturnTyp
           fontFamily: "Archivo Black",
         },
       },
+      // The bar said "TOOLS WANTED" on the left and "WANTED" in red on
+      // the right, so the word appeared twice in one bar. The right-hand
+      // item now carries the domain, which is information rather than
+      // another copy of the name.
       h("div", { style: { display: "flex" } }, "TOOLS WANTED"),
-      h("div", { style: { display: "flex", color: RED } }, "WANTED")
+      h("div", { style: { display: "flex", color: RED } }, "TOOLSWANTED.DEV")
     ),
     // Body
     h(
@@ -166,7 +170,11 @@ async function renderPoster(cluster: Cluster | null, fontData: Awaited<ReturnTyp
               letterSpacing: -3,
             },
           },
-          isDefault ? "·" : String(count)
+          // The default card used to show a red middle dot where the
+          // count goes. On a cream panel a red horizontal bar reads as
+          // a redaction rather than as a count of nothing. It now says
+          // what it is, in the same face, at a size that fits.
+          isDefault ? "0" : String(count)
         ),
         h(
           "div",
@@ -180,7 +188,7 @@ async function renderPoster(cluster: Cluster | null, fontData: Awaited<ReturnTyp
               marginTop: 6,
             },
           },
-          isDefault ? "TOOLS" : count === 1 ? "AGENT" : "AGENTS"
+          isDefault ? "NOT YET" : count === 1 ? "AGENT" : "AGENTS"
         )
       )
     ),

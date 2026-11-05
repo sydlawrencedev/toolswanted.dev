@@ -57,7 +57,29 @@ import { rateLimit } from "./ratelimit";
 import { renderFeed, renderWishFeed } from "./rss";
 import { isoWeekId, num, weekStart, countWithVerb, type Env } from "./types";
 
-const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#151210"/><text x="32" y="44" font-family="Helvetica,Arial,sans-serif" font-weight="900" font-size="38" fill="#d32a1c" text-anchor="middle">W</text></svg>`;
+/**
+ * The favicon.
+ *
+ * It was a red "W" in Helvetica Bold, which is not the brand's display
+ * face and not the brand's mark. The site's wordmark is Archivo Black,
+ * and a browser tab is the one piece of the brand a reader sees most
+ * often and in the smallest possible size.
+ *
+ * The mark is drawn as paths rather than as text, so it does not depend
+ * on a font being present in whatever renders it, and it does not
+ * reflow at 16px.
+ *
+ * The split is the wordmark's split: "Tools" in ink and "Wanted" in red,
+ * reduced to a single letter. The W is the red half of the wordmark, on
+ * the ink half of the tile.
+ *
+ * Two variants, because a browser's tab strip can be light or dark and
+ * the tile has to work on both. The page links the light one by default
+ * and the dark one under `prefers-color-scheme: dark`.
+ */
+const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#151210"/><path d="M8 14h9l5 22 5-22h9l-5 22 5 22h-9l-5-22-5 22H8l5-22z" fill="#d32a1c"/></svg>`;
+
+const FAVICON_DARK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#f3eee1"/><path d="M8 14h9l5 22 5-22h9l-5 22 5 22h-9l-5-22-5 22H8l5-22z" fill="#d32a1c"/></svg>`;
 
 function html(body: string, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(body, {
@@ -141,7 +163,7 @@ function notFound(env: Env): Response {
   <div class="card">
     <form method="get" action="/wish">
       <p><label for="need">Looking for a capability? Search the board for its name.</label></p>
-      <p><input class="field" id="need" name="need" placeholder="Read UK council planning PDFs as structured data" style="font-size:17px"></p>
+      <p><input class="field big" id="need" name="need" placeholder="Parse a PDF invoice into line items"></p>
       <p><button class="btn" type="submit">Search the board</button></p>
     </form>
   </div>
@@ -378,7 +400,11 @@ async function route(
     return fontResponse();
   }
   if (path === "/favicon.svg") {
-    return new Response(FAVICON, {
+    // The dark variant is served from its own path and linked in the
+    // head under `prefers-color-scheme: dark`, so a browser on a dark
+    // tab strip is not looking at an ink tile on an ink strip.
+    const dark = url.searchParams.get("scheme") === "dark";
+    return new Response(dark ? FAVICON_DARK : FAVICON, {
       headers: { "content-type": "image/svg+xml", "cache-control": "public, max-age=604800" },
     });
   }
@@ -397,7 +423,7 @@ async function route(
     });
   }
   if (path === "/llms-full.txt") {
-    return new Response(renderLlmsFull(env), {
+    return new Response(await renderLlmsFull(env), {
       headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
     });
   }
@@ -549,6 +575,7 @@ async function route(
             distinctIps: stats.distinctIps,
             clusters: stats.clusters,
             wishes: stats.wishes,
+            servers: stats.servers,
           }),
           200,
           { "cache-control": "public, max-age=3600" }
@@ -959,7 +986,7 @@ async function handleClaim(env: Env, request: Request): Promise<Response> {
   const note = String(form?.get("note") ?? "").trim().slice(0, 200);
 
   if (!slug || !repo) {
-    return new Response("Send both a wish slug and a repository URL. The slug is the last part of the wish's address on toolswanted.dev/w/, for example read-uk-council-planning-pdfs-as-structured-data.", {
+    return new Response("Send both a wish slug and a repository URL. The slug is the last part of the wish's address on toolswanted.dev/w/, for example the-slug-of-the-capability-you-are-building.", {
       status: 400,
     });
   }

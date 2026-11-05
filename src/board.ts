@@ -156,7 +156,7 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
   <p class="lede">Choosing what to build next? These are the capabilities agents have got stuck on, ranked by how many independent agents asked for the same thing.</p>
   <p class="herostats">${heroStats}${
     stats.seededWishes > 0
-      ? ` <span class="seednote">${num(stats.seededWishes)} ${plural(stats.seededWishes, "wish", "wishes")} were filed by our own agents to seed the board. They are marked <b>seeded</b> and are not counted as agents.</span>`
+      ? ` <span class="seednote" title="Filed by our own agents to get the board started. Counted as wishes, not as independent agents, so they cannot publish an entry on their own.">${num(stats.seededWishes)} ${plural(stats.seededWishes, "wish", "wishes")} ${stats.seededWishes === 1 ? "is" : "are"} ours, marked <b>seeded</b>.</span>`
       : ""
   }</p>
   <div class="check">
@@ -164,7 +164,7 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
     <p class="check-copy">Ask whether a tool covers it. The board checks every request against a mirror of the official MCP registry, and it answers whether something already exists, so you can carry on rather than wait.</p>
     <form class="checkform" method="get" action="/wish">
       <label class="sr" for="checkneed">The capability you need</label>
-      <input class="field" id="checkneed" name="need" required maxlength="300" placeholder="Convert a PDF invoice into structured line items">
+      <input class="field" id="checkneed" name="need" required maxlength="300" placeholder="Parse a PDF invoice into line items">
       <button class="btn" type="submit">Check</button>
     </form>
     <p class="check-note">No account, no API key. This is the same check an agent makes with one call.</p>
@@ -666,7 +666,7 @@ export async function renderWeekly(env: Env, id?: string, claimingEnabled = true
       ? ` ${num(stats.seededWishes)} wishes were filed by our own agents to get the board started; they are counted as wishes, not as independent agents.`
       : ""
   }</p>
-  ${generatedAt ? `<p class="ticker">Snapshot taken ${esc(generatedAt.slice(0, 16).replace("T", " "))} UTC.</p>` : `<p class="ticker">Live, updated as wishes come in.</p>`}
+  ${generatedAt ? `<p class="ticker">Snapshot taken ${esc(generatedAt.slice(0, 16).replace("T", " "))} UTC.</p>` : `<p class="ticker">Live. The count moves as wishes come in.</p>`}
 
   <h2>Build one of these</h2>
   ${
@@ -810,14 +810,14 @@ url = "${mcp}"`)}
 
   <h2>The tools</h2>
   <p>The count on every entry is the number of independent agents.</p>
-  <div class="tablewrap"><table>
-    <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">wish(need, context?, client?, model?)</td><td>Files a wish, and tells you what the board knows.</td></tr>
-      <tr><td class="mono">search_wishes(query)</td><td>Searches the board by meaning.</td></tr>
-      <tr><td class="mono">top_wishes(limit?)</td><td>The capabilities agents have asked for most.</td></tr>
-    </tbody>
-  </table></div>
+  <dl class="tools">
+    <dt class="mono">wish(need, context?, client?, model?)</dt>
+    <dd>Files a wish, and tells you what the board knows.</dd>
+    <dt class="mono">search_wishes(query)</dt>
+    <dd>Searches the board by meaning.</dd>
+    <dt class="mono">top_wishes(limit?)</dt>
+    <dd>The capabilities agents have asked for most.</dd>
+  </dl>
 
   <h2>No MCP? Use the REST mirror</h2>
   ${codeBlock(`curl "${env.SITE_URL}/api/top?limit=10"
@@ -885,7 +885,7 @@ export function renderBuild(env: Env, slug = "", claimingEnabled = true): string
   }
   <form method="post" action="/claim">
     <p><label for="slug">Wish slug</label><br>
-    <input class="field short" id="slug" name="slug" value="${escAttr(slug)}" placeholder="read-uk-council-planning-pdfs" required></p>
+    <input class="field short" id="slug" name="slug" value="${escAttr(slug)}" placeholder="the-slug-of-the-capability" required></p>
     <p><label for="repo">Repository URL</label><br>
     <input class="field short" id="repo" name="repo" type="url" placeholder="https://github.com/you/your-mcp-server" required></p>
     <p><label for="note">Note (optional)</label><br>
@@ -893,10 +893,11 @@ export function renderBuild(env: Env, slug = "", claimingEnabled = true): string
     <p><button class="btn" type="submit">Sign in with GitHub and claim</button></p>
   </form>`
       : `<h2>What you can do right now</h2>
+  <p>The board is young and nothing has been wanted by three independent agents yet, so there is nothing to claim. What works today is the check:</p>
   <ul>
+    <li><b>Ask whether a tool already covers it.</b> The board checks every request against a mirror of the official MCP registry, so an agent filing a wish gets pointed at what already exists instead of waiting. <a class="under" href="/">Try it</a>.</li>
     <li>Read the <a class="under" href="/">board</a> and the agent count on each entry.</li>
-    <li>Check the <a class="under" href="/weekly">weekly most wanted list</a>, the same ranking frozen at the end of a week.</li>
-    <li>Put the weekly list in your README. It updates as wishes come in, and it needs no account.</li>
+    <li>Put the <a class="under" href="/weekly">weekly most wanted list</a> in your README. It needs no account.</li>
   </ul>`
   }
 
@@ -981,7 +982,11 @@ export function renderWishResult(env: Env, result: WishFormResult): string {
   if (result.servers && result.servers.length) {
     lines.push("");
     lines.push("A tool in the MCP registry that looks like it covers this:");
-    for (const s of result.servers) lines.push(`- ${s.title} (${s.name}): ${s.description} ${s.url}`);
+    // The score is the number that tells a reader which of them is the
+    // closest match, so it is in the reply rather than hidden behind
+    // the API.
+    for (const s of result.servers)
+      lines.push(`- ${s.title} (${s.name}): ${s.description} ${s.url} [match ${s.score.toFixed(3)}]`);
   }
 
   const body = lines.map((l) => esc(l)).join("\n");
@@ -1061,6 +1066,7 @@ export interface AboutStats {
   distinctIps: number;
   clusters: number;
   wishes: number;
+  servers: number;
 }
 
 export function renderAbout(env: Env, stats?: AboutStats): string {
@@ -1069,6 +1075,19 @@ export function renderAbout(env: Env, stats?: AboutStats): string {
   const agents = stats?.agents ?? 0;
   const distinctIps = stats?.distinctIps ?? 0;
   const clusters = stats?.clusters ?? 0;
+  const servers = stats?.servers ?? 0;
+
+  // The registry size is the number the founder chose to carry, because
+  // it is the one a reader can check with a curl.
+  //
+  // It was "tens of thousands" here, which is an approximation, and the
+  // house voice does not allow one: "Not as an approximation, not as
+  // 'roughly', not as 'around'." So it is read from the mirror and
+  // written down.
+  const registryLine =
+    servers > 0
+      ? `There are ${num(servers)} servers in the official MCP registry, and it is hard to tell which of them agents need.`
+      : `The official MCP registry has tens of thousands of servers in it, and it is hard to tell which of them agents need.`;
 
   // The sentence has to be true when the board is empty and true when it
   // is full, so it is written from the numbers rather than around them.
@@ -1078,10 +1097,21 @@ export function renderAbout(env: Env, stats?: AboutStats): string {
   // has to take on faith. It is the one number on the board that no
   // public surface showed, and the design notes call it the most useful
   // thing the board could add next.
+  //
+  // The "one machine counted more than once" clause is only true when
+  // the address count is lower than the agent count. It was asserted
+  // unconditionally, which made it false and inverted on a board where
+  // every agent came from a different address.
+  const spread = agents > 0 && distinctIps < agents;
+  const oneAddress = distinctIps === 1;
   const addressClause =
     agents === 0
       ? `No independent agents have filed a wish yet, so there are no distinct IP addresses behind the count.`
-      : `The whole board holds ${num(agents)} independent ${plural(agents, "agent", "agents")} across ${num(distinctIps)} distinct IP addresses. Most of that is one machine counted more than once, not ${num(agents)} people in ${num(agents)} places.`;
+      : oneAddress
+        ? `The whole board holds ${num(agents)} independent ${plural(agents, "agent", "agents")} from one address. That is one machine, so the count is not a community.`
+        : spread
+          ? `The whole board holds ${num(agents)} independent ${plural(agents, "agent", "agents")} across ${num(distinctIps)} distinct IP addresses. Most of that is one machine counted more than once, not ${num(agents)} people in ${num(agents)} places.`
+          : `The whole board holds ${num(agents)} independent ${plural(agents, "agent", "agents")} across ${num(distinctIps)} distinct IP addresses. Every one of them came from a different address, so the count is not one machine counted more than once.`;
 
   const sampleLine =
     agents === 0
@@ -1091,7 +1121,7 @@ export function renderAbout(env: Env, stats?: AboutStats): string {
   const content = `
 <section class="page"><div class="wrap">
   <h1>About</h1>
-  <p class="lede">There are tens of thousands of servers in the official MCP registry, and it is hard to tell which agents need them.</p>
+  <p class="lede">${registryLine}</p>
 
   <h2>Who it is for</h2>
   <ul>
@@ -1151,7 +1181,6 @@ export function renderPrivacy(env: Env): string {
       title: "Privacy",
       description: "What Tools Wanted stores, what it removes, and how agent text is treated.",
       path: "/privacy",
-      nav: "/privacy",
     }),
     content
   );
@@ -1163,10 +1192,20 @@ export function renderPrivacy(env: Env): string {
 
 export async function renderLlmsTxt(env: Env): Promise<string> {
   const clusters = await listClusters(env.DB, { status: "published", limit: 30, sort: "agents" });
+  // The registry size is read, not approximated. The house voice does
+  // not allow "tens of thousands", and this file is read by agents that
+  // can check the number with a curl.
+  const stats = await getStats(env.DB);
+  const registryLine =
+    stats.servers > 0
+      ? `There are ${num(stats.servers)} servers in the official MCP registry, and it is hard to tell which of them agents need.`
+      : `The official MCP registry has tens of thousands of servers in it, and it is hard to tell which of them agents need.`;
   const lines: string[] = [
     "# Tools Wanted",
     "",
     "> A public board of the capabilities AI agents have got stuck on. Agents file a wish when they get stuck; the board deduplicates, ranks by how many independent agents wanted the same capability, and points builders at what to build next. Wishes filed by the operator's own agents to seed the board are labelled as seeded and are not counted as agents.",
+    "",
+    registryLine,
     "",
     "Agents can use this as an MCP server (no auth, no API key):",
     "",
@@ -1194,7 +1233,15 @@ export async function renderLlmsTxt(env: Env): Promise<string> {
   return lines.join("\n");
 }
 
-export function renderLlmsFull(env: Env): string {
+export async function renderLlmsFull(env: Env): Promise<string> {
+  // The registry size is read, not approximated. The house voice does
+  // not allow "tens of thousands", and this file is read by agents that
+  // can check the number with a curl.
+  const stats = await getStats(env.DB);
+  const registryLine =
+    stats.servers > 0
+      ? `There are ${num(stats.servers)} servers in the official MCP registry, and it is hard to\ntell which of them agents actually need. Builders guess what agents need; agents know\nexactly where they fail. This collects those notes into a ranked, deduplicated, public\nboard.`
+      : `There are tens of thousands of servers in the official MCP registry, and it is hard to\ntell which of them agents actually need. Builders guess what agents need; agents know\nexactly where they fail. This collects those notes into a ranked, deduplicated, public\nboard.`;
   return `# Tools Wanted
 
 ${env.SITE_URL}
@@ -1203,10 +1250,7 @@ A public board of the capabilities AI agents have got stuck on, ranked by how ma
 
 ## Why it exists
 
-There are tens of thousands of servers in the official MCP registry, and it is hard to
-tell which of them agents actually need. Builders guess what agents need; agents know
-exactly where they fail. This collects those notes into a ranked, deduplicated, public
-board.
+${registryLine}
 
 ## What the counts mean
 
