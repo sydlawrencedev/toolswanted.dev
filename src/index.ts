@@ -537,7 +537,23 @@ async function route(
     return cached(
       request,
       3600,
-      async () => html(renderAbout(env), 200, { "cache-control": "public, max-age=3600" }),
+      async () => {
+        // The page explains what the board's counts mean, so it carries the
+        // board's counts. They are read here rather than typed into the
+        // template, because a typed-in count is wrong the moment a wish is
+        // filed.
+        const stats = await db.getStats(env.DB);
+        return html(
+          renderAbout(env, {
+            agents: stats.agents,
+            distinctIps: stats.distinctIps,
+            clusters: stats.clusters,
+            wishes: stats.wishes,
+          }),
+          200,
+          { "cache-control": "public, max-age=3600" }
+        );
+      },
       env.VERSION_METADATA?.id,
       local
     );
@@ -738,9 +754,19 @@ async function renderOg(env: Env, name: string): Promise<Response> {
   // runs, a stale poster is not served, so the contradiction between the
   // card and the board cannot be shown to a reader.
   const cluster = await db.getClusterBySlug(env.DB, slug);
+
+  // A poster for a cluster that is not published is a share card for an
+  // entry nobody can open.
+  //
+  // The lookup only returns published clusters, so a cluster still waiting
+  // in the review queue comes back null, and the poster that was rendered
+  // for it is not served. A link preview is the first thing a reader sees
+  // and it has to be a thing that exists.
+  const unpublished = !isDefault && !cluster;
+
   const stale = !isDefault && cluster ? object.updatedAt < cluster.updated_at : false;
 
-  if (stale) {
+  if (stale || unpublished) {
     const fallback = await db.getOgImage(env.DB, "default");
     if (fallback) {
       return new Response(fallback.bytes, {
@@ -797,9 +823,13 @@ async function renderWeeklyBadge(env: Env): Promise<Response> {
 
 async function renderBadge(env: Env, slug: string): Promise<Response> {
   const cluster = await db.getClusterBySlug(env.DB, slug);
-  // A badge for a wish that does not exist is a broken image and a broken
+  // A badge for a wish that is not published is a broken image and a broken
   // link in somebody's README. It used to render "Wanted by 0 agents"
   // with a 200, which is a lie rather than a 404.
+  //
+  // The cluster lookup only returns published clusters, so a cluster still
+  // waiting in the review queue is a 404 here too. A badge is a thing a
+  // builder publishes, and it must point at something a reader can open.
   if (!cluster) {
     return new Response("Not found", {
       status: 404,

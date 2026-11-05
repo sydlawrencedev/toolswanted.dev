@@ -60,7 +60,7 @@ export const CSS = `
 @media (prefers-color-scheme:dark){
   :root{
     --paper:#100e0d; --paper-2:#1a1715; --ink:#f3eee1; --ink-soft:#a89f93;
-    --red:#ff5c4a; --red-ink:#ff7a6a; --line:#726859; --chip:#241f1c;
+    --red:#ff5c4a; --red-ink:#ff7a6a; --line:#726859; --chip:#211d1a;
     --shadow:3px 3px 0 #000;
   }
 }
@@ -70,7 +70,7 @@ html[data-theme="light"]{
 }
 html[data-theme="dark"]{
   --paper:#100e0d; --paper-2:#1a1715; --ink:#f3eee1; --ink-soft:#a89f93;
-  --red:#ff5c4a; --red-ink:#ff7a6a; --line:#726859; --chip:#241f1c; --shadow:3px 3px 0 #000;
+  --red:#ff5c4a; --red-ink:#ff7a6a; --line:#726859; --chip:#211d1a; --shadow:3px 3px 0 #000;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -325,7 +325,16 @@ a{color:inherit}
 }
 .hero h1 em{font-style:normal;color:var(--red)}
 .hero p{max-width:60ch;color:var(--ink-soft);margin:0 0 16px;font-size:17px}
+/* The hero's lede is one size larger than a page lede, because it is the
+   largest text on the site and it opens the product's one idea. The page
+   lede is set by the shared .lede rule further down. */
 .hero .lede{font-size:20px;color:var(--ink);letter-spacing:-.01em}
+/* The hero's stats line, and the seeded caveat inside it.
+   The caveat is separated from the count so it cannot be read as part of
+   it, and so it cannot grow into the sentence it used to be. */
+.hero .herostats{color:var(--ink-soft)}
+.hero .seednote{color:var(--ink-soft)}
+.hero .seednote b{color:var(--red-ink);font-weight:700}
 .btn{
   display:inline-block;background:var(--ink);color:var(--paper);text-decoration:none;
   font-weight:700;font-size:14px;padding:12px 16px;border-radius:var(--radius);
@@ -396,7 +405,12 @@ a{color:inherit}
   border-radius:99px;letter-spacing:-.02em;
 }
 .cluster h2{
-  font-family:var(--font-display);font-weight:600;letter-spacing:-.012em;line-height:1.1;
+  /* Archivo Black ships one weight, so a weight declaration here is a
+     no-op. It read 600 here and 400 on the tally, which made the title
+     look heavier than the count when they are the same face at the same
+     weight. The title is bigger than the count because of its size, not
+     its weight. */
+  font-family:var(--font-display);font-weight:400;letter-spacing:-.012em;line-height:1.1;
   margin:0;font-size:clamp(18px,2.2vw,22px);flex:1;min-width:0;color:var(--ink);
   align-self:center;
 }
@@ -455,8 +469,19 @@ a{color:inherit}
 }
 /* On a narrow screen the title wraps to three lines and the tally beside
    it left a column of wrapped words against a block of numbers, with
-   neither of them readable. Below the title the count becomes a full
-   width stamp and the title gets the whole measure. */
+   neither of them readable.
+
+   So the count moved below the title. What it must not do is become a
+   full-width black slab: measured against the title it was carrying
+   2.2 times the ink at 28px against the title's 18px, in the same face,
+   so the visual order was count-then-title while the DOM order was
+   title-then-count. The subject of the card was the second thing the eye
+   landed on, at half the weight.
+
+   So the count is a line of meta under the title now, not a slab. It is
+   still the count the eye lands on second, because it is set in the
+   display face and the title's rank badge is the only thing that
+   competes with it. */
 @media (max-width:560px){
   .cluster .topline{flex-wrap:wrap;gap:12px}
   .cluster h2{flex:1 1 100%;order:2;align-self:auto}
@@ -464,7 +489,13 @@ a{color:inherit}
   .tallybig{
     order:3;flex:1 1 100%;margin:0;
     flex-direction:row;gap:8px;align-items:baseline;justify-content:flex-start;
-    padding:8px 12px;
+    padding:0;
+    /* No slab. The number is the display face at the title's scale, and
+       the label sits beside it. The block treatment belongs to the
+       desktop rule, where the count has a column of its own. */
+    background:none;color:var(--ink);
+    font-size:clamp(18px,2.2vw,22px);
+    letter-spacing:-.012em;line-height:1.1;
     /* The number and its label are a pair that can be too wide for a
        narrow screen at a large font size: 297px at 200% zoom, against a
        320px phone. The pair wraps instead of taking the page sideways. */
@@ -473,8 +504,46 @@ a{color:inherit}
   /* On the strip the label is the same size as the number's own
      optical weight, so the pair reads as one figure and not as a
      number with a caption stuck to it. */
-  .tallybig small{margin-top:0;font-size:16px;letter-spacing:.08em}
+  .tallybig small{margin-top:0;font-size:13px;letter-spacing:.08em;color:var(--ink-soft);font-weight:700}
+  .tallybig small.addresses{font-weight:400}
   .cluster .meta{padding-top:8px}
+}
+
+/* ---------- the registry check ----------
+   The first-class action on the landing page.
+
+   It is the one thing the product does that works with no crowd, so it is
+   the thing the page leads with. The board is the reason to come back;
+   this is the reason to stay for two minutes. */
+.check{
+  border:2px solid var(--line);border-left:6px solid var(--red);
+  background:var(--paper-2);border-radius:var(--radius);
+  padding:16px;margin:0 0 24px;max-width:760px;
+}
+.check-label{
+  font-size:12px;text-transform:uppercase;letter-spacing:.12em;
+  font-weight:800;color:var(--red-ink);margin-bottom:4px;
+}
+.check-copy{margin:0 0 12px;color:var(--ink-soft);font-size:15px;max-width:60ch}
+.checkform{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* The basis is a hint, not a width. At 320px with the reader at 200%
+   zoom the effective viewport is 160px, and a 320px basis put the field
+   389px wide and took the page sideways. A zero min-width lets the field
+   shrink below its basis, which is what stops it. */
+.checkform .field{flex:1 1 240px;min-width:0;width:auto}
+.checkform .btn{flex:0 0 auto}
+.check-note{margin:8px 0 0;font-size:13px;color:var(--ink-soft)}
+@media (max-width:560px){
+  /* The basis is the field's width on one row and its height when the
+     form stacks, so it has to be reset when it stacks. Left alone it
+     made the input 320px tall.
+
+     And in a column the field's width is its content width, which is
+     the placeholder's, and that is wider than the form at 200% zoom.
+     So it is stretched to the form's width instead. */
+  .checkform{flex-direction:column;align-items:stretch}
+  .checkform .field{flex:0 0 auto;width:100%;align-self:stretch}
+  .checkform .btn{width:100%;justify-content:center}
 }
 
 /* ---------- generic page ---------- */
@@ -485,8 +554,19 @@ a{color:inherit}
 }
 .page h2{font-weight:700;font-size:20px;letter-spacing:-.01em;margin:32px 0 8px}
 .page h3{font-weight:700;font-size:17px;margin:24px 0 8px}
+/* The lede is the largest paragraph on a page.
+   It used to be set by an inline style on six pages at 19px and by
+   another inline style on two at 20px, so the size lived in the markup
+   rather than in the stylesheet, and a reader moving between pages saw a
+   one-pixel difference in the first thing they read. One rule, one
+   place. The hero sets its own size because it is not a page lede.
+
+   It sits after the muted body ink so it wins, and it is in full ink
+   because the lede is the first thing a reader reads. The muted colour
+   is for body copy. */
 .page p,.page li{color:var(--ink-soft)}
 .page p strong,.page li strong{color:var(--ink)}
+.lede{font-size:19px;color:var(--ink);letter-spacing:-.01em}
 .page code{
   /* The floor is 12px. A pre block is 13px and this used to be .92em of
      it, which is 11.96px: a rounding accident, and a violation of the
@@ -503,9 +583,9 @@ pre{
    page. The code block has its own colours rather than following the
    ink/paper swap. */
 @media (prefers-color-scheme:dark){
-  pre{background:#241f1c;color:#f3eee1;border-color:#726859}
+  pre{background:var(--chip);color:#f3eee1;border-color:var(--line)}
 }
-html[data-theme="dark"] pre{background:#241f1c;color:#f3eee1;border-color:#726859}
+html[data-theme="dark"] pre{background:var(--chip);color:#f3eee1;border-color:var(--line)}
 /* A code block inside a pre inherits the block's own colours.
    This needs to beat the inline-code rule, which sets the chip background
    and the ink colour. Without the extra specificity, inline code inside a
@@ -555,12 +635,26 @@ a.under{text-decoration:underline;text-underline-offset:4px}
 }
 .field::placeholder{color:var(--ink-soft);opacity:1}
 .field:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+/* The field on a form somebody is filling in is bigger than a field in a
+   card, because the reader is typing into it. The size used to be an
+   inline style on the two wish form fields, which put it in the markup
+   rather than in the stylesheet. */
+.field.big{font-size:17px}
+.field.short{max-width:420px}
 ul.archive{list-style:none;padding-left:0}
 ul.archive li{margin:0 0 4px}
 ul.archive li::before{content:"· ";color:var(--ink-soft)}
 
 /* ---------- cards / lists ---------- */
 .card{border:2px solid var(--line);background:var(--paper-2);border-radius:var(--radius);padding:20px;margin:0 0 20px}
+/* A heading that opens a card sits at the card's own top edge, so it
+   does not carry the page's heading margin. The rule used to be an
+   inline style on three headings on the cluster page, which meant the
+   markup had to know about the spacing. */
+.card > h2:first-child{margin-top:0}
+/* The context line under a grouped wish is secondary to the wish text
+   itself, so it is in the muted ink. */
+.context{color:var(--ink-soft)}
 
 /* ---------- the quiet register ----------
    A work surface: the admin panel, where the reader is one person doing a
@@ -583,6 +677,25 @@ ul.archive li::before{content:"· ";color:var(--ink-soft)}
 .foot nav{margin-left:auto;display:flex;gap:12px;flex-wrap:wrap}
 .foot nav a{font-size:13px;font-weight:700;text-decoration:none;color:var(--ink-soft);padding:12px 0;display:inline-block;min-height:44px}
 .foot nav a:hover{color:var(--ink);text-decoration:underline}
+/* The theme control.
+   It used to be a script looking for a button that did not exist, and a
+   localStorage read that applied a preference the reader could not see,
+   could not change and could not clear. A reader with a stale value was
+   pinned to a theme that ignored their system preference with no way
+   back except devtools.
+
+   So the button exists, and the control next to it clears the override
+   and hands the choice back to the system. */
+.foottheme{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-basis:100%;margin-top:12px}
+.themebtn{
+  font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
+  padding:12px 16px;min-height:44px;
+  background:var(--paper-2);color:var(--ink);
+  border:1px solid var(--line);border-radius:var(--radius);
+}
+.themebtn:hover{background:var(--chip)}
+.themebtn:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.themeclear{font-weight:400;color:var(--ink-soft)}
 
 /* ---------- misc ---------- */
 .snippet{margin:24px 0 0;border:2px solid var(--line);border-radius:var(--radius);background:var(--paper-2);padding:16px}
@@ -615,8 +728,19 @@ ul.archive li::before{content:"· ";color:var(--ink-soft)}
   display:block;
   /* A long snippet needs to wrap rather than run under the button. The
      markdown badge snippet is 130 characters and was disappearing
-     behind the copy control. */
-  white-space:pre-wrap;word-break:break-all;
+     behind the copy control.
+
+     word-break:break-all stopped the run-under, but it also broke
+     words mid-syllable. Measured at 320px, the install snippet rendered
+     as 25 lines with 24 of them broken mid-word: "MC/P",
+     "toolswa|nted.dev", "pub/lic", "capabiliti|es". The URL, the one
+     thing in the snippet a reader has to transcribe correctly, was
+     broken in half.
+
+     overflow-wrap:anywhere breaks a word only when it cannot fit on a
+     line by itself, so prose breaks at spaces and a single long token
+     still breaks rather than running under the button. */
+  white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;
 }
 .copybtn{
   grid-column:2;grid-row:1;
@@ -817,7 +941,28 @@ ${meta.noindex ? '<meta name="robots" content="noindex,nofollow">' : '<meta name
 <link rel="stylesheet" href="${escAttr(styleHref)}">
 <link rel="stylesheet" href="${escAttr(fontHref)}">
 <link rel="preload" href="${escAttr(fontHref)}" as="style">
-<script>try{var t=localStorage.getItem('tw-theme');if(t)document.documentElement.setAttribute('data-theme',t);var b=document.getElementById('themebtn');if(b)b.onclick=function(){var c=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',c);localStorage.setItem('tw-theme',c);};}catch(e){}</script>
+<script>try{
+  var t=localStorage.getItem('tw-theme');
+  if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);
+  var b=document.getElementById('themebtn');
+  if(b){
+    var dark=document.documentElement.getAttribute('data-theme')==='dark';
+    b.textContent=dark?'Light mode':'Dark mode';
+    b.onclick=function(){
+      var now=document.documentElement.getAttribute('data-theme');
+      var next=now==='dark'?'light':'dark';
+      document.documentElement.setAttribute('data-theme',next);
+      localStorage.setItem('tw-theme',next);
+      b.textContent=next==='dark'?'Light mode':'Dark mode';
+    };
+  }
+  var d=document.getElementById('themeclear');
+  if(d)d.onclick=function(){
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.removeItem('tw-theme');
+    if(b)b.textContent='Dark mode';
+  };
+}catch(e){}</script>
 ${meta.extraHead ?? ""}
 </head>
 <body>
@@ -833,6 +978,10 @@ ${content}
     <a href="/agents">Agents</a><a href="/api/top">API</a><a href="/llms.txt">llms.txt</a>
     <a href="/feed.xml">RSS</a><a href="/privacy">Privacy</a><a href="/about">About</a>
   </nav>
+  <div class="foottheme">
+    <button type="button" id="themebtn" class="themebtn">Dark mode</button>
+    <button type="button" id="themeclear" class="themebtn themeclear">Use my system theme</button>
+  </div>
 </div></footer>
 ${COPY_SCRIPT}
 ${STICKY_SCRIPT}

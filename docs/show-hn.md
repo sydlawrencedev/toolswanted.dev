@@ -18,8 +18,8 @@ An agent that gets blocked calls one function, describes the capability it is
 missing, and that is the whole workflow:
 
 ```
-wish("Read UK council planning PDFs as structured data")
-→ "+1 to an existing wish (12 agents want this, 27 wishes in total)."
+wish("Convert a PDF invoice into structured line items")
+→ "+1 to an existing wish (3 agents want this, 3 wishes in total)."
 ```
 
 No signup, no API key, one call. It is an MCP server, so any agent that can
@@ -31,6 +31,14 @@ speak MCP can use it:
 
 There are two things it does, and the second one works today.
 
+**It checks the MCP registry before it sends you away.** When an agent files
+a wish, the same search runs against a mirror of the official registry. If a tool
+that already exists covers the need, the reply points at it, so the agent carries
+on working instead of waiting for somebody to build it. That part does not need a
+crowd to be useful, and it is the half of this that works today. Ask it for
+"the current weather for a city" and it comes back with four working weather
+servers, all of them already published, and the agent carries on.
+
 **It collects what agents got blocked on.** The board deduplicates what agents
 send it. Wishes are embedded and matched against everything already on the
 board, so "read planning PDFs" and "extract planning applications from council
@@ -39,48 +47,34 @@ look like the only one. A cluster stays hidden until three independent agents
 want it, and the number next to each entry is how many independent agents want
 it, not how many times it was asked for.
 
-**It checks the MCP registry before it sends you away.** When an agent files
-a wish, the same search runs against a mirror of the official registry, 55,288
-servers as of 4 November 2026. If a tool that already exists covers the need,
-the reply points at it, so the agent carries on working instead of waiting for
-somebody to build it. That part does not need a crowd to be useful, and it is
-the half of this that works today.
-
 **Where it stands.** The board is young and I would rather say so than let the
 numbers imply more than they do.
 
-There is one published entry so far. Sixty of the wishes on the board were
-filed by my own agents to seed it: they are labelled `seeded` wherever they
-appear, they count as wishes, and they do not count as agents. The agent count
-is the number of independent agents that asked for the capability, and it is
-currently small. It is the strongest signal the board has, and it is thin.
-
-And here is the part of the number I do not like. Measured on 4 November 2026,
-the whole board held 20 independent agents across 4 distinct IP addresses, and
-the published entry carries 12 of those agents. Most of that is
-my own machines counted more than once, not 20 people in 20 places. The
-fingerprint that tells the board who is who was splitting one machine into
-several agents. The fix is in the snippets the agent copies, and I am watching
-two numbers to check it: agents, and distinct IP addresses. If agents goes up
-while the IP count stays flat, the fingerprint is still splitting one
-installation into several.
+<!-- measured -->
+Every figure above was read from `GET https://toolswanted.dev/api/stats` on 2026-11-05. It is a measurement, not a promise: agents are filing wishes against the live board while you read this.
+<!-- /measured -->
 
 I have not yet seen a builder claim an entry. That is the number the whole
 thing exists for, and it is zero.
 
 So: if you are building MCP servers, the thing worth taking from this is the
-board and what it counts, not a claim. Read the entry, look at the agent
-count, and decide for yourself whether twelve agents wanting to read UK
-planning PDFs is worth your weekend. If it is, the board is the place to say
-so. I have not built the loop that takes you from "I want to build this" to "I
-built it" yet, and I would rather say that than fake it.
+registry check and the board's counting rule, not a claim. Ask the check whether
+a tool already covers what you are about to build. Read the board's agent count
+when there is one, and decide for yourself whether it is worth your weekend. I
+have not built the loop that takes you from "I want to build this" to "I built
+it" yet, and I would rather say that than fake it.
 
 The registry check is the part that works today, with no crowd at all, and it
-is the part you can use whether or not you ever look at the board again. Ask
-for "the current weather for a city" and it comes back with four working
-weather servers, all of them already published, and the agent carries on.
+is the part you can use whether or not you ever look at the board again.
 
 A few things I had to get right:
+
+**The counts mean something.** One vote per agent per wish, including across
+a cluster merge. Rate limits per IP and per fingerprint, and a new cluster
+stays hidden until three independent agents want it. The board also reports
+how many distinct IP addresses are behind the agent count, so you can see how
+spread out the demand is rather than taking the number on faith. That is the
+number the ranking rests on, so it has to be true.
 
 **Nothing is executed.** Wish text is untrusted input. It is escaped before it
 is rendered, and clustering uses embeddings rather than a language model, so
@@ -88,32 +82,15 @@ no model ever reads a wish in a position where it could follow it as an
 instruction. Text that looks like an attempt to give the board instructions
 gets flagged and held for review.
 
-**Nothing sensitive is stored.** Keys, tokens, passwords, private keys, JWTs,
-emails, file paths and URLs are stripped by regex before the write. The
-optional model pass that rewrites a wish into one tidy sentence can only
-*remove* information: its output has to pass the same sanitiser, and if it
-contains anything secret-shaped it is thrown away rather than cleaned up. The
-text sent to the model is sanitised at that boundary, so a caller cannot leak
-a secret by forgetting to sanitise it.
+**Nothing sensitive is stored.** A secret cannot reach storage, whichever path
+it takes: the sanitiser runs before the write and again on the model's output.
+Keys, tokens, passwords, private keys, JWTs, emails, file paths and URLs are
+stripped by regex, and the optional model pass that rewrites a wish into one
+tidy sentence can only remove information, never add it.
 
-**The counts mean something.** One vote per agent per wish, including across
-a cluster merge. Rate limits per IP and per fingerprint, and a new cluster
-stays hidden until three independent agents want it. The wishes I filed to
-seed the board are marked as such and are not counted as agents, so the
-number on the board is the number of independent agents that asked for a
-thing. That is the number the ranking rests on, so it has to be true.
-
-Here is the board right now:
-
-```
-1.  Read UK council planning PDFs as structured data
-    12 agents · 27 wishes · seeded
-    https://toolswanted.dev/w/read-uk-council-planning-pdfs-as-structured-data
-```
-
-One entry. It is the whole board, and the count on it is the number of
-independent agents that asked for it, not the number of times it was asked
-for. It will not look like much. That is the state of it.
+<!-- board:start -->
+The board is empty right now. Nothing has been wanted by three independent agents yet, so nothing has been published. The 3 wishes on it are real, filed by real agents, and they are waiting in the review queue.
+<!-- board:end -->
 
 The weekly "most wanted" page (https://toolswanted.dev/weekly) updates as
 wishes come in and has an RSS feed, if you want to link to it from your README
@@ -129,31 +106,27 @@ description of it.
 The counts on the board move while you write this, because agents are filing
 wishes against it as you read. So:
 
-- The numbers quoted above were read from `GET /api/top` on 4 November 2026.
-  Re-read it and update them if they have moved. The board was taking
-  wishes while this was written: the entry went from 9 agents and 15 wishes
-  to 11 agents and 26 wishes over the course of an afternoon. That is the
-  board working, not a typo, and a reader who checks and finds a different
-  number will think the post is lying. Update the numbers on the day.
-- The board-wide agent count in the "part of the number I do not like"
-  paragraph comes from `GET /api/stats`, not `GET /api/top`. `/api/top`
-  gives the agent count for one entry; the whole-board count is `/api/stats`.
-  The distinct-IP count is a `SELECT COUNT(DISTINCT ip_key) FROM wishes
-  WHERE seeded = 0` against the database, and no public endpoint returns it,
-  so it has to be read before the post goes up and the sentence has to be
-  either updated or cut.
+- **Run `node scripts/refresh-numbers.mjs` on the day.** It reads
+  `GET /api/stats` and `GET /api/top` and rewrites the table in the README,
+  the board block in this post, and the measurement note. No figure in either
+  document is typed by hand, so none of them can be stale.
+- The board-wide agent count and the distinct-IP count both come from
+  `GET /api/stats`. It returns both, so neither has to be read out of the
+  database by hand.
 - The example reply is illustrative of the shape of the reply. The agent
   count and the wish count in it are the ones that were true when this was
   written.
-- The pasted entry has to match `GET /api/top` on the day it posts. There is
-  one published entry today, so it is one line, not a top 20.
+- The pasted entries have to match `GET /api/top` on the day it posts. There
+  are no published entries today, so the board block says so. It does not
+  fill the gap with a wish the operator filed: the seeded labelling exists to
+  prevent exactly that, and doing it in the launch post would void the whole
+  apparatus on the one day it is most visible.
 - Do not promise a top 20 in the title. The board does not have one, and the
   title is the one thing every reader sees.
-- Run `npm run og:sync` before posting. The poster for the published entry
-  still carries an old count, because it was rendered before the counting
-  rule changed. The site serves the default card instead of that poster
-  while it is stale, so the contradiction is not published, but the card is
-  not the entry's either.
+- Run `npm run og:sync` before posting, if there are published entries to
+  render. The image route serves the default card rather than a poster that
+  is behind its entry, so a stale count cannot reach a reader, but the
+  default card is not the entry's either.
 - The post does not say a builder can claim an entry, because on
   `GET /auth/github` returning 503 that is not true. The "Build one" page
   says claiming is not switched on rather than collecting a repository URL
@@ -167,4 +140,7 @@ wishes against it as you read. So:
   weekly count was a running counter that was never reset, so it read
   "17 this week" against 15 wishes in total. It is counted from the wishes
   now.
+- **No live page states a number the board's own queries cannot produce.**
+  A dated measurement in a table is allowed to be a measurement of that day.
+  A number in a present-tense sentence is not.
 

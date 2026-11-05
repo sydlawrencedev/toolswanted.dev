@@ -52,7 +52,47 @@ export async function getClusterById(db: D1Database, id: string): Promise<Cluste
     .first<Cluster>();
 }
 
-export async function getClusterBySlug(db: D1Database, slug: string): Promise<Cluster | null> {
+/**
+ * A cluster by its slug, for the public surfaces.
+ *
+ * Only a published cluster is public.
+ *
+ * It used to return any cluster with that slug, whatever its status, so a
+ * cluster that was still waiting in the review queue was readable at
+ * `/w/{slug}`, served at `/api/cluster/{slug}` and turned up in
+ * `/api/search` results. The board's own list hid it, and the publish rule
+ * said three independent agents were needed, so a reader could find and read
+ * an entry that had not met the rule. The threshold was theatre.
+ *
+ * That is a correctness defect on its own, and it is what made seeding
+ * unsafe: a seeded wish would create a pending cluster that a reader could
+ * find and read, which is exactly what the seeded labelling exists to
+ * prevent.
+ *
+ * The admin surfaces need the other behaviour, so they use
+ * `getClusterById` or query the status they need directly.
+ */
+export async function getClusterBySlug(
+  db: D1Database,
+  slug: string,
+  status = "published"
+): Promise<Cluster | null> {
+  return db
+    .prepare(`SELECT ${CLUSTER_COLUMNS} FROM clusters WHERE slug = ? AND status = ?`)
+    .bind(slug, status)
+    .first<Cluster>();
+}
+
+/**
+ * A cluster by its slug, whatever its status.
+ *
+ * Only for the admin and moderation surfaces, which need to see the review
+ * queue. A public surface that calls this can leak an unpublished entry.
+ */
+export async function getClusterBySlugAnyStatus(
+  db: D1Database,
+  slug: string
+): Promise<Cluster | null> {
   return db
     .prepare(`SELECT ${CLUSTER_COLUMNS} FROM clusters WHERE slug = ?`)
     .bind(slug)
@@ -305,6 +345,49 @@ export async function getClientBreakdown(
     const list = out.get(row.cluster_id) ?? [];
     list.push({ client: row.client, count: row.count, total: row.total });
     out.set(row.cluster_id, list);
+  }
+  return out;
+}
+
+/**
+ * How many distinct addresses each cluster's wishes came from.
+ *
+ * This is the number that makes the agent count judgeable rather than a
+ * figure a reader has to take on faith.
+ *
+ * The board counts independent agents by fingerprint, and a fingerprint
+ * splits one machine into several agents. On 3 November 2026 the board held
+ * 18 independent agents across 4 distinct IP addresses, and the published
+ * entry carried 10 of those agents from 4 addresses. Ten fingerprints from
+ * four addresses is not ten people, and a builder deciding what to build
+ * needs to know that before they commit a week.
+ *
+ * It is one windowed query over the visible clusters, the same shape as
+ * `getClientBreakdown`. It cannot be one query per card: the board render
+ * is on the free tier's 10ms CPU budget.
+ *
+ * Seeded wishes are excluded, matching the agent count's rule exactly. A
+ * wish the operator filed is not demand and it does not come from an
+ * address in the world.
+ */
+export async function getAddressBreakdown(
+  db: D1Database,
+  clusterIds: string[]
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  if (clusterIds.length === 0) return out;
+  const placeholders = clusterIds.map(() => "?").join(",");
+  const { results } = await db
+    .prepare(
+      `SELECT cluster_id, COUNT(DISTINCT ip_key) AS addresses
+         FROM wishes
+        WHERE seeded = 0 AND ip_key IS NOT NULL AND cluster_id IN (${placeholders})
+        GROUP BY cluster_id`
+    )
+    .bind(...clusterIds)
+    .all<{ cluster_id: string; addresses: number }>();
+  for (const row of results ?? []) {
+    out.set(row.cluster_id, row.addresses);
   }
   return out;
 }
@@ -588,9 +671,11 @@ export async function getStats(db: D1Database): Promise<{
   clusters: number;
   wishes: number;
   agents: number;
+  distinctIps: number;
   seededWishes: number;
   shipped: number;
   pending: number;
+  servers: number;
 }> {
   const row = await db
     .prepare(
@@ -598,26 +683,32 @@ export async function getStats(db: D1Database): Promise<{
          (SELECT COUNT(*) FROM clusters WHERE status = 'published') AS clusters,
          (SELECT COUNT(*) FROM wishes) AS wishes,
          (SELECT COUNT(DISTINCT source_key) FROM wishes WHERE seeded = 0) AS agents,
+         (SELECT COUNT(DISTINCT ip_key) FROM wishes WHERE seeded = 0) AS distinctIps,
          (SELECT COUNT(*) FROM wishes WHERE seeded = 1) AS seededWishes,
          (SELECT COUNT(*) FROM clusters WHERE shipped = 1) AS shipped,
-         (SELECT COUNT(*) FROM clusters WHERE status = 'pending') AS pending`
+         (SELECT COUNT(*) FROM clusters WHERE status = 'pending') AS pending,
+         (SELECT COUNT(*) FROM servers) AS servers`
     )
     .first<{
     clusters: number;
     wishes: number;
     agents: number;
+    distinctIps: number;
     seededWishes: number;
     shipped: number;
     pending: number;
+    servers: number;
   }>();
   return (
     row ?? {
       clusters: 0,
       wishes: 0,
       agents: 0,
+      distinctIps: 0,
       seededWishes: 0,
       shipped: 0,
       pending: 0,
+      servers: 0,
     }
   );
 }

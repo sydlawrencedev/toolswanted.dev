@@ -117,3 +117,63 @@
     - projects/tools-wanted
   last_accessed: "2026-11-03"
   access_count: 1
+
+- id: tw-011
+  fact: "The publish gate leaks. /w/{slug} is served through getClusterBySlug (src/db.ts:55) with no status filter, so a pending, unpublished cluster is publicly readable, appears in /api/search results with a live URL, and is served at /api/cluster/{slug}. The board's own list hides the same cluster. Measured on production 5 November 2026."
+  category: status
+  timestamp: "2026-11-05"
+  source: "2026-11-05"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-05"
+  access_count: 1
+
+- id: tw-012
+  fact: "The board was reset on 4 November 2026. As of 5 November 2026 production reports 0 published clusters, 0 seeded wishes, 0 shipped and 3 unseeded pending wishes (one from the brand review's weather probe, two from the founder direction review). The board is empty of published entries but it is accumulating real unseeded wishes: it is unproven, not dead."
+  category: status
+  timestamp: "2026-11-05"
+  source: "2026-11-05"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-05"
+  access_count: 1
+
+- id: tw-013
+  fact: "Founder decisions of 5 November 2026, recorded in reviews/product-direction.md. Seeding: seeded wishes stay visible and labelled, the ranking is computed over unseeded wishes only, the seeded count is a separate 'ours' stamp and never a rank, and a cluster with zero unseeded wishes never appears in the published board. Threshold: three holds, it does not move. The registry check becomes the first-class hero action. The distinct-IP count ships now, on the card and on /about, with distinctIps added to /api/stats. Launch: six gates, including no live page may state a number the board's own queries cannot produce; GitHub OAuth, a ranking and a claim are not launch gates."
+  category: decision
+  timestamp: "2026-11-05"
+  source: "2026-11-05"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-05"
+  access_count: 1
+
+- id: tw-014
+  fact: "The registry check was verified working end to end on production on 5 November 2026. Filing 'Convert a PDF invoice into structured line items' returned four real, already-published MCP servers with scores from 0.683 down to 0.629. The wedge needs no crowd and no builder, and it is the only part of the product that works with an empty board."
+  category: status
+  timestamp: "2026-11-05"
+  source: "2026-11-05"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-05"
+  access_count: 1
+
+- id: tw-015
+  fact: "The stale OG poster is not being served. The image route already falls back to the default card when a poster is behind its entry, and sends x-og-default: 1 and x-og-stale: 1. The design review's finding that the stale poster still reaches readers was wrong on that point. The stale poster is still in the database and still has to be re-rendered, but it is not a launch blocker."
+  category: status
+  timestamp: "2026-11-05"
+  source: "2026-11-05"
+  status: active
+  superseded_by: null
+  related_entities:
+    - projects/tools-wanted
+  last_accessed: "2026-11-05"
+  access_count: 1
