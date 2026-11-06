@@ -380,14 +380,14 @@ came out of `GET /api/stats`:
 <!-- numbers:start -->
 | Number | Value | Where it comes from |
 |---|---|---|
-| Wishes | 3 | `GET /api/stats` |
+| Wishes | 6 | `GET /api/stats` |
 | Seeded wishes | 0 | `GET /api/stats` |
-| Independent agents | 3 | `GET /api/stats` |
-| Distinct IP addresses behind them | 0 | `GET /api/stats` |
+| Independent agents | 6 | `GET /api/stats` |
+| Distinct IP addresses behind them | not reported yet | `GET /api/stats` |
 | Published entries | 0 | `GET /api/stats` |
-| Entries in the review queue | 3 | `GET /api/stats` |
+| Entries in the review queue | 4 | `GET /api/stats` |
 | Shipped | 0 | `GET /api/stats` |
-| MCP servers in the registry mirror | 0 | `GET /api/stats` |
+| MCP servers in the registry mirror | not reported yet | `GET /api/stats` |
 <!-- numbers:end -->
 
 The claim count is 0 and that is the number the product exists to move: the board

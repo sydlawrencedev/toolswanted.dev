@@ -1009,6 +1009,7 @@ ${meta.noindex ? '<meta name="robots" content="noindex,nofollow">' : '<meta name
           document.documentElement.setAttribute('data-theme',next);
           localStorage.setItem('tw-theme',next);
           b.textContent=label();
+          showClear();
         };
       }
       var d=document.getElementById('themeclear');
@@ -1016,7 +1017,23 @@ ${meta.noindex ? '<meta name="robots" content="noindex,nofollow">' : '<meta name
         document.documentElement.removeAttribute('data-theme');
         localStorage.removeItem('tw-theme');
         if(b)b.textContent=label();
+        showClear();
       };
+      showClear();
+    }
+    // The clear control only appears when there is an override to clear.
+    //
+    // It used to sit beside the toggle on every page, always visible,
+    // for every reader. For the majority, who have never touched the
+    // toggle, clicking it did nothing at all, because there was no
+    // override to undo. A control that asks a reader to do something
+    // that has no effect is a control that has to be explained, and it
+    // is not worth the space.
+    function showClear(){
+      var d=document.getElementById('themeclear');
+      if(!d)return;
+      var has=localStorage.getItem('tw-theme')!==null;
+      d.style.display=has?'inline-block':'none';
     }
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire);
     else wire();

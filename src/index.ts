@@ -65,21 +65,26 @@ import { isoWeekId, num, weekStart, countWithVerb, type Env } from "./types";
  * and a browser tab is the one piece of the brand a reader sees most
  * often and in the smallest possible size.
  *
- * The mark is drawn as paths rather than as text, so it does not depend
+ * The mark is drawn as a path rather than as text, so it does not depend
  * on a font being present in whatever renders it, and it does not
  * reflow at 16px.
  *
- * The split is the wordmark's split: "Tools" in ink and "Wanted" in red,
- * reduced to a single letter. The W is the red half of the wordmark, on
- * the ink half of the tile.
+ * The path is the real Archivo Black "W", taken from the glyph outline
+ * in `assets/fonts/ArchivoBlack-Regular.ttf` that the site already
+ * ships, and scaled to a 50px width on the 64px grid. It was not
+ * hand-written: the first attempt traced a letter that read as an X, and
+ * a tab icon is too small to argue with.
  *
  * Two variants, because a browser's tab strip can be light or dark and
  * the tile has to work on both. The page links the light one by default
  * and the dark one under `prefers-color-scheme: dark`.
  */
-const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#151210"/><path d="M8 14h9l5 22 5-22h9l-5 22 5 22h-9l-5-22-5 22H8l5-22z" fill="#d32a1c"/></svg>`;
+const FAVICON_PATH =
+  "M36.6 56L32.1 34.84L31.9 34.84L27.4 56H15.13L7 21.25H18.62L22.61 40.95H22.81L26.75 21.25H37.76L41.95 40.95H42.15L45.89 21.25H57L48.87 56Z";
 
-const FAVICON_DARK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#f3eee1"/><path d="M8 14h9l5 22 5-22h9l-5 22 5 22h-9l-5-22-5 22H8l5-22z" fill="#d32a1c"/></svg>`;
+const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#151210"/><path d="${FAVICON_PATH}" fill="#d32a1c"/></svg>`;
+
+const FAVICON_DARK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#f3eee1"/><path d="${FAVICON_PATH}" fill="#d32a1c"/></svg>`;
 
 function html(body: string, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(body, {
@@ -163,7 +168,7 @@ function notFound(env: Env): Response {
   <div class="card">
     <form method="get" action="/wish">
       <p><label for="need">Looking for a capability? Search the board for its name.</label></p>
-      <p><input class="field big" id="need" name="need" placeholder="Parse a PDF invoice into line items"></p>
+      <p><input class="field big" id="need" name="need" placeholder="Parse an invoice"></p>
       <p><button class="btn" type="submit">Search the board</button></p>
     </form>
   </div>

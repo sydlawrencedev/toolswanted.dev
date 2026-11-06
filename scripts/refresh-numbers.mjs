@@ -91,36 +91,50 @@ const top = await fetchTop();
  * wrote "Distinct IP addresses behind them | 0" and "MCP servers in the
  * registry mirror | 0" while production's database said 2 and 55,289.
  *
- * A missing field is written as "not reported yet" and the script says
- * so, loudly, and exits non-zero, because the point of the script is
- * that no figure in the document is a guess.
+ * So a missing field is never written as a number. It is written as
+ * "not reported yet", which is what is true, and the row keeps its
+ * place so the table does not change shape between deployments. And the
+ * script says which fields it could not read, so nobody mistakes "not
+ * reported yet" for a figure.
+ *
+ * The script still refuses to write a number it cannot read. A zero is
+ * a number, and a wrong zero in a table whose next column says where
+ * the number came from is worse than an absence.
  */
 const REQUIRED = ["wishes", "agents", "distinctIps", "seededWishes", "clusters", "pending", "shipped", "servers"];
 
 const missing = REQUIRED.filter((f) => stats[f] === undefined || stats[f] === null);
+
 if (missing.length) {
-  console.error(
+  console.warn(
     `${base}/api/stats does not report: ${missing.join(", ")}.\n` +
-      `The deployment is older than the code that added those fields, so their values\n` +
-      `cannot be written down. Deploy the branch, or point the script at a deployment\n` +
-      `that has it. Nothing was written.`
+      `Those fields are written as "not reported yet" rather than as a number.\n` +
+      `Deploy the branch, or point the script at a deployment that has them.`
   );
-  process.exit(1);
 }
+
+/**
+ * A figure, or the words that say there is not one.
+ *
+ * A missing field is never a zero. Zero is a figure the board can
+ * produce, and it is a very different claim from "this deployment does
+ * not report this".
+ */
+const figure = (field) => (missing.includes(field) ? "not reported yet" : num(stats[field]));
 
 const rows = top.wishes ?? [];
 const entries = rows.length;
 
 const table = `| Number | Value | Where it comes from |
 |---|---|---|
-| Wishes | ${num(stats.wishes)} | \`GET /api/stats\` |
-| Seeded wishes | ${num(stats.seededWishes)} | \`GET /api/stats\` |
-| Independent agents | ${num(stats.agents)} | \`GET /api/stats\` |
-| Distinct IP addresses behind them | ${num(stats.distinctIps)} | \`GET /api/stats\` |
-| Published entries | ${num(stats.clusters)} | \`GET /api/stats\` |
-| Entries in the review queue | ${num(stats.pending)} | \`GET /api/stats\` |
-| Shipped | ${num(stats.shipped)} | \`GET /api/stats\` |
-| MCP servers in the registry mirror | ${num(stats.servers)} | \`GET /api/stats\` |`;
+| Wishes | ${figure("wishes")} | \`GET /api/stats\` |
+| Seeded wishes | ${figure("seededWishes")} | \`GET /api/stats\` |
+| Independent agents | ${figure("agents")} | \`GET /api/stats\` |
+| Distinct IP addresses behind them | ${figure("distinctIps")} | \`GET /api/stats\` |
+| Published entries | ${figure("clusters")} | \`GET /api/stats\` |
+| Entries in the review queue | ${figure("pending")} | \`GET /api/stats\` |
+| Shipped | ${figure("shipped")} | \`GET /api/stats\` |
+| MCP servers in the registry mirror | ${figure("servers")} | \`GET /api/stats\` |`;
 
 /* ------------------------------------------------------------------ *
  * The README
@@ -143,7 +157,7 @@ readme = readme.replace(
 );
 
 writeFileSync(readmePath, readme);
-console.log(`README.md: ${stats.wishes} wishes, ${stats.agents} agents, ${entries} published`);
+console.log(`README.md: ${figure("wishes")} wishes, ${figure("agents")} agents, ${entries} published`);
 
 /* ------------------------------------------------------------------ *
  * The launch post
@@ -163,7 +177,6 @@ const boardBlock =
           return `${w.agents}.  ${w.title}\n    ${w.agents} agents · ${w.wishes} wishes${s}\n    ${base}/w/${w.slug}`;
         })
         .join("\n");
-
 post = replaceBetween(
   post,
   "<!-- board:start -->",
@@ -172,16 +185,43 @@ post = replaceBetween(
   "docs/show-hn.md"
 );
 
-// The registry size is the post's headline number, so it is written
-// from the same source as the table rather than typed.
+// The registry size is the post's headline number, so it is written from
+// the same source as the table rather than typed.
 //
 // It was "tens of thousands", which is an approximation, and the house
 // voice does not allow one: "Not as an approximation, not as 'roughly',
 // not as 'around'."
-post = post.replace(
-  /There are [\d,]+ servers in the official MCP registry/,
-  `There are ${num(stats.servers)} servers in the official MCP registry`
-);
+//
+// The replacement is checked rather than assumed. The first version
+// used a regex that only matched a figure, so when the post said "tens
+// of thousands" the replace silently did nothing and the script
+// reported success. A script that reports success and writes nothing is
+// the same class of defect the script exists to remove.
+//
+// When the deployment does not report the count, the sentence is left
+// alone and the script says so, because a figure it cannot read is not
+// one it is allowed to write.
+const registryPattern =
+  /There are (?:[\d,]+ servers|tens of thousands of servers) in the official MCP registry/;
+if (!registryPattern.test(post)) {
+  console.error(
+    "docs/show-hn.md: the registry size sentence was not found, so it was not rewritten.\n" +
+      "The script needs a sentence matching:\n" +
+      "  There are <figure> servers in the official MCP registry"
+  );
+  process.exit(1);
+}
+if (!missing.includes("servers")) {
+  post = post.replace(
+    registryPattern,
+    `There are ${num(stats.servers)} servers in the official MCP registry`
+  );
+} else {
+  console.warn(
+    "docs/show-hn.md: the registry size was left as it was, because this\n" +
+      "deployment does not report it. Run the script again after deploying."
+  );
+}
 
 post = post.replace(
   /<!-- measured -->[\s\S]*?<!-- \/measured -->/,

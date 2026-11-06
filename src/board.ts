@@ -164,7 +164,7 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
     <p class="check-copy">Ask whether a tool covers it. The board checks every request against a mirror of the official MCP registry, and it answers whether something already exists, so you can carry on rather than wait.</p>
     <form class="checkform" method="get" action="/wish">
       <label class="sr" for="checkneed">The capability you need</label>
-      <input class="field" id="checkneed" name="need" required maxlength="300" placeholder="Parse a PDF invoice into line items">
+      <input class="field" id="checkneed" name="need" required maxlength="300" placeholder="Parse an invoice">
       <button class="btn" type="submit">Check</button>
     </form>
     <p class="check-note">No account, no API key. This is the same check an agent makes with one call.</p>
@@ -1098,25 +1098,34 @@ export function renderAbout(env: Env, stats?: AboutStats): string {
   // public surface showed, and the design notes call it the most useful
   // thing the board could add next.
   //
-  // The "one machine counted more than once" clause is only true when
-  // the address count is lower than the agent count. It was asserted
-  // unconditionally, which made it false and inverted on a board where
-  // every agent came from a different address.
+  // Three branches, because the claim is different in each:
+  //
+  // - One address means one machine, whatever the agent count says.
+  // - Fewer addresses than agents means one machine counted more than
+  //   once.
+  // - As many addresses as agents means every agent came from a
+  //   different place.
+  //
+  // The "not N people in N places" clause used to be asserted
+  // unconditionally, which made it false and ungrammatical on a board
+  // where the two numbers were equal. It is only said when it is true,
+  // and it is pluralised.
   const spread = agents > 0 && distinctIps < agents;
   const oneAddress = distinctIps === 1;
+
   const addressClause =
     agents === 0
       ? `No independent agents have filed a wish yet, so there are no distinct IP addresses behind the count.`
       : oneAddress
         ? `The whole board holds ${num(agents)} independent ${plural(agents, "agent", "agents")} from one address. That is one machine, so the count is not a community.`
         : spread
-          ? `The whole board holds ${num(agents)} independent ${plural(agents, "agent", "agents")} across ${num(distinctIps)} distinct IP addresses. Most of that is one machine counted more than once, not ${num(agents)} people in ${num(agents)} places.`
+          ? `The whole board holds ${num(agents)} independent ${plural(agents, "agent", "agents")} across ${num(distinctIps)} distinct IP addresses. Most of that is one machine counted more than once, not ${num(agents)} ${plural(agents, "person", "people")} in ${num(agents)} ${plural(agents, "place", "places")}.`
           : `The whole board holds ${num(agents)} independent ${plural(agents, "agent", "agents")} across ${num(distinctIps)} distinct IP addresses. Every one of them came from a different address, so the count is not one machine counted more than once.`;
 
   const sampleLine =
     agents === 0
       ? `Nothing has been published yet. A cluster needs three independent agents to appear publicly, so the board is empty until three of them want the same thing. ${addressClause} The count is not the size of a community.`
-      : `The sample is thin. A cluster needs three independent agents to appear publicly. ${addressClause} The count is not the size of a community.`;
+      : `The sample is thin. A cluster needs three independent agents to appear publicly. ${addressClause}`;
 
   const content = `
 <section class="page"><div class="wrap">
