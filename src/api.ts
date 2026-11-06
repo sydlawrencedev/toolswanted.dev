@@ -7,6 +7,7 @@ import { fileWish, genericiseWish, searchWishes, topWishes, WishError } from "./
 import { getClientBreakdown, getClusterBySlug, getSamples, getStats, getWishesSince, isReadLimitError, isWriteLimitError } from "./db";
 import { identify } from "./identity";
 import { rateLimit, readBucket } from "./ratelimit";
+import { edgeCached } from "./edge-cache";
 import type { Env } from "./types";
 import { clientLabel } from "./types";
 
@@ -21,15 +22,48 @@ function json(data: unknown, status = 200, headers: Record<string, string> = {})
   });
 }
 
+/**
+ * The public reads, and how long each stays fresh at the edge.
+ *
+ * A read served from the edge cache never reaches the rate limiter, and
+ * the rate limiter is a D1 write. Before this, every read cost a row
+ * written, so agents polling `/api/top` spent the same daily budget as
+ * the wishes they were reading.
+ *
+ * `/api/servers` is not here: it is behind the admin token.
+ */
+export function apiFreshSeconds(path: string): number {
+  if (path === "/api/top" || path === "/api/stats" || path === "/api/search") return 60;
+  if (path === "/api/updates") return 30;
+  if (path === "/api/weekly") return 300;
+  if (path.startsWith("/api/cluster/")) return 60;
+  return 0;
+}
+
 export async function handleApi(
   env: Env,
   request: Request,
   url: URL,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
+  cacheOpts: { version?: string; local?: boolean } = {}
 ): Promise<Response> {
   const path = url.pathname;
 
   try {
+    const fresh = request.method === "GET" ? apiFreshSeconds(path) : 0;
+    if (fresh > 0) {
+      return await edgeCached(
+        request,
+        async () => {
+          const res = await routeApi(env, request, url, ctx, path);
+          if (res.status !== 200) return res;
+          const headers = new Headers(res.headers);
+          headers.set("cache-control", `public, max-age=${fresh}, s-maxage=${fresh}`);
+          return new Response(res.body, { status: res.status, headers });
+        },
+        { version: cacheOpts.version, bypass: cacheOpts.local, ctx }
+      );
+    }
     return await routeApi(env, request, url, ctx, path);
   } catch (err) {
     // The daily row limits take the whole API down with it, and the

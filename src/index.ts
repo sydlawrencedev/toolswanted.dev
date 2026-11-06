@@ -20,6 +20,7 @@
 import { CSS, esc, escAttr, layout } from "./html";
 import { fontResponse } from "./font";
 import { handleApi } from "./api";
+import { edgeCached } from "./edge-cache";
 import { handleMcpRequest } from "./mcp";
 import { identify } from "./identity";
 import { handleAdmin, purgeClusterCache, readForm } from "./admin";
@@ -30,6 +31,7 @@ import * as db from "./db";
 import {
   completeGitHubLogin,
   githubAuthorizeUrl,
+  getSessionCookieValue,
   makeState,
   readSession,
   readState,
@@ -261,10 +263,9 @@ async function cached(
   _ttlSeconds: number,
   produce: () => Promise<Response>,
   version?: string,
-  local = false
+  local = false,
+  ctx?: ExecutionContext
 ): Promise<Response> {
-  if (request.method !== "GET") return produce();
-
   // A local request is never served from a cache, and never stored in one.
   //
   // `wrangler dev --remote` runs on Cloudflare's network, so a local
@@ -273,31 +274,14 @@ async function cached(
   // edited. The page looks unchanged, the change looks like it did not
   // apply, and restarting the server does not help because the edge is
   // answering.
-  if (local || isLocalRequest(request)) {
-    const res = await produce();
-    const headers = new Headers(res.headers);
-    headers.set("cache-control", "no-store");
-    headers.set("x-cache", "BYPASS");
-    return new Response(res.body, { status: res.status, headers });
-  }
-
-  const cache = caches.default;
-  const url = new URL(request.url);
-  if (version) url.searchParams.set("__v", version);
-  const cacheKey = new Request(url.toString(), { method: "GET" });
-  const hit = await cache.match(cacheKey);
-  if (hit) {
-    const res = new Response(hit.body, hit);
-    res.headers.set("x-cache", "HIT");
-    return res;
-  }
-  const res = await produce();
-  if (res.status === 200 && res.headers.get("cache-control")?.includes("public")) {
-    const copy = res.clone();
-    // TTL comes from the response's own cache-control header.
-    await cache.put(cacheKey, copy);
-  }
-  return res;
+  //
+  // Freshness, serving stale while refreshing, and keeping the last good
+  // copy when D1 is down are in `edgeCached`.
+  return edgeCached(request, produce, {
+    version,
+    bypass: local || isLocalRequest(request),
+    ctx,
+  });
 }
 
 /**
@@ -456,7 +440,7 @@ async function route(
 
   /* ---------------- REST ---------------- */
   if (path.startsWith("/api/")) {
-    return handleApi(env, request, url, ctx);
+    return handleApi(env, request, url, ctx, { version: env.VERSION_METADATA?.id, local: local || isLocalRequest(request) });
   }
 
   /* ---------------- static bits ---------------- */
@@ -570,7 +554,8 @@ async function route(
         return html(body, 200, { "cache-control": "public, max-age=30, s-maxage=60" });
       },
       env.VERSION_METADATA?.id,
-      local
+      local,
+      ctx
     );
   }
 
@@ -579,6 +564,10 @@ async function route(
     // GitHub sign in is a deployment setting. When it is not configured the
     // page must not promise a claim path that dead-ends at a 503.
     const claimingEnabled = Boolean(env.GITHUB_CLIENT_ID);
+    // A signed-in builder who claimed this wish sees an "I have shipped
+    // this" button that nobody else should. Their page is rendered for
+    // them alone and never stored, or the next visitor would be handed it.
+    const signedIn = Boolean(await getSessionCookieValue(request));
     return cached(
       request,
       300,
@@ -592,7 +581,8 @@ async function route(
         return html(body, 200, { "cache-control": "public, max-age=120, s-maxage=300" });
       },
       env.VERSION_METADATA?.id,
-      local
+      local || signedIn,
+      ctx
     );
   }
 
@@ -604,7 +594,8 @@ async function route(
       async () =>
         html(await renderWeekly(env, undefined, claimingEnabled), 200, { "cache-control": "public, max-age=300, s-maxage=600" }),
       env.VERSION_METADATA?.id,
-      local
+      local,
+      ctx
     );
   }
   if (path.startsWith("/weekly/")) {
@@ -633,7 +624,8 @@ async function route(
       async () =>
         html((await renderWeekly(env, id, claimingEnabled)) ?? "", 200, { "cache-control": "public, max-age=3600" }),
       env.VERSION_METADATA?.id,
-      local
+      local,
+      ctx
     );
   }
   if (path === "/agents") {
@@ -642,7 +634,8 @@ async function route(
       3600,
       async () => html(renderAgents(env), 200, { "cache-control": "public, max-age=3600" }),
       env.VERSION_METADATA?.id,
-      local
+      local,
+      ctx
     );
   }
   if (path === "/build") {
@@ -659,7 +652,8 @@ async function route(
       600,
       async () => html(renderBuild(env, slug, claimingEnabled), 200, { "cache-control": "public, max-age=600" }),
       env.VERSION_METADATA?.id,
-      local
+      local,
+      ctx
     );
   }
   if (path === "/about") {
@@ -685,7 +679,8 @@ async function route(
         );
       },
       env.VERSION_METADATA?.id,
-      local
+      local,
+      ctx
     );
   }
   if (path === "/privacy") {
@@ -694,7 +689,8 @@ async function route(
       3600,
       async () => html(renderPrivacy(env), 200, { "cache-control": "public, max-age=3600" }),
       env.VERSION_METADATA?.id,
-      local
+      local,
+      ctx
     );
   }
 
