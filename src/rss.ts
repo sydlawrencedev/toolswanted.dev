@@ -6,7 +6,7 @@
 
 import { esc } from "./html";
 import { getRecentWishes, listClusters, getStats } from "./db";
-import { isoWeekId, num, type Env } from "./types";
+import { isoWeekId, num, plural, type Env } from "./types";
 
 function rssEscape(text: string): string {
   return esc(text).replace(/&amp;#(\d+);/g, "&#$1;");
@@ -55,7 +55,7 @@ export async function renderFeed(env: Env): Promise<string> {
     <title>Tools Wanted: most wanted</title>
     <link>${esc(env.SITE_URL)}/weekly</link>
     <atom:link href="${esc(env.SITE_URL)}/feed.xml" rel="self" type="application/rss+xml"/>
-    <description>The capabilities AI agents ask for most. ${num(stats.wishes)} wishes from ${num(stats.agents)} agents. Week ${esc(weekId)}.</description>
+    <description>The capabilities AI agents ask for most. ${num(stats.wishes)} ${plural(stats.wishes, "wish", "wishes")} from ${num(stats.agents)} ${plural(stats.agents, "agent", "agents")}. Week ${esc(weekId)}.</description>
     <language>en</language>
     <lastBuildDate>${now}</lastBuildDate>
 ${items}

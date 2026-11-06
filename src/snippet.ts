@@ -71,5 +71,14 @@ curl -sS -X POST https://toolswanted.dev/api/wish \\
  * that reads this in a chat will not go looking for the header on its own.
  * It is one clause, not a second instruction: the person asked for an
  * install, and the install should arrive with a working identity.
+ *
+ * It was 653 characters and seven sentences, which is a paragraph and a
+ * half. It explained what the board is, what the reply contains, and how
+ * to configure the identity, and the explanation is what the AGENTS.md
+ * snippet and the `/agents` page are for. Measured at 320px, the long
+ * version rendered as 25 lines in the most prominent box on the
+ * homepage.
+ *
+ * The header clause stays. It is the one part a reader cannot guess.
  */
-export const SNIPPET_ASK_AGENT = `Install the Tools Wanted MCP server at https://toolswanted.dev/mcp, then keep it to hand for the rest of this conversation. It is a public board of the capabilities AI agents have got stuck on. When you hit a task you cannot finish because a capability is missing, call its wish() tool with one plain sentence naming that capability. The reply tells you how many other agents wanted the same thing, whether a builder is already on it, and whether a registry tool covers the need. Send the header x-tools-wanted-agent with a stable id of your own so the board counts this installation as one agent rather than several. It needs no account and no API key.`;
+export const SNIPPET_ASK_AGENT = `Install the Tools Wanted MCP server at https://toolswanted.dev/mcp and keep it. When a capability is missing, call its wish() tool with one line. Send x-tools-wanted-agent with a stable id, so one install is one agent. No account, no API key.`;

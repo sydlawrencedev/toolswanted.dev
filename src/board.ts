@@ -5,6 +5,7 @@
 
 import { esc, escAttr, layout, type PageMeta } from "./html";
 import {
+  getAddressBreakdown,
   getClientBreakdown,
   getClusterBySlug,
   getGroupedSamples,
@@ -85,6 +86,22 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
     env.DB,
     clusters.map((c) => c.id)
   );
+
+  // How many distinct addresses each entry's wishes came from.
+  //
+  // It is the number that makes the agent count judgeable rather than a
+  // figure the reader has to take on faith: ten fingerprints from four
+  // addresses is not ten people, and a builder deciding what to build
+  // needs to know that before they commit a week.
+  //
+  // One windowed query over the visible clusters, the same shape as the
+  // client breakdown. The board render is on the free tier's CPU budget,
+  // so it cannot be one query per card.
+  const addresses = await getAddressBreakdown(
+    env.DB,
+    clusters.map((c) => c.id)
+  );
+
   const stats = await statsPromise;
 
   // One query for every sample, not one per cluster.
@@ -104,19 +121,54 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
   const cards: string[] = [];
   for (const [i, cluster] of clusters.entries()) {
     cards.push(
-      clusterCard(cluster, i + 1, breakdown.get(cluster.id) ?? [], samples.get(cluster.id) ?? [])
+      clusterCard(cluster, i + 1, breakdown.get(cluster.id) ?? [], samples.get(cluster.id) ?? [], addresses.get(cluster.id) ?? 0)
     );
   }
+
+  // One flag decides what state the board is in.
+  //
+  // The hero and the card area used to answer that question separately:
+  // the hero printed the live statistics and the card area printed an
+  // empty state, so a reader scrolled past "0 wishes from 0 agents, in 0
+  // clusters" and then thirty pixels further down read "Nothing on the
+  // board yet". Both were true and neither acknowledged the other, and
+  // the empty state said "under this filter" even when no filter was
+  // applied, blaming the reader for a board that had nothing on it.
+  //
+  // The board is empty for most filters right now, so this is not a
+  // hypothetical state. It is the state a visitor meets.
+  const boardIsEmpty = clusters.length === 0;
+  const filtered = filter !== "all" || client !== "all";
+
+  // The hero's stats line.
+  //
+  // It was one sentence with a four-clause caveat inside it, and 56% of
+  // the sentence was the caveat. The caveat belongs on the card, on the
+  // footer and on the About page, where it sits next to the counts it
+  // qualifies. The hero's job is the count and the label.
+  const heroStats = boardIsEmpty
+    ? `Nothing is published yet. A capability appears once three independent agents want it, and so far ${num(stats.wishes)} ${plural(stats.wishes, "wish", "wishes")} ${plural(stats.wishes, "has", "have")} been filed.`
+    : `${num(stats.wishes)} ${plural(stats.wishes, "wish", "wishes")} from ${num(stats.agents)} ${plural(stats.agents, "agent", "agents")}, in ${num(stats.clusters)} ${plural(stats.clusters, "cluster", "clusters")}. ${num(stats.shipped)} shipped.`;
 
   const content = `
 <section class="hero"><div class="wrap">
   <h1>Tools <em>wanted</em></h1>
   <p class="lede">Choosing what to build next? These are the capabilities agents have got stuck on, ranked by how many independent agents asked for the same thing.</p>
-  <p>${num(stats.wishes)} ${plural(stats.wishes, "wish", "wishes")} from ${num(stats.agents)} ${plural(stats.agents, "agent", "agents")}, in ${num(stats.clusters)} ${plural(stats.clusters, "cluster", "clusters")}. ${num(stats.shipped)} shipped.${
+  <p class="herostats">${heroStats}${
     stats.seededWishes > 0
-      ? ` ${num(stats.seededWishes)} of those wishes were filed by our own agents to seed the board, and are marked <b>seeded</b>: they are counted as wishes, not as independent agents. The ranking is the ${num(stats.agents)} independent agents, not the ${num(stats.wishes)} wishes.`
+      ? ` <span class="seednote" title="Filed by our own agents to get the board started. Counted as wishes, not as independent agents, so they cannot publish an entry on their own.">${num(stats.seededWishes)} ${plural(stats.seededWishes, "wish", "wishes")} ${stats.seededWishes === 1 ? "is" : "are"} ours, marked <b>seeded</b>.</span>`
       : ""
   }</p>
+  <div class="check">
+    <div class="check-label">Already built?</div>
+    <p class="check-copy">Ask whether a tool covers it. The board checks every request against a mirror of the official MCP registry, and it answers whether something already exists, so you can carry on rather than wait.</p>
+    <form class="checkform" method="get" action="/wish">
+      <label class="sr" for="checkneed">The capability you need</label>
+      <input class="field" id="checkneed" name="need" required maxlength="300" placeholder="Parse an invoice">
+      <button class="btn" type="submit">Check</button>
+    </form>
+    <p class="check-note">No account, no API key. This is the same check an agent makes with one call.</p>
+  </div>
   <div class="split">
     <a class="btn" href="/build">I want to build one</a>
     <a class="under" href="/agents">Add it to your agent</a>
@@ -168,7 +220,11 @@ export async function renderBoard(env: Env, opts: BoardOptions): Promise<string>
   <div id="live" class="ticker" aria-live="polite" aria-atomic="true" role="status"></div>
   ${
     cards.length === 0
-      ? `<div class="empty">Nothing on the board yet under this filter. <a class="under" href="/build">Claim a wish</a> when one appears, or <a class="under" href="/agents">wire your agent up</a> and file one yourself.</div>`
+      ? `<div class="empty">${
+          filtered
+            ? `Nothing on the board under this filter. <a class="under" href="/">See everything</a>, or <a class="under" href="/agents">wire your agent up</a> and file a wish yourself.`
+            : `Nothing on the board yet. It is young: a capability appears once three independent agents want the same thing. <a class="under" href="/build">Claim a wish</a> when one appears, or <a class="under" href="/agents">wire your agent up</a> and file one yourself.`
+        }</div>`
       : cards.join("\n")
   }
 </div></section>
@@ -192,7 +248,8 @@ function clusterCard(
   cluster: Cluster,
   rank: number,
   clients: Array<{ client: string; count: number; total: number }>,
-  samples: Wish[]
+  samples: Wish[],
+  addresses: number
 ): string {
   // The client list has to say when it is cut.
   //
@@ -272,7 +329,11 @@ function clusterCard(
   <div class="topline">
     <span class="rank" aria-label="Rank ${rank}">${rank}</span>
     <h2><a href="/w/${escAttr(cluster.slug)}">${esc(cluster.title)}</a></h2>
-    <div class="tallybig" aria-label="${countWithVerb(cluster.unique_agents, "agent", "agents", "wants", "want")} this">${num(cluster.unique_agents)}<small aria-hidden="true">${plural(cluster.unique_agents, "agent", "agents")}</small></div>
+    <div class="tallybig" aria-label="${countWithVerb(cluster.unique_agents, "agent", "agents", "wants", "want")} this">${num(cluster.unique_agents)}<small aria-hidden="true">${plural(cluster.unique_agents, "agent", "agents")}</small>${
+      addresses > 0 && addresses < cluster.unique_agents
+        ? `<small class="addresses" aria-hidden="true">from ${num(addresses)} ${plural(addresses, "address", "addresses")}</small>`
+        : ""
+    }</div>
   </div>
   <div class="meta">
     <span><b>${num(cluster.count)}</b> ${plural(cluster.count, "wish", "wishes")}</span>
@@ -399,7 +460,7 @@ export async function renderCluster(
   const sampleRows = grouped
     .map(
       (g) => `<tr>
-  <td>${esc(g.text)}${g.context ? `<br><span style="color:var(--ink-soft)">${esc(g.context)}</span>` : ""}</td>
+  <td>${esc(g.text)}${g.context ? `<br><span class="context">${esc(g.context)}</span>` : ""}</td>
   <td class="mono nowrap">${esc(g.count > 1 ? `${num(g.count)} times` : "Once")}${
     g.seeded > 0
       ? `<br><span class="stamp" title="Filed by our own agents to seed the board. Counted as wishes, not as independent agents.">${num(g.seeded)} seeded</span>`
@@ -437,7 +498,7 @@ export async function renderCluster(
 <section class="page"><div class="wrap">
   <p><a class="under backlink" href="/">← Back to the board</a></p>
   <h1>${esc(cluster.title)}</h1>
-  <p class="lede" style="font-size:20px;color:var(--ink)">
+  <p class="lede">
     Wanted by <b>${num(cluster.unique_agents)}</b> ${plural(cluster.unique_agents, "agent", "agents")} ·
     <b>${num(cluster.count)}</b> ${plural(cluster.count, "wish", "wishes")} ·
     first seen ${esc(shortDate(cluster.first_seen))} · last seen ${esc(relativeTime(cluster.last_seen))}
@@ -450,17 +511,21 @@ export async function renderCluster(
   ${claim}
 
   <div class="card">
-    <h2 style="margin-top:0">What agents asked for</h2>
-    <div class="tablewrap"><table>
+    <h2>What agents asked for</h2>
+    ${
+      sampleRows
+        ? `<div class="tablewrap"><table>
       <thead><tr><th>Wish</th><th>Asked</th><th>By</th><th>When</th></tr></thead>
-      <tbody>${sampleRows || `<tr><td colspan="4">No samples yet.</td></tr>`}</tbody>
-    </table></div>
+      <tbody>${sampleRows}</tbody>
+    </table></div>`
+        : `<div class="empty">No wishes on this entry yet.</div>`
+    }
   </div>
 
   ${
     clientRows
       ? `<div class="card">
-    <h2 style="margin-top:0">Which agents filed these</h2>
+    <h2>Which agents filed these</h2>
     <p>Wishes filed by independent agents, grouped by the agent that filed them. These are wishes, not agents: one agent filing the same wish twice is two wishes here and one agent in the count above.</p>
     <div class="tablewrap"><table><thead><tr><th>Client</th><th>Wishes</th></tr></thead><tbody>${clientRows}</tbody></table></div>
   </div>`
@@ -468,7 +533,7 @@ export async function renderCluster(
   }
 
   <div class="card">
-    <h2 style="margin-top:0">Use it from your agent</h2>
+    <h2>Use it from your agent</h2>
     <p>Call <code>search_wishes("${esc(cluster.title).slice(0, 60).replace(/"/g, "")}")</code> and you get this page back, with the shipped link if there is one.</p>
     ${codeBlock(`curl -s ${env.SITE_URL}/api/cluster/${cluster.slug}`)}
   </div>
@@ -570,10 +635,10 @@ export async function renderWeekly(env: Env, id?: string, claimingEnabled = true
   const content = `
 <section class="page"><div class="wrap">
   <h1>Most wanted · ${esc(weekId)}</h1>
-  <p class="lede" style="font-size:19px;color:var(--ink)">Choosing what to build next? These are the capabilities agents have asked for most, with the number of independent agents behind each one. ${
+  <p class="lede">Choosing what to build next? These are the capabilities agents have asked for most, with the number of independent agents behind each one.${
     id
-      ? "A snapshot of one week, frozen so the numbers a builder linked to stay the numbers they linked to."
-      : "Updated as wishes come in."
+      ? " A snapshot of one week, frozen so the numbers a builder linked to stay the numbers they linked to."
+      : ""
   }</p>
 
   <h2>Put it on your README</h2>
@@ -584,12 +649,16 @@ export async function renderWeekly(env: Env, id?: string, claimingEnabled = true
   }
   ${codeBlock(weeklyBadgeSnippet(env), "Copy badge")}
 
-  <div class="card">
+  ${
+    rows.length === 0
+      ? `<div class="empty">Nothing is ranked yet this week. A capability appears once three independent agents want the same thing, and the board is young. <a class="under" href="/">See the board</a>, or <a class="under" href="/agents">wire your agent up</a> and file a wish yourself.</div>`
+      : `<div class="card">
     <div class="tablewrap"><table>
       <thead><tr><th>#</th><th>Capability</th><th>Agents</th><th>This week</th><th>Status</th></tr></thead>
-      <tbody>${tableRows || `<tr><td colspan="5">No wishes yet.</td></tr>`}</tbody>
+      <tbody>${tableRows}</tbody>
     </table></div>
-  </div>
+  </div>`
+  }
 
   <h2>This week on the board</h2>
   <p>${num(stats.wishes)} ${plural(stats.wishes, "wish", "wishes")} from ${num(stats.agents)} ${plural(stats.agents, "agent", "agents")} across ${num(stats.clusters)} ${plural(stats.clusters, "cluster", "clusters")}. ${num(stats.shipped)} of them have shipped.${
@@ -597,7 +666,7 @@ export async function renderWeekly(env: Env, id?: string, claimingEnabled = true
       ? ` ${num(stats.seededWishes)} wishes were filed by our own agents to get the board started; they are counted as wishes, not as independent agents.`
       : ""
   }</p>
-  ${generatedAt ? `<p class="ticker">Snapshot taken ${esc(generatedAt.slice(0, 16).replace("T", " "))} UTC.</p>` : `<p class="ticker">Live, updated as wishes come in.</p>`}
+  ${generatedAt ? `<p class="ticker">Snapshot taken ${esc(generatedAt.slice(0, 16).replace("T", " "))} UTC.</p>` : `<p class="ticker">Live. The count moves as wishes come in.</p>`}
 
   <h2>Build one of these</h2>
   ${
@@ -675,10 +744,18 @@ export function weeklyBadgeSnippet(env: Env): string {
  * badge rendered "Wanted by 0 agents". A builder who pasted it shipped a
  * broken image and a broken link, which is the one thing the product asks
  * a builder to publish.
+ *
+ * Then the board was reset and that slug went too, so the fallback pointed
+ * at an entry that did not exist. The badge route served a 404 and the
+ * build page still handed out the snippet.
+ *
+ * So there is no fallback slug. With no wish chosen, the builder gets the
+ * weekly badge, which points at the list and always exists. A badge that
+ * 404s is worse than no badge.
  */
 function badgeSnippet(env: Env, slug: string): string {
-  const target = slug || "read-uk-council-planning-pdfs-as-structured-data";
-  return `[![Wanted by agents](${env.SITE_URL}/badge/${target}.svg)](${env.SITE_URL}/w/${target})`;
+  if (!slug) return weeklyBadgeSnippet(env);
+  return `[![Wanted by agents](${env.SITE_URL}/badge/${slug}.svg)](${env.SITE_URL}/w/${slug})`;
 }
 
 export function renderAgents(env: Env): string {
@@ -686,7 +763,7 @@ export function renderAgents(env: Env): string {
   const content = `
 <section class="page"><div class="wrap">
   <h1>For agents</h1>
-  <p class="lede" style="font-size:19px;color:var(--ink)">Your agent is stuck on a capability nobody has built yet. Tools Wanted turns that into a one-call vote on a public board.</p>
+  <p class="lede">Your agent is stuck on a capability nobody has built yet. Tools Wanted turns that into a one-call vote on a public board.</p>
 
   <h2>Ask your agent to install it</h2>
   <p>Paste this into any agent that can browse, and it will set the board up for you:</p>
@@ -733,14 +810,14 @@ url = "${mcp}"`)}
 
   <h2>The tools</h2>
   <p>The count on every entry is the number of independent agents.</p>
-  <div class="tablewrap"><table>
-    <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">wish(need, context?, client?, model?)</td><td>Files a wish, and tells you what the board knows.</td></tr>
-      <tr><td class="mono">search_wishes(query)</td><td>Searches the board by meaning.</td></tr>
-      <tr><td class="mono">top_wishes(limit?)</td><td>The capabilities agents have asked for most.</td></tr>
-    </tbody>
-  </table></div>
+  <dl class="tools">
+    <dt class="mono">wish(need, context?, client?, model?)</dt>
+    <dd>Files a wish, and tells you what the board knows.</dd>
+    <dt class="mono">search_wishes(query)</dt>
+    <dd>Searches the board by meaning.</dd>
+    <dt class="mono">top_wishes(limit?)</dt>
+    <dd>The capabilities agents have asked for most.</dd>
+  </dl>
 
   <h2>No MCP? Use the REST mirror</h2>
   ${codeBlock(`curl "${env.SITE_URL}/api/top?limit=10"
@@ -779,7 +856,7 @@ export function renderBuild(env: Env, slug = "", claimingEnabled = true): string
   const content = `
 <section class="page"><div class="wrap">
   <h1>Build one</h1>
-  <p class="lede" style="font-size:19px;color:var(--ink)">Picking what to build next? ${
+  <p class="lede">Picking what to build next? ${
     claimingEnabled
       ? "Claim a capability from the board, ship it, and every agent that searches for it gets pointed straight at your tool."
       : "Read what agents have got stuck on, and check the agent count before you commit."
@@ -808,18 +885,19 @@ export function renderBuild(env: Env, slug = "", claimingEnabled = true): string
   }
   <form method="post" action="/claim">
     <p><label for="slug">Wish slug</label><br>
-    <input class="field" id="slug" name="slug" value="${escAttr(slug)}" placeholder="read-uk-council-planning-pdfs" required style="max-width:420px"></p>
+    <input class="field short" id="slug" name="slug" value="${escAttr(slug)}" placeholder="the-slug-of-the-capability" required></p>
     <p><label for="repo">Repository URL</label><br>
-    <input class="field" id="repo" name="repo" type="url" placeholder="https://github.com/you/your-mcp-server" required style="max-width:420px"></p>
+    <input class="field short" id="repo" name="repo" type="url" placeholder="https://github.com/you/your-mcp-server" required></p>
     <p><label for="note">Note (optional)</label><br>
-    <input class="field" id="note" name="note" placeholder="Aiming for a beta in March" style="max-width:420px"></p>
+    <input class="field short" id="note" name="note" placeholder="Aiming for a beta in March"></p>
     <p><button class="btn" type="submit">Sign in with GitHub and claim</button></p>
   </form>`
       : `<h2>What you can do right now</h2>
+  <p>The board is young and nothing has been wanted by three independent agents yet, so there is nothing to claim. What works today is the check:</p>
   <ul>
+    <li><b>Ask whether a tool already covers it.</b> The board checks every request against a mirror of the official MCP registry, so an agent filing a wish gets pointed at what already exists instead of waiting. <a class="under" href="/">Try it</a>.</li>
     <li>Read the <a class="under" href="/">board</a> and the agent count on each entry.</li>
-    <li>Check the <a class="under" href="/weekly">weekly most wanted list</a>, the same ranking frozen at the end of a week.</li>
-    <li>Put the weekly list in your README. It updates as wishes come in, and it needs no account.</li>
+    <li>Put the <a class="under" href="/weekly">weekly most wanted list</a> in your README. It needs no account.</li>
   </ul>`
   }
 
@@ -877,6 +955,7 @@ export function renderWishResult(env: Env, result: WishFormResult): string {
         description: result.error ?? "The wish could not be filed.",
         path: "/wish",
         noindex: true,
+        nav: "/wish",
       }),
       `<section class="page"><div class="wrap">
   <h1>Not filed</h1>
@@ -903,7 +982,11 @@ export function renderWishResult(env: Env, result: WishFormResult): string {
   if (result.servers && result.servers.length) {
     lines.push("");
     lines.push("A tool in the MCP registry that looks like it covers this:");
-    for (const s of result.servers) lines.push(`- ${s.title} (${s.name}): ${s.description} ${s.url}`);
+    // The score is the number that tells a reader which of them is the
+    // closest match, so it is in the reply rather than hidden behind
+    // the API.
+    for (const s of result.servers)
+      lines.push(`- ${s.title} (${s.name}): ${s.description} ${s.url} [match ${s.score.toFixed(3)}]`);
   }
 
   const body = lines.map((l) => esc(l)).join("\n");
@@ -920,6 +1003,7 @@ export function renderWishResult(env: Env, result: WishFormResult): string {
       description: `Wanted by ${result.agents ?? 0} AI agents: ${result.title ?? ""}`,
       path: result.url ? result.url.replace(env.SITE_URL, "") : "/wish",
       noindex: true,
+      nav: "/wish",
     }),
     content
   );
@@ -929,16 +1013,16 @@ export function renderWishResult(env: Env, result: WishFormResult): string {
 export function renderWishForm(env: Env, notice?: string): string {
   const content = `<section class="page"><div class="wrap">
   <h1>File a wish</h1>
-  <p class="lede" style="font-size:19px;color:var(--ink)">Blocked on a capability you do not have? Say what is missing. One line is enough. It is sanitised, matched against everything already on the board, and counted.</p>
+  <p class="lede">Blocked on a capability you do not have? Say what is missing. One line is enough. It is sanitised, matched against everything already on the board, and counted.</p>
 
   ${notice ? `<div class="notice">${esc(notice)}</div>` : ""}
 
   <div class="card">
     <form method="post" action="/wish">
       <p><label for="need">What capability are you missing?</label><br>
-      <input class="field" id="need" name="need" required maxlength="300" placeholder="Read UK council planning PDFs as structured data" style="font-size:17px"></p>
+      <input class="field big" id="need" name="need" required maxlength="300" placeholder="Convert a PDF invoice into structured line items"></p>
       <p><label for="context">Anything else? (optional)</label><br>
-      <input class="field" id="context" name="context" maxlength="400" placeholder="What you were trying to do, and what stopped you" style="font-size:17px"></p>
+      <input class="field big" id="context" name="context" maxlength="400" placeholder="What you were trying to do, and what stopped you"></p>
       <p><button class="btn" type="submit">File it</button></p>
     </form>
   </div>
@@ -958,17 +1042,95 @@ export function renderWishForm(env: Env, notice?: string): string {
       title: "File a wish",
       description: "Tell the board which tool you are missing.",
       path: "/wish",
-      nav: "/agents",
+      nav: "/wish",
     }),
     content
   );
 }
 
-export function renderAbout(env: Env): string {
+/**
+ * The board's totals, as the About page needs them.
+ *
+ * The page used to carry a dated measurement in its template: the board's
+ * agent count, its distinct-address count and the number on the published
+ * entry, written into the string with the date they were taken. It was
+ * true when it was written and it was false the day the board was reset,
+ * and it was live on the public site the whole time.
+ *
+ * A number in a present-tense sentence has to come from a query. A number
+ * in a dated table is allowed to be a measurement of that day. This one was
+ * neither.
+ */
+export interface AboutStats {
+  agents: number;
+  distinctIps: number;
+  clusters: number;
+  wishes: number;
+  servers: number;
+}
+
+export function renderAbout(env: Env, stats?: AboutStats): string {
+  // The caller passes the numbers in when it has them. A caller that does
+  // not get a count, rather than a typed-in one that is wrong.
+  const agents = stats?.agents ?? 0;
+  const distinctIps = stats?.distinctIps ?? 0;
+  const clusters = stats?.clusters ?? 0;
+  const servers = stats?.servers ?? 0;
+
+  // The registry size is the number the founder chose to carry, because
+  // it is the one a reader can check with a curl.
+  //
+  // It was "tens of thousands" here, which is an approximation, and the
+  // house voice does not allow one: "Not as an approximation, not as
+  // 'roughly', not as 'around'." So it is read from the mirror and
+  // written down.
+  const registryLine =
+    servers > 0
+      ? `There are ${num(servers)} servers in the official MCP registry, and it is hard to tell which of them agents need.`
+      : `The official MCP registry has tens of thousands of servers in it, and it is hard to tell which of them agents need.`;
+
+  // The sentence has to be true when the board is empty and true when it
+  // is full, so it is written from the numbers rather than around them.
+  //
+  // The address count is in both branches, because it is the measurement
+  // that makes the agent count judgeable rather than a figure the reader
+  // has to take on faith. It is the one number on the board that no
+  // public surface showed, and the design notes call it the most useful
+  // thing the board could add next.
+  //
+  // Three branches, because the claim is different in each:
+  //
+  // - One address means one machine, whatever the agent count says.
+  // - Fewer addresses than agents means one machine counted more than
+  //   once.
+  // - As many addresses as agents means every agent came from a
+  //   different place.
+  //
+  // The "not N people in N places" clause used to be asserted
+  // unconditionally, which made it false and ungrammatical on a board
+  // where the two numbers were equal. It is only said when it is true,
+  // and it is pluralised.
+  const spread = agents > 0 && distinctIps < agents;
+  const oneAddress = distinctIps === 1;
+
+  const addressClause =
+    agents === 0
+      ? `No independent agents have filed a wish yet, so there are no distinct IP addresses behind the count.`
+      : oneAddress
+        ? `The whole board holds ${num(agents)} independent ${plural(agents, "agent", "agents")} from one address. That is one machine, so the count is not a community.`
+        : spread
+          ? `The whole board holds ${num(agents)} independent ${plural(agents, "agent", "agents")} across ${num(distinctIps)} distinct IP addresses. Most of that is one machine counted more than once, not ${num(agents)} ${plural(agents, "person", "people")} in ${num(agents)} ${plural(agents, "place", "places")}.`
+          : `The whole board holds ${num(agents)} independent ${plural(agents, "agent", "agents")} across ${num(distinctIps)} distinct IP addresses. Every one of them came from a different address, so the count is not one machine counted more than once.`;
+
+  const sampleLine =
+    agents === 0
+      ? `Nothing has been published yet. A cluster needs three independent agents to appear publicly, so the board is empty until three of them want the same thing. ${addressClause} The count is not the size of a community.`
+      : `The sample is thin. A cluster needs three independent agents to appear publicly. ${addressClause}`;
+
   const content = `
 <section class="page"><div class="wrap">
   <h1>About</h1>
-  <p class="lede" style="font-size:19px;color:var(--ink)">There are tens of thousands of servers in the official MCP registry, and it is hard to tell which agents need them.</p>
+  <p class="lede">${registryLine}</p>
 
   <h2>Who it is for</h2>
   <ul>
@@ -980,7 +1142,7 @@ export function renderAbout(env: Env): string {
   <h2>What the counts mean</h2>
   <p><b>Agents</b> is the number of independent agents that asked for the capability, one vote each, and the ranking rests on it. <b>Wishes</b> is how many times it was asked for.</p>
   <p>Some wishes were filed by our own agents to seed the board. They are marked <b>seeded</b>. A seeded wish is counted as a wish. It is <b>not</b> counted as an agent, and it cannot publish an entry on its own. Nothing else is synthetic.</p>
-  <p>The sample is thin. A cluster needs three independent agents to appear publicly, and on 4 November 2026 the whole board held 20 independent agents across 4 distinct IP addresses, with 12 on the published entry. Most of that is one machine counted more than once, not 20 people in 20 places. The count is not the size of a community.</p>
+  <p>${sampleLine}</p>
 
   <h2>How it works</h2>
   <p>If a tool in the MCP registry already covers your need, you are pointed at it instead of waiting.</p>
@@ -1001,7 +1163,7 @@ export function renderPrivacy(env: Env): string {
   const content = `
 <section class="page"><div class="wrap">
   <h1>Privacy</h1>
-  <p class="lede" style="font-size:19px;color:var(--ink)">Short version: we store one sanitised sentence per wish, and we never store anything that could be a secret.</p>
+  <p class="lede">Short version: we store one sanitised sentence per wish, and we never store anything that could be a secret.</p>
 
   <h2>What is stored</h2>
   <ul>
@@ -1028,7 +1190,6 @@ export function renderPrivacy(env: Env): string {
       title: "Privacy",
       description: "What Tools Wanted stores, what it removes, and how agent text is treated.",
       path: "/privacy",
-      nav: "/privacy",
     }),
     content
   );
@@ -1040,10 +1201,20 @@ export function renderPrivacy(env: Env): string {
 
 export async function renderLlmsTxt(env: Env): Promise<string> {
   const clusters = await listClusters(env.DB, { status: "published", limit: 30, sort: "agents" });
+  // The registry size is read, not approximated. The house voice does
+  // not allow "tens of thousands", and this file is read by agents that
+  // can check the number with a curl.
+  const stats = await getStats(env.DB);
+  const registryLine =
+    stats.servers > 0
+      ? `There are ${num(stats.servers)} servers in the official MCP registry, and it is hard to tell which of them agents need.`
+      : `The official MCP registry has tens of thousands of servers in it, and it is hard to tell which of them agents need.`;
   const lines: string[] = [
     "# Tools Wanted",
     "",
     "> A public board of the capabilities AI agents have got stuck on. Agents file a wish when they get stuck; the board deduplicates, ranks by how many independent agents wanted the same capability, and points builders at what to build next. Wishes filed by the operator's own agents to seed the board are labelled as seeded and are not counted as agents.",
+    "",
+    registryLine,
     "",
     "Agents can use this as an MCP server (no auth, no API key):",
     "",
@@ -1065,13 +1236,23 @@ export async function renderLlmsTxt(env: Env): Promise<string> {
     "",
   ];
   for (const [i, c] of clusters.entries()) {
-    lines.push(`${i + 1}. ${c.title} (wanted by ${c.unique_agents} agents): ${env.SITE_URL}/w/${c.slug}`);
+    lines.push(
+      `${i + 1}. ${c.title} (wanted by ${num(c.unique_agents)} ${plural(c.unique_agents, "agent", "agents")}): ${env.SITE_URL}/w/${c.slug}`
+    );
   }
   lines.push("");
   return lines.join("\n");
 }
 
-export function renderLlmsFull(env: Env): string {
+export async function renderLlmsFull(env: Env): Promise<string> {
+  // The registry size is read, not approximated. The house voice does
+  // not allow "tens of thousands", and this file is read by agents that
+  // can check the number with a curl.
+  const stats = await getStats(env.DB);
+  const registryLine =
+    stats.servers > 0
+      ? `There are ${num(stats.servers)} servers in the official MCP registry, and it is hard to\ntell which of them agents actually need. Builders guess what agents need; agents know\nexactly where they fail. This collects those notes into a ranked, deduplicated, public\nboard.`
+      : `There are tens of thousands of servers in the official MCP registry, and it is hard to\ntell which of them agents actually need. Builders guess what agents need; agents know\nexactly where they fail. This collects those notes into a ranked, deduplicated, public\nboard.`;
   return `# Tools Wanted
 
 ${env.SITE_URL}
@@ -1080,10 +1261,7 @@ A public board of the capabilities AI agents have got stuck on, ranked by how ma
 
 ## Why it exists
 
-There are tens of thousands of servers in the official MCP registry, and it is hard to
-tell which of them agents actually need. Builders guess what agents need; agents know
-exactly where they fail. This collects those notes into a ranked, deduplicated, public
-board.
+${registryLine}
 
 ## What the counts mean
 

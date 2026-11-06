@@ -502,7 +502,18 @@ export async function searchWishes(
     const similarity = cosine(vector, centroid);
     if (similarity < SEARCH_SCORE_FLOOR) continue;
     const cluster = await db.getClusterById(env.DB, row.id);
-    if (!cluster || cluster.status === "merged" || cluster.status === "rejected") continue;
+    // Only a published cluster is public.
+    //
+    // It used to exclude merged and rejected clusters, which left `pending`
+    // in. A cluster waiting in the review queue was therefore returned by
+    // the search, with its agent count and a working URL, while the board
+    // itself hid it. The publish rule says three independent agents are
+    // needed, and a reader could find and read an entry that had not met
+    // it. The threshold was theatre.
+    //
+    // The matcher still needs the pending centroids to land a new wish on
+    // the right cluster. That is the clustering path, not the public one.
+    if (!cluster || cluster.status !== "published") continue;
     found.set(cluster.id, { cluster, score: similarity });
   }
 
@@ -511,7 +522,7 @@ export async function searchWishes(
     if (m.score < SEARCH_SCORE_FLOOR) break;
     if (found.has(m.id)) continue;
     const cluster = await db.getClusterById(env.DB, m.id);
-    if (!cluster || cluster.status === "merged" || cluster.status === "rejected") continue;
+    if (!cluster || cluster.status !== "published") continue;
     found.set(m.id, { cluster, score: m.score });
   }
 

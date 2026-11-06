@@ -57,7 +57,34 @@ import { rateLimit } from "./ratelimit";
 import { renderFeed, renderWishFeed } from "./rss";
 import { isoWeekId, num, weekStart, countWithVerb, type Env } from "./types";
 
-const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#151210"/><text x="32" y="44" font-family="Helvetica,Arial,sans-serif" font-weight="900" font-size="38" fill="#d32a1c" text-anchor="middle">W</text></svg>`;
+/**
+ * The favicon.
+ *
+ * It was a red "W" in Helvetica Bold, which is not the brand's display
+ * face and not the brand's mark. The site's wordmark is Archivo Black,
+ * and a browser tab is the one piece of the brand a reader sees most
+ * often and in the smallest possible size.
+ *
+ * The mark is drawn as a path rather than as text, so it does not depend
+ * on a font being present in whatever renders it, and it does not
+ * reflow at 16px.
+ *
+ * The path is the real Archivo Black "W", taken from the glyph outline
+ * in `assets/fonts/ArchivoBlack-Regular.ttf` that the site already
+ * ships, and scaled to a 50px width on the 64px grid. It was not
+ * hand-written: the first attempt traced a letter that read as an X, and
+ * a tab icon is too small to argue with.
+ *
+ * Two variants, because a browser's tab strip can be light or dark and
+ * the tile has to work on both. The page links the light one by default
+ * and the dark one under `prefers-color-scheme: dark`.
+ */
+const FAVICON_PATH =
+  "M36.6 56L32.1 34.84L31.9 34.84L27.4 56H15.13L7 21.25H18.62L22.61 40.95H22.81L26.75 21.25H37.76L41.95 40.95H42.15L45.89 21.25H57L48.87 56Z";
+
+const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#151210"/><path d="${FAVICON_PATH}" fill="#d32a1c"/></svg>`;
+
+const FAVICON_DARK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#f3eee1"/><path d="${FAVICON_PATH}" fill="#d32a1c"/></svg>`;
 
 function html(body: string, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(body, {
@@ -109,6 +136,7 @@ function writeLimitResponse(err: unknown, request: Request, env: Env): Response 
         description: message,
         canonical: `${env.SITE_URL}/`,
         noindex: true,
+        assetVersion: env.VERSION_METADATA?.id,
       },
       `<section class="page"><div class="wrap"><h1>Out of writes</h1><p>${esc(message)}</p><p>Reading the board still works; filing new wishes and moderating do not, for now.</p></div></section>`
     ),
@@ -134,6 +162,11 @@ function notFound(env: Env): Response {
         description: "That page does not exist. Search the board, or go back to it.",
         canonical: `${env.SITE_URL}/404`,
         noindex: true,
+        // The version of the deploy, so the stylesheet's URL changes with
+        // it. Every other page gets this from `pageMeta`, and this one
+        // builds its own meta. Without it the 404 asks for a bare
+        // `/style.css`, which the browser may hold for a year.
+        assetVersion: env.VERSION_METADATA?.id,
       },
       `<section class="page"><div class="wrap">
   <h1>404</h1>
@@ -141,7 +174,7 @@ function notFound(env: Env): Response {
   <div class="card">
     <form method="get" action="/wish">
       <p><label for="need">Looking for a capability? Search the board for its name.</label></p>
-      <p><input class="field" id="need" name="need" placeholder="Read UK council planning PDFs as structured data" style="font-size:17px"></p>
+      <p><input class="field big" id="need" name="need" placeholder="Parse an invoice"></p>
       <p><button class="btn" type="submit">Search the board</button></p>
     </form>
   </div>
@@ -378,7 +411,11 @@ async function route(
     return fontResponse();
   }
   if (path === "/favicon.svg") {
-    return new Response(FAVICON, {
+    // The dark variant is served from its own path and linked in the
+    // head under `prefers-color-scheme: dark`, so a browser on a dark
+    // tab strip is not looking at an ink tile on an ink strip.
+    const dark = url.searchParams.get("scheme") === "dark";
+    return new Response(dark ? FAVICON_DARK : FAVICON, {
       headers: { "content-type": "image/svg+xml", "cache-control": "public, max-age=604800" },
     });
   }
@@ -397,7 +434,7 @@ async function route(
     });
   }
   if (path === "/llms-full.txt") {
-    return new Response(renderLlmsFull(env), {
+    return new Response(await renderLlmsFull(env), {
       headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
     });
   }
@@ -503,8 +540,30 @@ async function route(
   if (path.startsWith("/weekly/")) {
     const id = path.slice("/weekly/".length);
     const claimingEnabled = Boolean(env.GITHUB_CLIENT_ID);
-    return cached(request, 3600, async () =>
-      html((await renderWeekly(env, id, claimingEnabled)) ?? "", 200, { "cache-control": "public, max-age=3600" })
+    // The version goes in the cache key, and the local flag goes with it.
+    //
+    // This route had neither, and it was the only cached route out of
+    // eight that did not. Without the version a deploy did not
+    // invalidate the cached page, so it survived for the whole hour of
+    // its max-age. Without the local flag a local run could read from
+    // the production cache and write to it.
+    //
+    // And it did. On production, /weekly/2026-W44 served a page
+    // carrying the markup for a theme control the deployed Worker does
+    // not have, with a stylesheet URL that had no version on it, so the
+    // browser fetched the deployed stylesheet and the page rendered a
+    // button that nothing in the product had ever styled: 21px tall,
+    // with a 2px outset border.
+    //
+    // A cached page and the stylesheet it asks for have to come from
+    // the same deploy, or the page renders as something nobody designed.
+    return cached(
+      request,
+      3600,
+      async () =>
+        html((await renderWeekly(env, id, claimingEnabled)) ?? "", 200, { "cache-control": "public, max-age=3600" }),
+      env.VERSION_METADATA?.id,
+      local
     );
   }
   if (path === "/agents") {
@@ -537,7 +596,24 @@ async function route(
     return cached(
       request,
       3600,
-      async () => html(renderAbout(env), 200, { "cache-control": "public, max-age=3600" }),
+      async () => {
+        // The page explains what the board's counts mean, so it carries the
+        // board's counts. They are read here rather than typed into the
+        // template, because a typed-in count is wrong the moment a wish is
+        // filed.
+        const stats = await db.getStats(env.DB);
+        return html(
+          renderAbout(env, {
+            agents: stats.agents,
+            distinctIps: stats.distinctIps,
+            clusters: stats.clusters,
+            wishes: stats.wishes,
+            servers: stats.servers,
+          }),
+          200,
+          { "cache-control": "public, max-age=3600" }
+        );
+      },
       env.VERSION_METADATA?.id,
       local
     );
@@ -583,6 +659,7 @@ async function getWishForm(env: Env, request: Request, url: URL): Promise<Respon
           description: "A public board of the capabilities AI agents have got stuck on.",
           canonical: `${env.SITE_URL}/`,
           noindex: true,
+          assetVersion: env.VERSION_METADATA?.id,
         },
         `<section class="page"><div class="wrap"><h1>Tools Wanted</h1><p>A public board of the capabilities AI agents have got stuck on. <a class="under" href="/">See the board</a>.</p></div></section>`
       ),
@@ -738,9 +815,19 @@ async function renderOg(env: Env, name: string): Promise<Response> {
   // runs, a stale poster is not served, so the contradiction between the
   // card and the board cannot be shown to a reader.
   const cluster = await db.getClusterBySlug(env.DB, slug);
+
+  // A poster for a cluster that is not published is a share card for an
+  // entry nobody can open.
+  //
+  // The lookup only returns published clusters, so a cluster still waiting
+  // in the review queue comes back null, and the poster that was rendered
+  // for it is not served. A link preview is the first thing a reader sees
+  // and it has to be a thing that exists.
+  const unpublished = !isDefault && !cluster;
+
   const stale = !isDefault && cluster ? object.updatedAt < cluster.updated_at : false;
 
-  if (stale) {
+  if (stale || unpublished) {
     const fallback = await db.getOgImage(env.DB, "default");
     if (fallback) {
       return new Response(fallback.bytes, {
@@ -797,9 +884,13 @@ async function renderWeeklyBadge(env: Env): Promise<Response> {
 
 async function renderBadge(env: Env, slug: string): Promise<Response> {
   const cluster = await db.getClusterBySlug(env.DB, slug);
-  // A badge for a wish that does not exist is a broken image and a broken
+  // A badge for a wish that is not published is a broken image and a broken
   // link in somebody's README. It used to render "Wanted by 0 agents"
   // with a 200, which is a lie rather than a 404.
+  //
+  // The cluster lookup only returns published clusters, so a cluster still
+  // waiting in the review queue is a 404 here too. A badge is a thing a
+  // builder publishes, and it must point at something a reader can open.
   if (!cluster) {
     return new Response("Not found", {
       status: 404,
@@ -929,7 +1020,7 @@ async function handleClaim(env: Env, request: Request): Promise<Response> {
   const note = String(form?.get("note") ?? "").trim().slice(0, 200);
 
   if (!slug || !repo) {
-    return new Response("Send both a wish slug and a repository URL. The slug is the last part of the wish's address on toolswanted.dev/w/, for example read-uk-council-planning-pdfs-as-structured-data.", {
+    return new Response("Send both a wish slug and a repository URL. The slug is the last part of the wish's address on toolswanted.dev/w/, for example the-slug-of-the-capability-you-are-building.", {
       status: 400,
     });
   }

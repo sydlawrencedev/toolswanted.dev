@@ -49,9 +49,12 @@ npx wrangler secret put GITHUB_CLIENT_ID
 npx wrangler secret put GITHUB_CLIENT_SECRET
 ```
 
-## 3. Seed the board: done
+## 3. Seed the board: not done, and not a launch gate
 
-The board should not be empty on launch day. The seed has been run:
+The board was seeded once and then reset, because the seeded entries were
+doing the job the board was supposed to do: they were the only published
+entry, so the board's one public ranking was a ranking the operator had
+made. The seed is available:
 
 ```bash
 npm run seed
@@ -61,10 +64,30 @@ Seeded wishes are marked `seeded` in the database and labelled on the board.
 The `/about` page says so too. Do not present them as if they came from
 strangers.
 
-Sixty of the wishes on the board are seeded. They are labelled everywhere
-they appear and they are not counted as independent agents, so they cannot
-publish a cluster on their own. The board's honesty depends on that label
-staying on them, so do not write a script that strips it.
+They are labelled everywhere they appear and they are not counted as
+independent agents, so they cannot publish a cluster on their own. The
+board's honesty depends on that label staying on them, so do not write a
+script that strips it.
+
+**The launch does not need them.** The board launches empty and says so. A
+builder arriving cold gets the registry check, which works with no crowd at
+all, and the board is the reason to come back. A seeded entry shown as a
+ranking is worse than an honest empty state, because it teaches the reader
+that the operator's own catalogue is demand.
+
+Two things have to be true before any seed runs:
+
+1. **The publish gate is closed.** A pending cluster must not be readable at
+   `/w/{slug}`, searchable at `/api/search`, served at `/api/cluster/{slug}`,
+   or given a badge or an OG poster. It is closed now: the cluster lookup
+   filters on `status = 'published'`.
+2. **A seeded cluster is not part of the ranking.** Seeded wishes are
+   excluded from the agent count, and the ranking is ordered by that count.
+   A seeded entry can never be at rank 1.
+
+If a seed does run, the board's count of seeded wishes goes up and the
+`seeded` label goes with it everywhere. Both are in `GET /api/stats`, and
+`node scripts/refresh-numbers.mjs` writes them into the README.
 
 ## 4. Registry listings (needs approval)
 
@@ -106,10 +129,15 @@ description. The description is the whole pitch; keep it to one sentence.
 
 `docs/show-hn.md` is the draft. Before posting:
 
-- Re-run `npm run og:sync` so the OG image shows the current top cluster.
+- Run `node scripts/refresh-numbers.mjs`. It reads the board's own numbers
+  and rewrites the README table, the board block in the post, and the
+  measurement note. No figure in either document is typed by hand.
+- Re-run `npm run og:sync` so the OG image shows the current top cluster,
+  if there are published entries to render.
 - Read the board itself, then paste the entries that are actually on it into
-  the post. The post and the board must agree. If the board has one published
-  entry, the post says one published entry.
+  the post. The post and the board must agree. If the board has no published
+  entry, the post says the board is empty, and it does not fill the gap with
+  a wish the operator filed.
 - Post the link, not a screenshot. The board is the story.
 
 ### The gate
@@ -241,7 +269,7 @@ budget.
 
 ```
 agent reads AGENTS.md line
-  -> agent files a wish            (works: 97 wishes filed)
+  -> agent files a wish            (works: 3 wishes filed)
     -> board dedupes and counts it (works: one vote per agent per cluster)
       -> count reaches 3           (works: auto-publish)
         -> a builder sees the count
@@ -266,10 +294,16 @@ directions that both matter:
 - Two agents on one machine with the same user agent are counted as one, and
   a real vote goes missing.
 
-The board's own data shows the first case. On 3 November 2026 the whole
+The board's own data showed the first case. On 3 November 2026 the whole
 board held 18 independent agents across 4 distinct IP addresses, and the
 published entry carried 10 of those agents from 4 addresses. So most of the
-board's headline number is one machine counted several times.
+board's headline number was one machine counted several times.
+
+That measurement is history now: the board was reset, and the agent count and
+the distinct-IP count are both in `GET /api/stats`, so the ratio is readable
+from outside the deployment for the first time. The board's own copy shows the
+address count next to the agent count, so a reader can see how spread out the
+demand is rather than taking the number on faith.
 
 The header is now in both snippets an agent is likely to copy, so this is
 measured rather than assumed from here on: if the agent count rises while
