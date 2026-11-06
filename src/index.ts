@@ -136,6 +136,7 @@ function writeLimitResponse(err: unknown, request: Request, env: Env): Response 
         description: message,
         canonical: `${env.SITE_URL}/`,
         noindex: true,
+        assetVersion: env.VERSION_METADATA?.id,
       },
       `<section class="page"><div class="wrap"><h1>Out of writes</h1><p>${esc(message)}</p><p>Reading the board still works; filing new wishes and moderating do not, for now.</p></div></section>`
     ),
@@ -161,6 +162,11 @@ function notFound(env: Env): Response {
         description: "That page does not exist. Search the board, or go back to it.",
         canonical: `${env.SITE_URL}/404`,
         noindex: true,
+        // The version of the deploy, so the stylesheet's URL changes with
+        // it. Every other page gets this from `pageMeta`, and this one
+        // builds its own meta. Without it the 404 asks for a bare
+        // `/style.css`, which the browser may hold for a year.
+        assetVersion: env.VERSION_METADATA?.id,
       },
       `<section class="page"><div class="wrap">
   <h1>404</h1>
@@ -534,8 +540,30 @@ async function route(
   if (path.startsWith("/weekly/")) {
     const id = path.slice("/weekly/".length);
     const claimingEnabled = Boolean(env.GITHUB_CLIENT_ID);
-    return cached(request, 3600, async () =>
-      html((await renderWeekly(env, id, claimingEnabled)) ?? "", 200, { "cache-control": "public, max-age=3600" })
+    // The version goes in the cache key, and the local flag goes with it.
+    //
+    // This route had neither, and it was the only cached route out of
+    // eight that did not. Without the version a deploy did not
+    // invalidate the cached page, so it survived for the whole hour of
+    // its max-age. Without the local flag a local run could read from
+    // the production cache and write to it.
+    //
+    // And it did. On production, /weekly/2026-W44 served a page
+    // carrying the markup for a theme control the deployed Worker does
+    // not have, with a stylesheet URL that had no version on it, so the
+    // browser fetched the deployed stylesheet and the page rendered a
+    // button that nothing in the product had ever styled: 21px tall,
+    // with a 2px outset border.
+    //
+    // A cached page and the stylesheet it asks for have to come from
+    // the same deploy, or the page renders as something nobody designed.
+    return cached(
+      request,
+      3600,
+      async () =>
+        html((await renderWeekly(env, id, claimingEnabled)) ?? "", 200, { "cache-control": "public, max-age=3600" }),
+      env.VERSION_METADATA?.id,
+      local
     );
   }
   if (path === "/agents") {
@@ -631,6 +659,7 @@ async function getWishForm(env: Env, request: Request, url: URL): Promise<Respon
           description: "A public board of the capabilities AI agents have got stuck on.",
           canonical: `${env.SITE_URL}/`,
           noindex: true,
+          assetVersion: env.VERSION_METADATA?.id,
         },
         `<section class="page"><div class="wrap"><h1>Tools Wanted</h1><p>A public board of the capabilities AI agents have got stuck on. <a class="under" href="/">See the board</a>.</p></div></section>`
       ),
