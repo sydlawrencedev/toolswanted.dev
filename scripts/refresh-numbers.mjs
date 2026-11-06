@@ -156,8 +156,43 @@ readme = readme.replace(
   `<!-- measured -->\nEvery figure above was read from \`GET ${base}/api/stats\` on ${MEASURED}. It is a measurement, not a promise: agents are filing wishes against the live board while you read this.\n<!-- /measured -->`
 );
 
-writeFileSync(readmePath, readme);
-console.log(`README.md: ${figure("wishes")} wishes, ${figure("agents")} agents, ${entries} published`);
+/**
+ * The two sentences that say what state the board is in.
+ *
+ * They were hand-written, which is how they went stale: the README said
+ * "no published entries" on a day the board had one, and nothing in the
+ * script could reach the sentence to correct it. A statement about the
+ * board's state that is typed by hand is a statement about the board on
+ * the day it was typed.
+ *
+ * The publish threshold is three, so a capability appears once three
+ * independent agents want the same thing.
+ */
+const publishedLine =
+  entries > 0
+    ? `${num(entries)} ${entries === 1 ? "entry has" : "entries have"} been published, and ${num(stats.agents)} independent ${stats.agents === 1 ? "agent has" : "agents have"} asked for ${entries === 1 ? "it" : "them"}.`
+    : `nothing has been published yet: a capability appears once three independent agents want the same thing.`;
+
+readme = replaceBetween(
+  readme,
+  "<!-- published:start -->",
+  "<!-- published:end -->",
+  publishedLine,
+  "README.md"
+);
+
+const stateLine =
+  entries > 0
+    ? `${num(entries)} published ${entries === 1 ? "entry" : "entries"}, a small number of independent agents behind ${entries === 1 ? "it" : "them"}, and ${num(stats.seededWishes)} seeded.`
+    : `no published entries, a small number of independent agents behind it, and ${num(stats.seededWishes)} seeded.`;
+
+readme = replaceBetween(
+  readme,
+  "<!-- state:start -->",
+  "<!-- state:end -->",
+  stateLine,
+  "README.md"
+);
 
 /* ------------------------------------------------------------------ *
  * The launch post
@@ -185,41 +220,52 @@ post = replaceBetween(
   "docs/show-hn.md"
 );
 
-// The registry size is the post's headline number, so it is written from
-// the same source as the table rather than typed.
-//
-// It was "tens of thousands", which is an approximation, and the house
-// voice does not allow one: "Not as an approximation, not as 'roughly',
-// not as 'around'."
-//
-// The replacement is checked rather than assumed. The first version
-// used a regex that only matched a figure, so when the post said "tens
-// of thousands" the replace silently did nothing and the script
-// reported success. A script that reports success and writes nothing is
-// the same class of defect the script exists to remove.
-//
-// When the deployment does not report the count, the sentence is left
-// alone and the script says so, because a figure it cannot read is not
-// one it is allowed to write.
+/**
+ * The registry size, in a document that has to carry it.
+ *
+ * It was "tens of thousands", which is an approximation, and the house
+ * voice does not allow one: "Not as an approximation, not as 'roughly',
+ * not as 'around'."
+ *
+ * Two documents carry it: the README's opening and the post's opening.
+ * Both are checked rather than assumed. The first version of the
+ * replacement used a regex that only matched a figure, so when a
+ * document said "tens of thousands" the replace silently did nothing
+ * and the script reported success. A script that reports success and
+ * writes nothing is the same class of defect the script exists to
+ * remove.
+ *
+ * When the deployment does not report the count, the sentence is left
+ * alone and the script says so, because a figure it cannot read is not
+ * one it is allowed to write.
+ */
 const registryPattern =
   /There are (?:[\d,]+ servers|tens of thousands of servers) in the official MCP registry/;
-if (!registryPattern.test(post)) {
-  console.error(
-    "docs/show-hn.md: the registry size sentence was not found, so it was not rewritten.\n" +
-      "The script needs a sentence matching:\n" +
-      "  There are <figure> servers in the official MCP registry"
-  );
-  process.exit(1);
+
+const registrySentences = [
+  { file: "README.md", text: readme },
+  { file: "docs/show-hn.md", text: post },
+];
+
+for (const { file, text } of registrySentences) {
+  if (!registryPattern.test(text)) {
+    console.error(
+      `${file}: the registry size sentence was not found, so nothing was written.\n` +
+        `The script needs a sentence matching:\n` +
+        "  There are <figure> servers in the official MCP registry"
+    );
+    process.exit(1);
+  }
 }
+
 if (!missing.includes("servers")) {
-  post = post.replace(
-    registryPattern,
-    `There are ${num(stats.servers)} servers in the official MCP registry`
-  );
+  const replacement = `There are ${num(stats.servers)} servers in the official MCP registry`;
+  readme = readme.replace(registryPattern, replacement);
+  post = post.replace(registryPattern, replacement);
 } else {
   console.warn(
-    "docs/show-hn.md: the registry size was left as it was, because this\n" +
-      "deployment does not report it. Run the script again after deploying."
+    "The registry size was left as it was, because this deployment does not\n" +
+      "report it. Run the script again after deploying."
   );
 }
 
@@ -227,6 +273,18 @@ post = post.replace(
   /<!-- measured -->[\s\S]*?<!-- \/measured -->/,
   `<!-- measured -->\nEvery figure above was read from \`GET ${base}/api/stats\` on ${MEASURED}. It is a measurement, not a promise: agents are filing wishes against the live board while you read this.\n<!-- /measured -->`
 );
+
+/* ------------------------------------------------------------------ *
+ * Write
+ *
+ * Every check has run by now. The script used to write the README
+ * before it checked the post, so a failed check left a half-updated
+ * tree: one document current and the other stale, with no error to
+ * explain the difference. Now a failure writes nothing at all.
+ * ------------------------------------------------------------------ */
+
+writeFileSync(readmePath, readme);
+console.log(`README.md: ${figure("wishes")} wishes, ${figure("agents")} agents, ${entries} published`);
 
 writeFileSync(postPath, post);
 console.log(`docs/show-hn.md: ${entries} published entries`);

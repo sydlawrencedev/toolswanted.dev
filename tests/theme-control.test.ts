@@ -42,7 +42,10 @@ declare const document: {
   getElementById(id: string): { textContent: string | null } | null;
   body: unknown;
 };
-declare const getComputedStyle: (el: unknown) => { backgroundColor: string };
+declare const getComputedStyle: (el: unknown) => {
+  backgroundColor: string;
+  display: string;
+};
 declare const localStorage: { getItem(k: string): string | null; setItem(k: string, v: string): void };
 
 describe("the theme control's script", () => {
@@ -66,6 +69,17 @@ describe("the theme control's script", () => {
     // back to the system.
     expect(source).toMatch(/removeItem\('tw-theme'\)/);
     expect(source).toMatch(/removeAttribute\('data-theme'\)/);
+  });
+
+  it("hides the clear control when there is nothing to clear", () => {
+    // The clear button used to sit beside the toggle on every page, for
+    // every reader. For the majority, who have never touched the toggle,
+    // clicking it did nothing at all, because there was no override to
+    // undo. A control that asks a reader to do something that has no
+    // effect is a control that has to be explained, and it is not worth
+    // the space.
+    expect(source).toMatch(/showClear/);
+    expect(source).toMatch(/display=has\?'inline-block':'none'/);
   });
 });
 
@@ -108,11 +122,17 @@ describe("the theme control in a browser", () => {
         label: document.getElementById("themebtn")?.textContent ?? "",
         forced: document.documentElement.getAttribute("data-theme"),
         bg: getComputedStyle(document.body).backgroundColor,
+        clearVisible:
+          getComputedStyle(document.getElementById("themeclear")!).display !== "none",
       }));
 
       // No override is set, so the attribute is absent and the page
       // follows the system.
       expect(state.forced).toBeNull();
+
+      // The clear control is hidden, because there is no override to
+      // clear. For most readers it is a button that does nothing.
+      expect(state.clearVisible).toBe(false);
 
       // The button names the theme the reader would get by pressing it,
       // which on a dark system is light.
@@ -141,6 +161,8 @@ describe("the theme control in a browser", () => {
         forced: document.documentElement.getAttribute("data-theme"),
         stored: localStorage.getItem("tw-theme"),
         bg: getComputedStyle(document.body).backgroundColor,
+        clearVisible:
+          getComputedStyle(document.getElementById("themeclear")!).display !== "none",
       }));
       expect(flipped.forced).toBe(scheme === "dark" ? "light" : "dark");
       expect(flipped.stored).toBe(flipped.forced);
@@ -149,18 +171,27 @@ describe("the theme control in a browser", () => {
         scheme === "dark" ? "rgb(243, 238, 225)" : "rgb(16, 14, 13)"
       );
 
+      // Now there is an override to clear, so the clear control appears.
+      expect(flipped.clearVisible).toBe(true);
+
       // Clear it: the reader is handed back to their system.
       await page.click("#themeclear");
       const cleared = await page.evaluate(() => ({
         forced: document.documentElement.getAttribute("data-theme"),
         stored: localStorage.getItem("tw-theme"),
         bg: getComputedStyle(document.body).backgroundColor,
+        clearVisible:
+          getComputedStyle(document.getElementById("themeclear")!).display !== "none",
       }));
       expect(cleared.forced).toBeNull();
       expect(cleared.stored).toBeNull();
       expect(cleared.bg).toBe(
         scheme === "dark" ? "rgb(16, 14, 13)" : "rgb(243, 238, 225)"
       );
+
+      // And with no override there is nothing to clear, so the control
+      // goes away again.
+      expect(cleared.clearVisible).toBe(false);
 
       await context.close();
     }, 60000);
