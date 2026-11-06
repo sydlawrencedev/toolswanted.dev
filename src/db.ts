@@ -11,10 +11,41 @@
 import type { Cluster, ServerRecord, Wish } from "./types";
 import { newId, weekStart } from "./types";
 
-/** True when D1 refused a write because the daily row limit is spent. */
+/**
+ * True when D1 refused because a daily row limit is spent.
+ *
+ * There are two of them and they are different problems.
+ *
+ * The **write** limit is 100,000 rows a day. The board spends it on
+ * wishes, and when it is gone the board cannot record anything, so
+ * filing a wish fails.
+ *
+ * The **read** limit is 5,000,000 rows a day. The board spends it on
+ * the registry crawl and on the queries that read the board. When it is
+ * gone, reads fail, and with them every page that reads the board.
+ *
+ * The old check was `/row write limit|exceeded D1/i`, which matched
+ * "exceeded D1" on either, so a read-limit failure was reported as a
+ * write-limit failure and the message told a reader that filing wishes
+ * was paused, when what was actually paused was the whole site.
+ */
 export function isWriteLimitError(err: unknown): boolean {
+  return isDailyLimitError(err, "write");
+}
+
+/** True when D1 refused because the daily row *read* limit is spent. */
+export function isReadLimitError(err: unknown): boolean {
+  return isDailyLimitError(err, "read");
+}
+
+/** True when D1 refused because a daily row limit is spent. */
+export function isDailyLimitError(err: unknown, kind: "read" | "write"): boolean {
   const message = err instanceof Error ? err.message : String(err);
-  return /row write limit|exceeded D1/i.test(message);
+  if (/row write limit/i.test(message)) return kind === "write";
+  if (/row read limit/i.test(message)) return kind === "read";
+  // Cloudflare's own wording does not always say which limit it was.
+  if (/exceeded D1/i.test(message)) return true;
+  return false;
 }
 
 export const CLUSTER_COLUMNS = `id, slug, title, title_source, count, unique_agents, week_count,
@@ -687,7 +718,7 @@ export async function getStats(db: D1Database): Promise<{
          (SELECT COUNT(*) FROM wishes WHERE seeded = 1) AS seededWishes,
          (SELECT COUNT(*) FROM clusters WHERE shipped = 1) AS shipped,
          (SELECT COUNT(*) FROM clusters WHERE status = 'pending') AS pending,
-         (SELECT COUNT(*) FROM servers) AS servers`
+         (SELECT count FROM server_counts ORDER BY day DESC LIMIT 1) AS servers`
     )
     .first<{
     clusters: number;
@@ -711,6 +742,43 @@ export async function getStats(db: D1Database): Promise<{
       servers: 0,
     }
   );
+}
+
+/**
+ * The number of servers in the mirror, as written down.
+ *
+ * It is kept rather than counted, because counting it means reading
+ * 55,293 rows, and the board's stats query runs on every render.
+ */
+export async function currentServerCount(db: D1Database): Promise<number> {
+  const row = await db
+    .prepare(`SELECT count FROM server_counts ORDER BY day DESC LIMIT 1`)
+    .first<{ count: number }>();
+  return row?.count ?? 0;
+}
+
+/**
+ * Write down how many servers the mirror holds.
+ *
+ * The count was being recomputed on every board render, and the mirror
+ * holds 55,293 rows, so each render read 55,293 rows to produce one
+ * number. That is five million row reads a day, and the daily read
+ * limit took the site down.
+ *
+ * The crawl is the only thing that changes the count, so it writes it.
+ */
+export async function setServerCount(
+  db: D1Database,
+  count: number
+): Promise<void> {
+  const day = new Date().toISOString().slice(0, 10);
+  await db
+    .prepare(
+      `INSERT INTO server_counts (day, count) VALUES (?, ?)
+       ON CONFLICT(day) DO UPDATE SET count = excluded.count`
+    )
+    .bind(day, count)
+    .run();
 }
 
 /** Clusters waiting for review. */

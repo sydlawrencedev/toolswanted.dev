@@ -23,7 +23,7 @@ import { handleApi } from "./api";
 import { handleMcpRequest } from "./mcp";
 import { identify } from "./identity";
 import { handleAdmin, purgeClusterCache, readForm } from "./admin";
-import { isWriteLimitError } from "./db";
+import { isReadLimitError, isWriteLimitError } from "./db";
 import { crawlRegistry } from "./registry";
 import { fileWish, WishError } from "./wish";
 import * as db from "./db";
@@ -95,9 +95,20 @@ function html(body: string, status = 200, headers: Record<string, string> = {}):
 }
 
 /**
- * D1's free plan gives 100,000 rows written a day. When that is spent, say
- * so plainly and say when it resets, rather than showing a Cloudflare error
- * page and making it look like the board is broken.
+ * D1's free plan has two daily row limits and they fail differently.
+ *
+ * The **write** limit is 100,000 rows a day. When it is spent, filing a
+ * wish and moderating stop working. The board still reads.
+ *
+ * The **read** limit is 5,000,000 rows a day. When it is spent, the
+ * board cannot be read either, so every page that reads it fails. That
+ * is the whole site.
+ *
+ * The old handler told a reader that the write budget was spent and
+ * that "reading the board still works", which was not true of a read
+ * limit: the board was returning 503 and the message was on the 503
+ * page, so the one thing the reader could not do was the thing the
+ * message promised.
  */
 function writeLimitResponse(err: unknown, request: Request, env: Env): Response {
   if (!isWriteLimitError(err)) {
@@ -140,6 +151,60 @@ function writeLimitResponse(err: unknown, request: Request, env: Env): Response 
         assetVersion: env.VERSION_METADATA?.id,
       },
       `<section class="page"><div class="wrap"><h1>Out of writes</h1><p>${esc(message)}</p><p>Reading the board still works; filing new wishes and moderating do not, for now.</p></div></section>`
+    ),
+    503
+  );
+}
+
+/**
+ * The read limit spent.
+ *
+ * This one takes the whole site down, because every page reads the
+ * board. So it says that, rather than saying the write budget is
+ * spent, which is what the old handler did for both.
+ */
+function readLimitResponse(err: unknown, request: Request, env: Env): Response {
+  if (!isReadLimitError(err)) {
+    console.error("unhandled error", err);
+    return new Response("Something went wrong.", {
+      status: 500,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  console.error("d1 read limit reached", err);
+  const reset = new Date();
+  reset.setUTCHours(24, 0, 0, 0);
+  const hours = Math.max(1, Math.ceil((reset.getTime() - Date.now()) / 3_600_000));
+  const message = `The board has used its daily read budget (5,000,000 rows on the free plan), so it cannot be read for now. It resets at midnight UTC, in about ${hours} hour${hours === 1 ? "" : "s"}.`;
+
+  const accepts = request.headers.get("accept") ?? "";
+  const wantsJson =
+    path_isApi(request) ||
+    accepts.includes("application/json") ||
+    new URL(request.url).searchParams.get("format") === "json";
+  if (wantsJson) {
+    return new Response(JSON.stringify({ error: "daily_read_limit", message }), {
+      status: 503,
+      headers: { "content-type": "application/json; charset=utf-8" },
+    });
+  }
+  if (request.headers.get("accept")?.includes("text/event-stream")) {
+    return new Response(
+      JSON.stringify({ jsonrpc: "2.0", error: { code: -32000, message }, id: null }),
+      { status: 503, headers: { "content-type": "application/json" } }
+    );
+  }
+  return html(
+    layout(
+      {
+        title: "Briefly out of reads",
+        description: message,
+        canonical: `${env.SITE_URL}/`,
+        noindex: true,
+        assetVersion: env.VERSION_METADATA?.id,
+      },
+      `<section class="page"><div class="wrap"><h1>Out of reads</h1><p>${esc(message)}</p><p>Filing a wish needs a write, so that is paused too. Everything comes back at midnight UTC.</p></div></section>`
     ),
     503
   );
@@ -291,7 +356,9 @@ export default {
       try {
         response = await route(request, env, ctx, url, path, local);
       } catch (err) {
-        response = writeLimitResponse(err, request, env);
+        response = isReadLimitError(err)
+          ? readLimitResponse(err, request, env)
+          : writeLimitResponse(err, request, env);
       }
       const headers = new Headers(response.headers);
       for (const [k, v] of Object.entries(cors)) headers.set(k, v);
@@ -301,7 +368,9 @@ export default {
     try {
       return await route(request, env, ctx, url, path, local);
     } catch (err) {
-      return writeLimitResponse(err, request, env);
+      return isReadLimitError(err)
+        ? readLimitResponse(err, request, env)
+        : writeLimitResponse(err, request, env);
     }
   },
 

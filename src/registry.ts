@@ -8,7 +8,7 @@
  */
 
 import { embedBatch, upsertServerVectors, SERVER_MODEL } from "./embed";
-import { upsertServers, getExistingServerNames } from "./db";
+import { upsertServers, getExistingServerNames, currentServerCount, setServerCount } from "./db";
 import { backgroundBudget } from "./budget";
 
 /**
@@ -237,6 +237,20 @@ export async function crawlRegistry(env: Env, max = PAGE_SIZE): Promise<CrawlRes
 
   if (nextCursor) await setMeta(env.DB, "registry_cursor", nextCursor);
   else await setMeta(env.DB, "registry_cursor", "");
+
+  // Write down how many servers the mirror holds.
+  //
+  // It used to be counted on every board render, and the mirror holds
+  // 55,293 rows, so each render read 55,293 rows to produce one
+  // number. That is five million row reads a day, and the daily read
+  // limit took the whole site down.
+  //
+  // The count is adjusted by what this run changed, so it never needs a
+  // scan of the table. A run that changed nothing leaves it alone.
+  if (rowsWritten > 0) {
+    const current = await currentServerCount(env.DB);
+    await setServerCount(env.DB, Math.max(0, current + rowsWritten));
+  }
 
   return { fetched: records.length, stored: records.length, nextCursor, exhausted: !nextCursor };
 }
