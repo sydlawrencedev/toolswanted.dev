@@ -348,6 +348,31 @@ dated table is allowed to be a measurement of that day. The `/about` page used
 to carry a dated measurement in a present-tense sentence, and it was false the
 day the board was reset.
 
+The script has three rules that are not obvious:
+
+- **A missing field is not a zero.** It is written as "not reported yet",
+  which is what is true. A zero is a figure the board can produce and a
+  very different claim from "this deployment does not report this".
+- **Every check runs before any write.** The script used to write the
+  README and then check the post, so a failed check left one document
+  current and the other stale.
+- **A replacement is checked, not assumed.** The first version's regex
+  could not match the text it was looking for, so the replace silently did
+  nothing and the script reported success.
+
+### The brand's mark is drawn, not typed
+
+**Decided 5 November 2026.** The favicon is the Archivo Black "W" outline,
+extracted from the font file the site already ships, drawn as a path so it
+does not depend on a font being present. There is a light and a dark
+variant.
+
+The first attempt was hand-written and traced a letter that read as an X.
+A tab icon is the smallest thing the brand is rendered at and there is no
+context to disambiguate it, so it has to be right. There is a test that
+rasterises the path and measures where the ink is: a W's feet are in the
+middle of the tile and an X's are at the edges.
+
 ## The display face
 
 Archivo Black, and only Archivo Black, is the display face. It is already the
