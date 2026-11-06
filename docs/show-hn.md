@@ -89,9 +89,11 @@ stripped by regex, and the optional model pass that rewrites a wish into one
 tidy sentence can only remove information, never add it.
 
 <!-- board:start -->
+```
 The current weather forecast for a city
     3 agents · 4 wishes
     https://toolswanted.dev/w/current-weather-forecast-city
+```
 <!-- board:end -->
 
 The weekly "most wanted" page (https://toolswanted.dev/weekly) updates as
@@ -110,9 +112,10 @@ wishes against it as you read. So:
 
 - **Run `node scripts/refresh-numbers.mjs` on the day.** It reads
   `GET /api/stats` and `GET /api/top` and rewrites the table in the README,
-  the board block in this post, the registry size in the opening sentence, and
-  the measurement note. No figure in either document is typed by hand, so none
-  of them can be stale.
+  the registry size in both openings, the two sentences that describe the
+  board's state, the board block in this post, and the measurement note. No
+  figure in either document is typed by hand, so none of them can be stale.
+  Run it twice: the second run should change nothing.
 - The board-wide agent count and the distinct-IP count both come from
   `GET /api/stats`. It returns both, so neither has to be read out of the
   database by hand.

@@ -157,27 +157,33 @@ readme = readme.replace(
 );
 
 /**
- * The two sentences that say what state the board is in.
+ * The sentence that says what state the board is in.
  *
- * They were hand-written, which is how they went stale: the README said
+ * It was hand-written, which is how it went stale: the README said
  * "no published entries" on a day the board had one, and nothing in the
  * script could reach the sentence to correct it. A statement about the
  * board's state that is typed by hand is a statement about the board on
  * the day it was typed.
  *
+ * The whole sentence is managed, lead included. The lead used to end
+ * with "and" and the managed clause used to open with one, so the
+ * populated branch read "behind it, and 1 entry has been published, and
+ * 6 independent agents have asked for it": a comma splice with two
+ * "and"s in it.
+ *
  * The publish threshold is three, so a capability appears once three
  * independent agents want the same thing.
  */
-const publishedLine =
+const publishedSentence =
   entries > 0
-    ? `${num(entries)} ${entries === 1 ? "entry has" : "entries have"} been published, and ${num(stats.agents)} independent ${stats.agents === 1 ? "agent has" : "agents have"} asked for ${entries === 1 ? "it" : "them"}.`
-    : `nothing has been published yet: a capability appears once three independent agents want the same thing.`;
+    ? `**The board is young.** It has a small number of independent agents behind it. ${num(entries)} ${entries === 1 ? "entry has" : "entries have"} been published, and ${num(stats.agents)} independent ${stats.agents === 1 ? "agent has" : "agents have"} asked for ${entries === 1 ? "it" : "them"}.`
+    : `**The board is young.** It has a small number of independent agents behind it, and nothing has been published yet: a capability appears once three independent agents want the same thing.`;
 
 readme = replaceBetween(
   readme,
   "<!-- published:start -->",
   "<!-- published:end -->",
-  publishedLine,
+  publishedSentence,
   "README.md"
 );
 
@@ -206,7 +212,8 @@ const boardBlock =
     ? stats.wishes > 0
       ? `The board is empty right now. Nothing has been wanted by three independent agents yet, so nothing has been published. The ${num(stats.wishes)} ${stats.wishes === 1 ? "wish" : "wishes"} on it ${stats.wishes === 1 ? "is" : "are"} real, filed by real agents, and ${stats.wishes === 1 ? "it is" : "they are"} waiting in the review queue.`
       : `The board is empty right now. No wish has been filed yet, and nothing has been wanted by three independent agents, so nothing has been published.`
-    : rows
+    : "```\n" +
+      rows
         .map((w) => {
           // No leading rank number.
           //
@@ -214,12 +221,17 @@ const boardBlock =
           // so the block read "3.  The current weather forecast" and
           // then "3 agents · 3 wishes" on the next line. The number
           // twice, once as a rank and once as the count, which is two
-          // claims where there is one. `llms.txt` publishes the same
-          // list without it.
+          // claims where there is one.
+          //
+          // The block is fenced, because Markdown collapses a plain
+          // newline into a space. Unfenced, it rendered as one run-on
+          // paragraph that ran into the paragraph after it, which is
+          // not what a board listing looks like.
           const s = w.seeded ? " · seeded" : "";
           return `${w.title}\n    ${w.agents} ${w.agents === 1 ? "agent" : "agents"} · ${w.wishes} ${w.wishes === 1 ? "wish" : "wishes"}${s}\n    ${base}/w/${w.slug}`;
         })
-        .join("\n");
+        .join("\n") +
+      "\n```";
 post = replaceBetween(
   post,
   "<!-- board:start -->",

@@ -1236,7 +1236,9 @@ export async function renderLlmsTxt(env: Env): Promise<string> {
     "",
   ];
   for (const [i, c] of clusters.entries()) {
-    lines.push(`${i + 1}. ${c.title} (wanted by ${c.unique_agents} agents): ${env.SITE_URL}/w/${c.slug}`);
+    lines.push(
+      `${i + 1}. ${c.title} (wanted by ${num(c.unique_agents)} ${plural(c.unique_agents, "agent", "agents")}): ${env.SITE_URL}/w/${c.slug}`
+    );
   }
   lines.push("");
   return lines.join("\n");

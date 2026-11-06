@@ -724,6 +724,14 @@ ul.archive li::before{content:"· ";color:var(--ink-soft)}
 .themebtn:hover{background:var(--chip)}
 .themebtn:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .themeclear{font-weight:400;color:var(--ink-soft)}
+/* The clear control is hidden by default and the script reveals it when
+   there is an override to clear.
+
+   Without the script it stays hidden, because without the script there
+   is no override to clear either: the page follows the system, so
+   there is nothing to undo. The script sets the display when it finds
+   one. */
+.themeclear{display:none}
 
 /* ---------- misc ---------- */
 .snippet{margin:24px 0 0;border:2px solid var(--line);border-radius:var(--radius);background:var(--paper-2);padding:16px}
@@ -1067,8 +1075,7 @@ ${content}
   <div class="foottheme">
     <button type="button" id="themebtn" class="themebtn">Dark mode</button>
     <button type="button" id="themeclear" class="themebtn themeclear">Use my system theme</button>
-  </div>
-</div></footer>
+  </div></div></footer>
 ${COPY_SCRIPT}
 ${STICKY_SCRIPT}
 </body>
