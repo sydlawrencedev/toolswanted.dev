@@ -30,7 +30,26 @@ describe("the board's stats query", () => {
     const query = stats.slice(0, stats.indexOf("export async function setServerCount"));
 
     expect(query).not.toMatch(/COUNT\(\*\)\s*FROM\s+servers/i);
+    // The count is read by its own function, so it can survive a
+    // missing table.
+    expect(query).toMatch(/currentServerCount\(db\)/);
+  });
+
+  it("reads the count from the stored table", () => {
+    const read = db.slice(db.indexOf("export async function currentServerCount"));
+    const query = read.slice(0, read.indexOf("export async function setServerCount"));
     expect(query).toMatch(/FROM server_counts/i);
+    expect(query).not.toMatch(/COUNT\(\*\)\s*FROM\s+servers/i);
+  });
+
+  it("survives the table not being there yet", () => {
+    // The migration cannot run while the daily read limit is spent,
+    // which is exactly when the count is needed. A missing table is
+    // zero, not an error, or the board fails to render at all.
+    const read = db.slice(db.indexOf("export async function currentServerCount"));
+    const fn = read.slice(0, read.indexOf("export async function setServerCount"));
+    expect(fn).toMatch(/catch\s*\{/);
+    expect(fn).toMatch(/return 0;/);
   });
 
   it("has somewhere to write the count down", () => {

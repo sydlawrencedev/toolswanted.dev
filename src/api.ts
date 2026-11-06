@@ -4,7 +4,7 @@
  */
 
 import { fileWish, genericiseWish, searchWishes, topWishes, WishError } from "./wish";
-import { getClientBreakdown, getClusterBySlug, getSamples, getStats, getWishesSince } from "./db";
+import { getClientBreakdown, getClusterBySlug, getSamples, getStats, getWishesSince, isReadLimitError, isWriteLimitError } from "./db";
 import { identify } from "./identity";
 import { rateLimit, readBucket } from "./ratelimit";
 import type { Env } from "./types";
@@ -29,6 +29,47 @@ export async function handleApi(
 ): Promise<Response> {
   const path = url.pathname;
 
+  try {
+    return await routeApi(env, request, url, ctx, path);
+  } catch (err) {
+    // The daily row limits take the whole API down with it, and the
+    // message has to say which one.
+    //
+    // Without this, a read-limit failure at the rate limiter came back
+    // as a bare 500, because the limiter's own failure was not a D1
+    // limit error by the time it reached the top.
+    if (isReadLimitError(err)) {
+      return json(
+        {
+          error: "daily_read_limit",
+          message:
+            "The board has used its daily read budget (5,000,000 rows on the free plan), so it cannot be read for now. It resets at midnight UTC.",
+        },
+        503
+      );
+    }
+    if (isWriteLimitError(err)) {
+      return json(
+        {
+          error: "daily_write_limit",
+          message:
+            "The board has used its daily write budget (100,000 rows on the free plan), so it cannot record anything for now. It resets at midnight UTC.",
+        },
+        503
+      );
+    }
+    console.error("api error", err);
+    return json({ error: "internal_error", message: "Something went wrong." }, 500);
+  }
+}
+
+async function routeApi(
+  env: Env,
+  request: Request,
+  url: URL,
+  ctx: ExecutionContext,
+  path: string
+): Promise<Response> {
   // Read endpoints get a light rate limit so the board cannot be scraped.
   const identity = await identify(env, request);
   const readLimit = await rateLimit(env.DB, readBucket(identity.ipKey), 120, 60);

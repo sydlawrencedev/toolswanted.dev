@@ -708,6 +708,15 @@ export async function getStats(db: D1Database): Promise<{
   pending: number;
   servers: number;
 }> {
+  // The server count is read on its own, because the table it lives in
+  // might not be there yet.
+  //
+  // It is applied as a migration, and a migration cannot run while the
+  // daily read limit is spent, which is exactly when the count is most
+  // needed. So a missing table is not an error: the count is zero until
+  // the migration lands and the crawl writes it.
+  const servers = await currentServerCount(db);
+
   const row = await db
     .prepare(
       `SELECT
@@ -717,8 +726,7 @@ export async function getStats(db: D1Database): Promise<{
          (SELECT COUNT(DISTINCT ip_key) FROM wishes WHERE seeded = 0) AS distinctIps,
          (SELECT COUNT(*) FROM wishes WHERE seeded = 1) AS seededWishes,
          (SELECT COUNT(*) FROM clusters WHERE shipped = 1) AS shipped,
-         (SELECT COUNT(*) FROM clusters WHERE status = 'pending') AS pending,
-         (SELECT count FROM server_counts ORDER BY day DESC LIMIT 1) AS servers`
+         (SELECT COUNT(*) FROM clusters WHERE status = 'pending') AS pending`
     )
     .first<{
     clusters: number;
@@ -728,20 +736,17 @@ export async function getStats(db: D1Database): Promise<{
     seededWishes: number;
     shipped: number;
     pending: number;
-    servers: number;
   }>();
-  return (
-    row ?? {
-      clusters: 0,
-      wishes: 0,
-      agents: 0,
-      distinctIps: 0,
-      seededWishes: 0,
-      shipped: 0,
-      pending: 0,
-      servers: 0,
-    }
-  );
+  return {
+    clusters: row?.clusters ?? 0,
+    wishes: row?.wishes ?? 0,
+    agents: row?.agents ?? 0,
+    distinctIps: row?.distinctIps ?? 0,
+    seededWishes: row?.seededWishes ?? 0,
+    shipped: row?.shipped ?? 0,
+    pending: row?.pending ?? 0,
+    servers,
+  };
 }
 
 /**
@@ -749,12 +754,22 @@ export async function getStats(db: D1Database): Promise<{
  *
  * It is kept rather than counted, because counting it means reading
  * 55,293 rows, and the board's stats query runs on every render.
+ *
+ * A missing table is zero rather than an error. The table is created by
+ * a migration, and a migration cannot run while the daily read limit is
+ * spent, which is exactly when the count is needed most. So the board
+ * reports no mirror size until the migration lands and the crawl
+ * writes the number, rather than failing to render at all.
  */
 export async function currentServerCount(db: D1Database): Promise<number> {
-  const row = await db
-    .prepare(`SELECT count FROM server_counts ORDER BY day DESC LIMIT 1`)
-    .first<{ count: number }>();
-  return row?.count ?? 0;
+  try {
+    const row = await db
+      .prepare(`SELECT count FROM server_counts ORDER BY day DESC LIMIT 1`)
+      .first<{ count: number }>();
+    return row?.count ?? 0;
+  } catch {
+    return 0;
+  }
 }
 
 /**
