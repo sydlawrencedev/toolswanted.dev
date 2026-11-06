@@ -208,8 +208,16 @@ const boardBlock =
       : `The board is empty right now. No wish has been filed yet, and nothing has been wanted by three independent agents, so nothing has been published.`
     : rows
         .map((w) => {
+          // No leading rank number.
+          //
+          // It used to print the agent count with a rank's punctuation,
+          // so the block read "3.  The current weather forecast" and
+          // then "3 agents · 3 wishes" on the next line. The number
+          // twice, once as a rank and once as the count, which is two
+          // claims where there is one. `llms.txt` publishes the same
+          // list without it.
           const s = w.seeded ? " · seeded" : "";
-          return `${w.agents}.  ${w.title}\n    ${w.agents} agents · ${w.wishes} wishes${s}\n    ${base}/w/${w.slug}`;
+          return `${w.title}\n    ${w.agents} ${w.agents === 1 ? "agent" : "agents"} · ${w.wishes} ${w.wishes === 1 ? "wish" : "wishes"}${s}\n    ${base}/w/${w.slug}`;
         })
         .join("\n");
 post = replaceBetween(
