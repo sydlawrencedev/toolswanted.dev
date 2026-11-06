@@ -8,8 +8,10 @@
  *   npm run seed
  */
 
+import { adminToken } from "./admin-token.mjs";
+
 const WORKER = process.env.WORKER_URL ?? "https://toolswanted.dev";
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "";
+const ADMIN_TOKEN = await adminToken();
 
 interface Seed {
   need: string;

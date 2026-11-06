@@ -1,0 +1,18 @@
+-- The copy a poster was rendered from.
+--
+-- Staleness was detected by comparing the poster's timestamp with the
+-- cluster's, which catches "the number moved" and nothing else. A
+-- poster rendered from an older version of the design was newer than
+-- its cluster, so it served, and it carried the old design. That is
+-- exactly the case the design changes in this branch were in: the
+-- source copy was fixed and the deployed PNG was not.
+--
+-- So the poster carries the version of the template it was rendered
+-- from. The image route compares it with the current one and refuses a
+-- poster that was rendered from an older template, in the same way it
+-- refuses one that is behind its entry.
+--
+-- The column is nullable, so a poster that predates this migration has
+-- no version. It is treated as stale: an unknown version is not a
+-- current one.
+ALTER TABLE og_images ADD COLUMN copy_version TEXT;

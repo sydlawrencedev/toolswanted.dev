@@ -53,6 +53,7 @@ import {
   type WishFormResult,
 } from "./board";
 import { isPreviewBot, isCrawler } from "./bots";
+import { OG_COPY_VERSION } from "./og-version.mjs";
 import { rateLimit } from "./ratelimit";
 import { renderFeed, renderWishFeed } from "./rss";
 import { isoWeekId, num, weekStart, countWithVerb, type Env } from "./types";
@@ -827,7 +828,25 @@ async function renderOg(env: Env, name: string): Promise<Response> {
 
   const stale = !isDefault && cluster ? object.updatedAt < cluster.updated_at : false;
 
-  if (stale || unpublished) {
+  // A poster carries a number and a design, and both move.
+  //
+  // The timestamp catches the number. It cannot catch the design: a
+  // poster rendered from an older version of the template is newer than
+  // its cluster, so the timestamp check passes and it serves, carrying
+  // the old copy. That was the exact state of this project: the source
+  // copy had been fixed and the deployed PNG had not, and nothing
+  // noticed.
+  //
+  // So the poster carries the version of the template it was rendered
+  // from, and a poster whose version is not the current one is refused
+  // in the same way a poster behind its entry is.
+  //
+  // The default card is exempt. It carries no number and no entry, so
+  // there is nothing to be out of date against.
+  const wrongVersion =
+    !isDefault && object.copyVersion !== OG_COPY_VERSION;
+
+  if (stale || unpublished || wrongVersion) {
     const fallback = await db.getOgImage(env.DB, "default");
     if (fallback) {
       return new Response(fallback.bytes, {
@@ -838,6 +857,7 @@ async function renderOg(env: Env, name: string): Promise<Response> {
           "x-og-stale": "1",
           "x-og-updated-at": fallback.updatedAt,
           "x-og-stale-for": slug,
+          ...(wrongVersion ? { "x-og-version": "mismatch" } : {}),
         },
       });
     }

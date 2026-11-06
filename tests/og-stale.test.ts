@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { staleOgImages } from "../src/db";
+import { freshDb as testDb } from "./helpers/db";
 
 /**
  * A poster is a rendering of a number, and the number moves.
@@ -19,24 +19,9 @@ import { staleOgImages } from "../src/db";
  */
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const MIGRATIONS = join(ROOT, "migrations");
 
-function freshDb(): DatabaseSync {
-  const db = new DatabaseSync(":memory:");
-  db.exec("PRAGMA foreign_keys = ON;");
-  for (const file of [
-    "0001_init.sql",
-    "0002_claims_unique.sql",
-    "0003_servers_latest.sql",
-    "0004_neuron_budget.sql",
-    "0005_og_images.sql",
-    "0006_usage_budget.sql",
-    "0007_votes_seeded.sql",
-  ]) {
-    db.exec(readFileSync(join(MIGRATIONS, file), "utf8"));
-  }
-  return db;
-}
+/** A database with the board's schema on it, from the migrations directory. */
+const freshDb = () => testDb();
 
 /**
  * The D1-shaped wrapper the query functions expect.

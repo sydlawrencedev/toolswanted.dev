@@ -7,10 +7,11 @@
  */
 
 import { readFile } from "node:fs/promises";
+import { adminToken } from "./admin-token.mjs";
 import { createHmac } from "node:crypto";
 
 const WORKER = process.env.WORKER_URL ?? "https://toolswanted.dev";
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? (await readFile("/tmp/admin_token", "utf8")).trim();
+const ADMIN_TOKEN = await adminToken();
 const SESSION_SECRET =
   process.env.SESSION_SECRET ?? (await readFile("/tmp/session_secret", "utf8")).trim();
 

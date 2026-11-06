@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { getClusterBySlug, getClusterBySlugAnyStatus } from "../src/db";
+import { freshDb as testDb } from "./helpers/db";
 
 /**
  * A cluster that has not met the publish threshold is not public.
@@ -26,32 +27,11 @@ import { getClusterBySlug, getClusterBySlugAnyStatus } from "../src/db";
  */
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const MIGRATIONS = join(ROOT, "migrations");
 
 const NOW = "2026-11-05T10:00:00.000Z";
 
-function freshDb(): DatabaseSync {
-  const db = new DatabaseSync(":memory:");
-  db.exec("PRAGMA foreign_keys = ON;");
-  for (const file of [
-    "0001_init.sql",
-    "0002_claims_unique.sql",
-    "0003_servers_latest.sql",
-    "0004_neuron_budget.sql",
-    "0005_og_images.sql",
-    "0006_votes_unique.sql",
-    "0007_client_breakdown.sql",
-    "0008_week_count.sql",
-  ]) {
-    const path = join(MIGRATIONS, file);
-    try {
-      db.exec(readFileSync(path, "utf8"));
-    } catch {
-      // A migration that does not exist in this checkout is skipped.
-    }
-  }
-  return db;
-}
+/** A database with the board's schema on it, from the migrations directory. */
+const freshDb = () => testDb();
 
 function d1(db: DatabaseSync) {
   return {

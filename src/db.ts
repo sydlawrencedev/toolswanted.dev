@@ -996,30 +996,71 @@ export async function getServer(db: D1Database, name: string): Promise<ServerRec
 export async function putOgImage(
   db: D1Database,
   slug: string,
-  bytes: ArrayBuffer
+  bytes: ArrayBuffer,
+  copyVersion: string | null = null
 ): Promise<void> {
   await db
     .prepare(
-      `INSERT INTO og_images (slug, bytes, updated_at) VALUES (?, ?, ?)
-       ON CONFLICT(slug) DO UPDATE SET bytes = excluded.bytes, updated_at = excluded.updated_at`
+      `INSERT INTO og_images (slug, bytes, updated_at, copy_version) VALUES (?, ?, ?, ?)
+       ON CONFLICT(slug) DO UPDATE SET bytes = excluded.bytes, updated_at = excluded.updated_at,
+                                       copy_version = excluded.copy_version`
     )
-    .bind(slug, bytes, new Date().toISOString())
+    .bind(slug, bytes, new Date().toISOString(), copyVersion)
     .run();
+}
+
+/**
+ * Delete the posters that are not in the set.
+ *
+ * The upload is a complete set, not an addition. A board that is reset,
+ * or an entry that is unpublished, otherwise leaves its poster in the
+ * database forever, and the admin panel's list of stale posters grows
+ * without end.
+ *
+ * The default poster is never deleted: it is the card that is served
+ * when a poster is behind, and it is not tied to an entry.
+ */
+export async function pruneOgImages(
+  db: D1Database,
+  keepSlugs: string[]
+): Promise<string[]> {
+  const slugs = keepSlugs.filter((s) => s && s !== "default");
+  const placeholders = slugs.map(() => "?").join(",");
+
+  // Everything that is not the default and not in the set.
+  const query = slugs.length
+    ? `SELECT slug FROM og_images WHERE slug != 'default' AND slug NOT IN (${placeholders})`
+    : `SELECT slug FROM og_images WHERE slug != 'default'`;
+  const { results } = await db.prepare(query).bind(...slugs).all<{ slug: string }>();
+  const stale = (results ?? []).map((r) => r.slug);
+  if (stale.length === 0) return [];
+
+  // D1's free tier has a limit on how many statements a batch can hold,
+  // so they go in chunks.
+  for (let i = 0; i < stale.length; i += 40) {
+    const chunk = stale.slice(i, i + 40);
+    const marks = chunk.map(() => "?").join(",");
+    await db
+      .prepare(`DELETE FROM og_images WHERE slug IN (${marks})`)
+      .bind(...chunk)
+      .run();
+  }
+  return stale;
 }
 
 export async function getOgImage(
   db: D1Database,
   slug: string
-): Promise<{ bytes: Uint8Array; updatedAt: string } | null> {
+): Promise<{ bytes: Uint8Array; updatedAt: string; copyVersion: string | null } | null> {
   const row = await db
-    .prepare(`SELECT bytes, updated_at FROM og_images WHERE slug = ?`)
+    .prepare(`SELECT bytes, updated_at, copy_version FROM og_images WHERE slug = ?`)
     .bind(slug)
-    .first<{ bytes: Uint8Array; updated_at: string }>();
+    .first<{ bytes: Uint8Array; updated_at: string; copy_version: string | null }>();
   if (!row?.bytes) return null;
   // D1 hands the blob back as an array-like that Response() will not accept
   // as a body, so make it a real byte array.
   const bytes = row.bytes instanceof Uint8Array ? row.bytes : new Uint8Array(row.bytes as any);
-  return { bytes, updatedAt: row.updated_at };
+  return { bytes, updatedAt: row.updated_at, copyVersion: row.copy_version ?? null };
 }
 
 /**

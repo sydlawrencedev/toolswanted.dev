@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { renderAbout, renderBuild, renderCluster } from "../src/board";
+import { freshDb as testDb } from "./helpers/db";
 
 /**
  * The audience definition lives in one place, and every other document
@@ -39,23 +40,8 @@ const env = {
  * it. The entry page reads the cluster from the database, so it cannot be
  * rendered without one.
  */
-function freshDb(): DatabaseSync {
-  const db = new DatabaseSync(":memory:");
-  db.exec("PRAGMA foreign_keys = ON;");
-  for (const file of [
-    "0001_init.sql",
-    "0002_claims_unique.sql",
-    "0003_servers_latest.sql",
-    "0004_neuron_budget.sql",
-    "0005_og_images.sql",
-    "0006_usage_budget.sql",
-    "0007_votes_seeded.sql",
-    "0008_week_count.sql",
-  ]) {
-    db.exec(readFileSync(join(ROOT, "migrations", file), "utf8"));
-  }
-  return db;
-}
+/** A database with the board's schema on it, from the migrations directory. */
+const freshDb = () => testDb();
 
 function d1(db: DatabaseSync) {
   const run = (sql: string, params: unknown[] = []) => {

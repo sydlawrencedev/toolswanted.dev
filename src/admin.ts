@@ -16,6 +16,7 @@ import {
 } from "./db";
 import { num, relativeTime, shortDate, type Env } from "./types";
 import { readSession, sessionSecret, signSession, sessionCookie, clearCookie } from "./auth";
+import { OG_COPY_VERSION } from "./og-version.mjs";
 
 async function isAdmin(env: Env, request: Request): Promise<boolean> {
   const session = await readSession(env, request);
@@ -304,27 +305,66 @@ export async function markShipped(env: Env, clusterId: string, login: string, re
 }
 
 /**
- * Store rendered OG images in KV. The PNGs are rendered offline because the
+ * Store rendered OG images in D1. The PNGs are rendered offline because the
  * free Workers plan cannot rasterise them inside a request.
+ *
+ * The upload is a complete set, not an addition. It carries every poster
+ * that should exist, and anything not in it is deleted. A board that is
+ * reset, or an entry that is unpublished, otherwise leaves its poster in
+ * the database forever and the admin panel's list of stale posters grows
+ * without end.
+ *
+ * Every image also carries the version of the template it was rendered
+ * from, so the image route can tell a poster that is out of date in its
+ * design from one that is only out of date in its number.
  */
 async function handleOgUpload(env: Env, request: Request): Promise<Response> {
   const body = (await request.json().catch(() => null)) as {
     images?: Array<{ slug: string; png: string }>;
+    copyVersion?: string;
   } | null;
   if (!body?.images?.length) {
     return new Response(JSON.stringify({ error: "no images" }), { status: 400 });
   }
+
+  // The version the client says it rendered from. If it is not the
+  // current one, the upload is refused rather than stored: a set of
+  // posters rendered from an old template is the thing the version
+  // exists to catch.
+  const copyVersion = body.copyVersion ?? null;
+  if (copyVersion !== OG_COPY_VERSION) {
+    return new Response(
+      JSON.stringify({
+        error: "copy_version_mismatch",
+        expected: OG_COPY_VERSION,
+        got: copyVersion,
+        message:
+          "The posters were rendered from a different version of the template. " +
+          "Deploy the current code, then render and upload again.",
+      }),
+      { status: 409 }
+    );
+  }
+
   let stored = 0;
-  const { putOgImage } = await import("./db");
+  const { putOgImage, pruneOgImages } = await import("./db");
   for (const image of body.images) {
     if (!image.slug || !image.png) continue;
     const bytes = Uint8Array.from(atob(image.png), (c) => c.charCodeAt(0));
-    await putOgImage(env.DB, image.slug, bytes.buffer as ArrayBuffer);
+    await putOgImage(env.DB, image.slug, bytes.buffer as ArrayBuffer, copyVersion);
     stored++;
   }
-  return new Response(JSON.stringify({ ok: true, stored }), {
-    headers: { "content-type": "application/json" },
-  });
+
+  // Delete the posters that are not in this set.
+  const pruned = await pruneOgImages(
+    env.DB,
+    body.images.map((i) => i.slug)
+  );
+
+  return new Response(
+    JSON.stringify({ ok: true, stored, pruned: pruned.length, copyVersion }),
+    { headers: { "content-type": "application/json" } }
+  );
 }
 
 /**

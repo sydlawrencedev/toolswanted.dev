@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { renderBoard, renderCluster, renderWeekly } from "../src/board";
+import { freshDb as testDb } from "./helpers/db";
 
 /**
  * A CPU benchmark for the board render.
@@ -24,7 +24,6 @@ import { renderBoard, renderCluster, renderWeekly } from "../src/board";
  */
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const MIGRATIONS = join(ROOT, "migrations");
 const NOW = "2026-11-03T12:00:00.000Z";
 
 const CLUSTERS = 40;
@@ -46,22 +45,8 @@ const CAPABILITIES = [
 ];
 const CLIENTS = ["claude-code", "cursor", "codex", "chatgpt", "gemini-cli", "other"];
 
-function freshDb(): DatabaseSync {
-  const db = new DatabaseSync(":memory:");
-  db.exec("PRAGMA foreign_keys = ON;");
-  for (const file of [
-    "0001_init.sql",
-    "0002_claims_unique.sql",
-    "0003_servers_latest.sql",
-    "0004_neuron_budget.sql",
-    "0005_og_images.sql",
-    "0006_usage_budget.sql",
-    "0007_votes_seeded.sql",
-  ]) {
-    db.exec(readFileSync(join(MIGRATIONS, file), "utf8"));
-  }
-  return db;
-}
+/** A database with the board's schema on it, from the migrations directory. */
+const freshDb = () => testDb();
 
 function d1(db: DatabaseSync) {
   const run = (sql: string, params: unknown[] = []) => {

@@ -8,10 +8,10 @@
  *   node scripts/compare-models.ts
  */
 
-import { readFile } from "node:fs/promises";
+import { adminToken } from "./admin-token.mjs";
 
 const WORKER = process.env.WORKER_URL ?? "https://toolswanted.dev";
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? (await readFile("/tmp/admin_token", "utf8")).trim();
+const ADMIN_TOKEN = await adminToken();
 
 const MODELS = [
   "@cf/baai/bge-small-en-v1.5",

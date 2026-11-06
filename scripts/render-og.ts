@@ -12,10 +12,11 @@ import { readFile } from "node:fs/promises";
 import { Resvg } from "@resvg/resvg-js";
 import satori from "satori";
 import { createElement as h } from "react";
+import { requireAdminToken } from "./admin-token.mjs";
+import { OG_COPY_VERSION } from "../src/og-version.mjs";
 
 const SITE = process.env.SITE_URL ?? "https://toolswanted.dev";
 const WORKER = process.env.WORKER_URL ?? SITE;
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "";
 
 const PAPER = "#f3eee1";
 const PAPER_2 = "#fffdf7";
@@ -229,6 +230,39 @@ async function renderPoster(cluster: Cluster | null, fontData: Awaited<ReturnTyp
 }
 
 async function main() {
+  // The token first, and a preflight against the admin API before
+  // anything is rendered.
+  //
+  // Rasterising a 1200x630 PNG for every published cluster takes a
+  // while, and the upload happens at the end. Without the preflight, a
+  // wrong token means paying the whole render cost and then finding
+  // out, which is the slowest way to learn that a token is wrong.
+  const ADMIN_TOKEN = await requireAdminToken();
+
+  const preflight = await fetch(`${WORKER}/admin/og`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-admin-token": ADMIN_TOKEN,
+    },
+    body: JSON.stringify({ images: [], copyVersion: OG_COPY_VERSION }),
+  });
+  if (preflight.status === 401 || preflight.status === 403) {
+    console.error(
+      `The admin token was rejected (${preflight.status}).\n` +
+        `Check ADMIN_TOKEN, or the token in /tmp/admin_token.`
+    );
+    process.exit(1);
+  }
+  if (preflight.status === 409) {
+    console.error(
+      `The deployed Worker expects a different poster version than this script\n` +
+        `renders. Deploy the current code first, then run this again.\n` +
+        `${await preflight.text()}`
+    );
+    process.exit(1);
+  }
+
   const fontData = await fonts();
 
   // Pull the published clusters straight from the deployed API.
@@ -259,7 +293,7 @@ async function main() {
       "content-type": "application/json",
       "x-admin-token": ADMIN_TOKEN,
     },
-    body: JSON.stringify({ images }),
+    body: JSON.stringify({ images, copyVersion: OG_COPY_VERSION }),
   });
   if (!upload.ok) {
     console.error(`Upload failed: ${upload.status} ${await upload.text()}`);

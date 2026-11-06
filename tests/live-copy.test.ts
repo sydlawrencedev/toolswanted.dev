@@ -6,6 +6,7 @@ import { DatabaseSync } from "node:sqlite";
 
 import { renderAbout } from "../src/board";
 import { getStats } from "../src/db";
+import { freshDb as testDb } from "./helpers/db";
 
 /**
  * The numbers in the product copy.
@@ -38,7 +39,6 @@ import { getStats } from "../src/db";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BOARD_SRC = join(ROOT, "src", "board.ts");
-const MIGRATIONS = join(ROOT, "migrations");
 
 const SOURCE = readFileSync(BOARD_SRC, "utf8");
 
@@ -53,22 +53,8 @@ const SOURCE = readFileSync(BOARD_SRC, "utf8");
 const DATED_MEASUREMENT =
   /\b(?:on\s+)?\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b|\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b|\bon\s+\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\b/i;
 
-function freshDb(): DatabaseSync {
-  const db = new DatabaseSync(":memory:");
-  db.exec("PRAGMA foreign_keys = ON;");
-  for (const file of [
-    "0001_init.sql",
-    "0002_claims_unique.sql",
-    "0003_servers_latest.sql",
-    "0004_neuron_budget.sql",
-    "0005_og_images.sql",
-    "0006_usage_budget.sql",
-    "0007_votes_seeded.sql",
-  ]) {
-    db.exec(readFileSync(join(MIGRATIONS, file), "utf8"));
-  }
-  return db;
-}
+/** A database with the board's schema on it, from the migrations directory. */
+const freshDb = () => testDb();
 
 function d1(db: DatabaseSync) {
   const run = (sql: string, params: unknown[] = []) => {
